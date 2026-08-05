@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.10" />
+    <PackageReference Include="Microsoft.OpenApi" Version="2.11.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\RentoX.Application\RentoX.Application.csproj" />
+    <ProjectReference Include="..\RentoX.Infrastructure\RentoX.Infrastructure.csproj" />
+    <ProjectReference Include="..\RentoX.Contracts\RentoX.Contracts.csproj" />
+  </ItemGroup>
+
+</Project>

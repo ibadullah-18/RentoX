@@ -1,0 +1,16 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/RentoX.Api/RentoX.Api.csproj" />
+    <Project Path="src/RentoX.Application/RentoX.Application.csproj" />
+    <Project Path="src/RentoX.Contracts/RentoX.Contracts.csproj" />
+    <Project Path="src/RentoX.Domain/RentoX.Domain.csproj" />
+    <Project Path="src/RentoX.Infrastructure/RentoX.Infrastructure.csproj" />
+    <Project Path="src/RentoX.Worker/RentoX.Worker.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/RentoX.Application.UnitTests/RentoX.Application.UnitTests.csproj" />
+    <Project Path="tests/RentoX.ArchitectureTests/RentoX.ArchitectureTests.csproj" />
+    <Project Path="tests/RentoX.Domain.UnitTests/RentoX.Domain.UnitTests.csproj" />
+    <Project Path="tests/RentoX.IntegrationTests/RentoX.IntegrationTests.csproj" />
+  </Folder>
+</Solution>

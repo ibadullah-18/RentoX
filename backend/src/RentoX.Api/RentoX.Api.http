@@ -1,0 +1,6 @@
+@RentoX.Api_HostAddress = http://localhost:5155
+
+GET {{RentoX.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
