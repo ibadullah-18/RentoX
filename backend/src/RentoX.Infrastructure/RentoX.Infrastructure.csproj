@@ -5,6 +5,13 @@
     <ProjectReference Include="..\RentoX.Domain\RentoX.Domain.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="10.0.10" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.10" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.3" />
+    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.19.2" />
+  </ItemGroup>
+
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
