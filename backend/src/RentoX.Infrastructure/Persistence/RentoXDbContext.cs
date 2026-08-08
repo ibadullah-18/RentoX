@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using RentoX.Application.Abstractions.Persistence;
 using RentoX.Domain.Authentication;
+using RentoX.Domain.Catalog.Categories;
 using RentoX.Domain.Users;
 using RentoX.Infrastructure.Identity;
 
@@ -21,6 +22,12 @@ public sealed class RentoXDbContext(
 
     public DbSet<RefreshToken> RefreshTokens =>
     Set<RefreshToken>();
+
+    public DbSet<Category> Categories =>
+    Set<Category>();
+
+    public DbSet<CategoryTranslation> CategoryTranslations =>
+        Set<CategoryTranslation>();
 
     protected override void OnModelCreating(
         ModelBuilder builder)

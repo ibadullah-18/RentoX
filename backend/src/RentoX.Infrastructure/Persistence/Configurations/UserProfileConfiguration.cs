@@ -34,7 +34,7 @@ public sealed class UserProfileConfiguration
 
         builder.HasIndex(x => x.CreatedAtUtc);
 
-        builder.HasQueryFilter(x => !x.IsDeleted);
+        builder.HasQueryFilter(x => x.DeletedAtUtc == null);
 
         builder.Ignore(x => x.DomainEvents);
     }

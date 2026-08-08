@@ -1,20 +1,23 @@
-﻿using System.Globalization;
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-using System.Security.Cryptography;
-using System.Text;
+﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.IdentityModel.Tokens;
 using RentoX.Application.Abstractions.Time;
 using RentoX.Application.Authentication;
 using RentoX.Domain.Authentication;
+using RentoX.Infrastructure.Identity;
 using RentoX.Infrastructure.Persistence;
+using System.Globalization;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace RentoX.Infrastructure.Authentication;
 
 public sealed class JwtTokenService(
     JwtOptions options,
     IClock clock,
-    RentoXDbContext dbContext)
+    RentoXDbContext dbContext,
+    UserManager<AppUser> userManager)
     : ITokenService
 {
     public async Task<AuthTokenResult> CreateAsync(
@@ -33,26 +36,44 @@ public sealed class JwtTokenService(
             "D",
             CultureInfo.InvariantCulture);
 
-        Claim[] claims =
-        [
-            new(
-                JwtRegisteredClaimNames.Sub,
-                userIdText),
+        AppUser? user =
+            await userManager.FindByIdAsync(userIdText);
 
-            new(
-                ClaimTypes.NameIdentifier,
-                userIdText),
+        if (user is null)
+        {
+            throw new InvalidOperationException(
+                "User account was not found.");
+        }
 
-            new(
-                ClaimTypes.MobilePhone,
-                phoneNumber),
+        IList<string> roles =
+            await userManager.GetRolesAsync(user);
 
-            new(
-                JwtRegisteredClaimNames.Jti,
-                Guid.NewGuid().ToString(
-                    "D",
-                    CultureInfo.InvariantCulture))
-        ];
+        List<Claim> claims =
+[
+    new(
+        JwtRegisteredClaimNames.Sub,
+        userIdText),
+
+    new(
+        ClaimTypes.NameIdentifier,
+        userIdText),
+
+    new(
+        ClaimTypes.MobilePhone,
+        phoneNumber),
+
+    new(
+        JwtRegisteredClaimNames.Jti,
+        Guid.NewGuid().ToString(
+            "D",
+            CultureInfo.InvariantCulture))
+];
+
+        claims.AddRange(
+            roles.Select(role =>
+                new Claim(
+                    ClaimTypes.Role,
+                    role)));
 
         SymmetricSecurityKey securityKey = new(
             Encoding.UTF8.GetBytes(

@@ -1,26 +1,22 @@
-﻿using RentoX.Application.Abstractions.Time;
-using RentoX.Application.Authorization;
+﻿using RentoX.Application.Abstractions.Persistence;
+using RentoX.Application.Abstractions.Time;
 using RentoX.Domain.Authentication;
 using RentoX.Domain.Authentication.Enums;
 using RentoX.Domain.Common.Exceptions;
-using RentoX.Domain.Users.Enums;
 
 namespace RentoX.Application.Authentication;
 
-public sealed class CompleteRegistrationService(
+public sealed class CompleteLoginService(
     IOtpChallengeRepository challengeRepository,
     IOtpCodeHasher codeHasher,
-    IRegistrationAccountService accountService,
-    IIdentityUserLookup identityUserLookup,
+    ILoginAccountService loginAccountService,
     IClock clock,
-    ITokenService tokenService,
-    IUserRoleService userRoleService)
+    IUnitOfWork unitOfWork,
+    ITokenService tokenService)
 {
-    public async Task<CompleteRegistrationResult> CompleteAsync(
+    public async Task<CompleteLoginResult> CompleteAsync(
         Guid challengeId,
         string code,
-        string fullName,
-        int preferredLanguage,
         CancellationToken cancellationToken = default)
     {
         OtpChallenge challenge =
@@ -30,29 +26,10 @@ public sealed class CompleteRegistrationService(
             ?? throw new DomainException(
                 "OTP challenge was not found.");
 
-        if (challenge.Purpose != OtpPurpose.Registration)
+        if (challenge.Purpose != OtpPurpose.Login)
         {
             throw new DomainException(
-                "OTP challenge is not valid for registration.");
-        }
-
-        if (!Enum.IsDefined(
-                typeof(PreferredLanguage),
-                preferredLanguage))
-        {
-            throw new DomainException(
-                "Preferred language is invalid.");
-        }
-
-        bool phoneExists =
-            await identityUserLookup.PhoneExistsAsync(
-                challenge.PhoneNumber,
-                cancellationToken);
-
-        if (phoneExists)
-        {
-            throw new DomainException(
-                "This phone number is already registered.");
+                "OTP challenge is not valid for login.");
         }
 
         string candidateHash = codeHasher.Hash(
@@ -64,6 +41,9 @@ public sealed class CompleteRegistrationService(
                 candidateHash,
                 clock.UtcNow);
 
+        await unitOfWork.SaveChangesAsync(
+            cancellationToken);
+
         if (verificationResult !=
             OtpVerificationResult.Verified)
         {
@@ -71,24 +51,25 @@ public sealed class CompleteRegistrationService(
                 GetVerificationError(verificationResult));
         }
 
-        Guid userId = await accountService.CreateAsync(
-            challenge.PhoneNumber,
-            fullName,
-            (PreferredLanguage)preferredLanguage,
-            cancellationToken);
+        Guid? userId =
+            await loginAccountService.FindUserIdAsync(
+                challenge.PhoneNumber,
+                cancellationToken);
 
-        await userRoleService.AssignDefaultRoleAsync(
-            userId,
-            cancellationToken);
+        if (!userId.HasValue)
+        {
+            throw new DomainException(
+                "User account was not found.");
+        }
 
         AuthTokenResult tokens =
             await tokenService.CreateAsync(
-        userId,
-        challenge.PhoneNumber,
-        cancellationToken);
+                userId.Value,
+                challenge.PhoneNumber,
+                cancellationToken);
 
-        return new CompleteRegistrationResult(
-            userId,
+        return new CompleteLoginResult(
+            userId.Value,
             challenge.PhoneNumber,
             tokens);
     }
