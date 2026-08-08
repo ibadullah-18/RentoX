@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using RentoX.Application.Abstractions.Persistence;
 using RentoX.Domain.Authentication;
 using RentoX.Domain.Catalog.Categories;
+using RentoX.Domain.Catalog.Fields;
 using RentoX.Domain.Users;
 using RentoX.Infrastructure.Identity;
 
@@ -28,6 +29,20 @@ public sealed class RentoXDbContext(
 
     public DbSet<CategoryTranslation> CategoryTranslations =>
         Set<CategoryTranslation>();
+
+    public DbSet<CategoryField> CategoryFields =>
+    Set<CategoryField>();
+
+    public DbSet<CategoryFieldTranslation>
+        CategoryFieldTranslations =>
+            Set<CategoryFieldTranslation>();
+
+    public DbSet<CategoryFieldOption> CategoryFieldOptions =>
+        Set<CategoryFieldOption>();
+
+    public DbSet<CategoryFieldOptionTranslation>
+        CategoryFieldOptionTranslations =>
+            Set<CategoryFieldOptionTranslation>();
 
     protected override void OnModelCreating(
         ModelBuilder builder)

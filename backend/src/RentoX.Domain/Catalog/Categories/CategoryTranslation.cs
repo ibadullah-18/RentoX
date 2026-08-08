@@ -46,6 +46,11 @@ public sealed class CategoryTranslation : Entity
             name);
     }
 
+    public void UpdateName(string name)
+    {
+        Name = NormalizeName(name);
+    }
+
     private static string NormalizeName(string name)
     {
         if (string.IsNullOrWhiteSpace(name))

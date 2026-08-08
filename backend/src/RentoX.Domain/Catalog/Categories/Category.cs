@@ -80,6 +80,40 @@ public sealed class Category : AggregateRoot
         _translations.Add(translation);
     }
 
+    public void Update(
+    Guid? parentId,
+    string slug,
+    string? iconUrl,
+    int displayOrder)
+    {
+        if (parentId == Id)
+        {
+            throw new DomainException(
+                "Category cannot be its own parent.");
+        }
+
+        if (displayOrder < 0)
+        {
+            throw new DomainException(
+                "Display order cannot be negative.");
+        }
+
+        ParentId = parentId;
+        Slug = NormalizeSlug(slug);
+        IconUrl = NormalizeOptional(iconUrl);
+        DisplayOrder = displayOrder;
+    }
+
+    public void Activate()
+    {
+        IsActive = true;
+    }
+
+    public void Deactivate()
+    {
+        IsActive = false;
+    }
+
     private static string NormalizeSlug(string slug)
     {
         if (string.IsNullOrWhiteSpace(slug))

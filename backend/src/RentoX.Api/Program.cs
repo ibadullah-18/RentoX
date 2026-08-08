@@ -71,7 +71,19 @@ builder.Services
             };
     });
 
-builder.Services.AddAuthorization();
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy(
+        PolicyNames.AdminAccess,
+        policy => policy.RequireRole(
+            RoleNames.Admin,
+            RoleNames.SuperAdmin));
+
+    options.AddPolicy(
+        PolicyNames.SuperAdminOnly,
+        policy => policy.RequireRole(
+            RoleNames.SuperAdmin));
+});
 
 builder.Services.AddRateLimiter(options =>
 {
