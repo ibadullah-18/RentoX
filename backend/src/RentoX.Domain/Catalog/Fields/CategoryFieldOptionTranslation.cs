@@ -46,6 +46,11 @@ public sealed class CategoryFieldOptionTranslation : Entity
             label);
     }
 
+    public void UpdateLabel(string label)
+    {
+        Label = NormalizeLabel(label);
+    }
+
     private static string NormalizeLabel(string label)
     {
         if (string.IsNullOrWhiteSpace(label))

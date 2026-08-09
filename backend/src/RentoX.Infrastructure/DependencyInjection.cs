@@ -7,10 +7,12 @@ using RentoX.Application.Accounts;
 using RentoX.Application.Authentication;
 using RentoX.Application.Authorization;
 using RentoX.Application.Catalog.Categories;
+using RentoX.Application.Catalog.Fields;
 using RentoX.Application.Users;
 using RentoX.Infrastructure.Accounts;
 using RentoX.Infrastructure.Authentication;
 using RentoX.Infrastructure.Catalog.Categories;
+using RentoX.Infrastructure.Catalog.Fields;
 using RentoX.Infrastructure.Identity;
 using RentoX.Infrastructure.Persistence;
 using RentoX.Infrastructure.Persistence.Interceptors;
@@ -142,7 +144,22 @@ public static class DependencyInjection
             ICategoryManagementService,
             CategoryManagementService>();
 
+        services.AddScoped<
+            ICategoryFieldManagementService,
+            CategoryFieldManagementService>();
 
+        services.AddScoped<
+            ICategoryFieldQueryService,
+            CategoryFieldQueryService>();
+
+        services.AddScoped<
+            ICategoryFieldAdministrationService,
+            CategoryFieldAdministrationService>();
+
+        services.AddScoped<
+            ICategoryFieldOptionManagementService,
+            CategoryFieldOptionManagementService>();
+                
         return services;
     }
 }

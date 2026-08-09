@@ -81,6 +81,30 @@ public sealed class CategoryFieldOption : Entity
         _translations.Add(translation);
     }
 
+    public void Update(
+    string value,
+    int displayOrder)
+    {
+        if (displayOrder < 0)
+        {
+            throw new DomainException(
+                "Display order cannot be negative.");
+        }
+
+        Value = NormalizeValue(value);
+        DisplayOrder = displayOrder;
+    }
+
+    public void Activate()
+    {
+        IsActive = true;
+    }
+
+    public void Deactivate()
+    {
+        IsActive = false;
+    }
+
     private static string NormalizeValue(string value)
     {
         if (string.IsNullOrWhiteSpace(value))

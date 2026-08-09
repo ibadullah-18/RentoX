@@ -139,6 +139,48 @@ public sealed class CategoryField : AggregateRoot
         _options.Add(option);
     }
 
+    public void Update(
+    string key,
+    CategoryFieldType type,
+    bool isRequired,
+    bool isFilterable,
+    bool isSearchable,
+    bool allowCustomValue,
+    bool appliesToDescendants,
+    int displayOrder)
+    {
+        if (!Enum.IsDefined(type))
+        {
+            throw new DomainException(
+                "Category field type is invalid.");
+        }
+
+        if (displayOrder < 0)
+        {
+            throw new DomainException(
+                "Display order cannot be negative.");
+        }
+
+        Key = NormalizeKey(key);
+        Type = type;
+        IsRequired = isRequired;
+        IsFilterable = isFilterable;
+        IsSearchable = isSearchable;
+        AllowCustomValue = allowCustomValue;
+        AppliesToDescendants = appliesToDescendants;
+        DisplayOrder = displayOrder;
+    }
+
+    public void Activate()
+    {
+        IsActive = true;
+    }
+
+    public void Deactivate()
+    {
+        IsActive = false;
+    }
+
     private static string NormalizeKey(string key)
     {
         if (string.IsNullOrWhiteSpace(key))
