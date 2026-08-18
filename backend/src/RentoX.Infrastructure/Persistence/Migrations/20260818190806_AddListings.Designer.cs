@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using RentoX.Infrastructure.Persistence;
@@ -11,9 +12,11 @@ using RentoX.Infrastructure.Persistence;
 namespace RentoX.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(RentoXDbContext))]
-    partial class RentoXDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260818190806_AddListings")]
+    partial class AddListings
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -456,80 +459,11 @@ namespace RentoX.Infrastructure.Persistence.Migrations
                     b.ToTable("listings", "listings");
                 });
 
-            modelBuilder.Entity("RentoX.Domain.Listings.ListingFieldSelection", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("CategoryFieldOptionId")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("ListingFieldValueId")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CategoryFieldOptionId");
-
-                    b.HasIndex("ListingFieldValueId", "CategoryFieldOptionId")
-                        .IsUnique();
-
-                    b.ToTable("listing_field_selections", "listings");
-                });
-
-            modelBuilder.Entity("RentoX.Domain.Listings.ListingFieldValue", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<DateOnly?>("CalendarValue")
-                        .HasColumnType("date");
-
-                    b.Property<Guid>("CategoryFieldId")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("CustomValue")
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
-
-                    b.Property<bool?>("FlagValue")
-                        .HasColumnType("boolean");
-
-                    b.Property<Guid>("ListingId")
-                        .HasColumnType("uuid");
-
-                    b.Property<decimal?>("NumericValue")
-                        .HasPrecision(18, 4)
-                        .HasColumnType("numeric(18,4)");
-
-                    b.Property<string>("TextValue")
-                        .HasMaxLength(2000)
-                        .HasColumnType("character varying(2000)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CategoryFieldId", "FlagValue");
-
-                    b.HasIndex("CategoryFieldId", "NumericValue");
-
-                    b.HasIndex("ListingId", "CategoryFieldId")
-                        .IsUnique();
-
-                    b.ToTable("listing_field_values", "listings");
-                });
-
             modelBuilder.Entity("RentoX.Domain.Listings.ListingImage", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
-
-                    b.Property<string>("ContentType")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
 
                     b.Property<int>("DisplayOrder")
                         .HasColumnType("integer");
@@ -539,9 +473,6 @@ namespace RentoX.Infrastructure.Persistence.Migrations
 
                     b.Property<Guid>("ListingId")
                         .HasColumnType("uuid");
-
-                    b.Property<long>("SizeBytes")
-                        .HasColumnType("bigint");
 
                     b.Property<string>("StorageKey")
                         .IsRequired()
@@ -831,36 +762,6 @@ namespace RentoX.Infrastructure.Persistence.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("RentoX.Domain.Listings.ListingFieldSelection", b =>
-                {
-                    b.HasOne("RentoX.Domain.Catalog.Fields.CategoryFieldOption", null)
-                        .WithMany()
-                        .HasForeignKey("CategoryFieldOptionId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("RentoX.Domain.Listings.ListingFieldValue", null)
-                        .WithMany("Selections")
-                        .HasForeignKey("ListingFieldValueId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
-            modelBuilder.Entity("RentoX.Domain.Listings.ListingFieldValue", b =>
-                {
-                    b.HasOne("RentoX.Domain.Catalog.Fields.CategoryField", null)
-                        .WithMany()
-                        .HasForeignKey("CategoryFieldId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("RentoX.Domain.Listings.Listing", null)
-                        .WithMany("FieldValues")
-                        .HasForeignKey("ListingId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
             modelBuilder.Entity("RentoX.Domain.Listings.ListingImage", b =>
                 {
                     b.HasOne("RentoX.Domain.Listings.Listing", null)
@@ -889,14 +790,7 @@ namespace RentoX.Infrastructure.Persistence.Migrations
 
             modelBuilder.Entity("RentoX.Domain.Listings.Listing", b =>
                 {
-                    b.Navigation("FieldValues");
-
                     b.Navigation("Images");
-                });
-
-            modelBuilder.Entity("RentoX.Domain.Listings.ListingFieldValue", b =>
-                {
-                    b.Navigation("Selections");
                 });
 #pragma warning restore 612, 618
         }

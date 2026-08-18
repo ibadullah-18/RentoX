@@ -8,12 +8,16 @@ using RentoX.Application.Authentication;
 using RentoX.Application.Authorization;
 using RentoX.Application.Catalog.Categories;
 using RentoX.Application.Catalog.Fields;
+using RentoX.Application.Files;
+using RentoX.Application.Listings;
 using RentoX.Application.Users;
 using RentoX.Infrastructure.Accounts;
 using RentoX.Infrastructure.Authentication;
 using RentoX.Infrastructure.Catalog.Categories;
 using RentoX.Infrastructure.Catalog.Fields;
+using RentoX.Infrastructure.Files;
 using RentoX.Infrastructure.Identity;
+using RentoX.Infrastructure.Listings;
 using RentoX.Infrastructure.Persistence;
 using RentoX.Infrastructure.Persistence.Interceptors;
 using RentoX.Infrastructure.Time;
@@ -42,6 +46,10 @@ public static class DependencyInjection
         services.AddScoped<
             IUserRoleService,
             UserRoleService>();
+
+        services.AddScoped<
+            IListingCreationService,
+            ListingCreationService>();
 
         services.AddScoped<AuditableEntityInterceptor>();
 
@@ -159,7 +167,19 @@ public static class DependencyInjection
         services.AddScoped<
             ICategoryFieldOptionManagementService,
             CategoryFieldOptionManagementService>();
-                
+
+        services.AddSingleton<
+            IFileStorage,
+            LocalFileStorage>();
+
+        services.AddScoped<
+            IListingImageService,
+            ListingImageService>();
+
+        services.AddScoped<
+            IListingImageManagementService,
+            ListingImageManagementService>();
+
         return services;
     }
 }

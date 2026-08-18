@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using RentoX.Infrastructure.Persistence;
@@ -11,9 +12,11 @@ using RentoX.Infrastructure.Persistence;
 namespace RentoX.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(RentoXDbContext))]
-    partial class RentoXDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260818191744_AddListingFieldValues")]
+    partial class AddListingFieldValues
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -526,11 +529,6 @@ namespace RentoX.Infrastructure.Persistence.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<string>("ContentType")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
-
                     b.Property<int>("DisplayOrder")
                         .HasColumnType("integer");
 
@@ -539,9 +537,6 @@ namespace RentoX.Infrastructure.Persistence.Migrations
 
                     b.Property<Guid>("ListingId")
                         .HasColumnType("uuid");
-
-                    b.Property<long>("SizeBytes")
-                        .HasColumnType("bigint");
 
                     b.Property<string>("StorageKey")
                         .IsRequired()

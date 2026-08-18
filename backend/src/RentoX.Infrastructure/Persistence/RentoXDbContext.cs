@@ -5,6 +5,7 @@ using RentoX.Application.Abstractions.Persistence;
 using RentoX.Domain.Authentication;
 using RentoX.Domain.Catalog.Categories;
 using RentoX.Domain.Catalog.Fields;
+using RentoX.Domain.Listings;
 using RentoX.Domain.Users;
 using RentoX.Infrastructure.Identity;
 
@@ -22,10 +23,23 @@ public sealed class RentoXDbContext(
         Set<OtpChallenge>();
 
     public DbSet<RefreshToken> RefreshTokens =>
-    Set<RefreshToken>();
+        Set<RefreshToken>();
 
     public DbSet<Category> Categories =>
-    Set<Category>();
+        Set<Category>();
+
+    public DbSet<Listing> Listings =>
+        Set<Listing>();
+
+    public DbSet<ListingImage> ListingImages =>
+        Set<ListingImage>();
+
+    public DbSet<ListingFieldValue> ListingFieldValues =>
+        Set<ListingFieldValue>();
+
+    public DbSet<ListingFieldSelection>
+        ListingFieldSelections =>
+            Set<ListingFieldSelection>();
 
     public DbSet<CategoryTranslation> CategoryTranslations =>
         Set<CategoryTranslation>();
