@@ -1,8 +1,11 @@
-﻿using System.Security.Claims;
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using RentoX.Application.Common;
 using RentoX.Application.Listings;
+using RentoX.Contracts.Common;
 using RentoX.Contracts.Listings;
+using RentoX.Domain.Users.Enums;
+using System.Security.Claims;
 
 namespace RentoX.Api.Controllers;
 
@@ -11,7 +14,10 @@ namespace RentoX.Api.Controllers;
 public sealed class ListingsController(
     IListingCreationService listingCreationService,
     IListingImageService listingImageService,
-    IListingImageManagementService imageManagementService)
+    IListingImageManagementService imageManagementService,
+    IListingQueryService listingQueryService,
+    IListingUpdateService listingUpdateService,
+    IListingFieldUpdateService listingFieldUpdateService)
     : ControllerBase
 {
     [Authorize]
@@ -214,6 +220,247 @@ public sealed class ListingsController(
         return NoContent();
     }
 
+    [Authorize]
+    [HttpGet("mine")]
+    [ProducesResponseType<
+    PagedResponse<OwnedListingSummaryResponse>>(
+    StatusCodes.Status200OK)]
+    public async Task<ActionResult<
+    PagedResponse<OwnedListingSummaryResponse>>>
+    GetMineAsync(
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 20,
+        CancellationToken cancellationToken = default)
+    {
+        if (!TryGetOwnerId(out Guid ownerId))
+        {
+            return Unauthorized();
+        }
+
+        PagedResult<OwnedListingSummaryResult> result =
+            await listingQueryService.GetMineAsync(
+                ownerId,
+                page,
+                pageSize,
+                cancellationToken);
+
+        OwnedListingSummaryResponse[] items =
+            result.Items
+                .Select(item =>
+                    new OwnedListingSummaryResponse(
+                        item.Id,
+                        item.CategoryId,
+                        item.Title,
+                        item.Price,
+                        item.Currency,
+                        item.RentalPeriodUnit,
+                        item.Status,
+                        item.CoverImageId.HasValue
+                            ? $"/api/listing-images/{item.CoverImageId}"
+                            : null,
+                        item.ImageCount,
+                        item.CreatedAtUtc,
+                        item.PublishedAtUtc,
+                        item.ExpiresAtUtc))
+                .ToArray();
+
+        return Ok(new PagedResponse<
+            OwnedListingSummaryResponse>(
+                items,
+                result.Page,
+                result.PageSize,
+                result.TotalCount,
+                result.TotalPages));
+    }
+
+    [Authorize]
+    [HttpGet("mine/{listingId:guid}")]
+    [ProducesResponseType<OwnedListingDetailsResponse>(
+    StatusCodes.Status200OK)]
+    [ProducesResponseType(
+    StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(
+    StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<
+    OwnedListingDetailsResponse>>
+    GetMineByIdAsync(
+        Guid listingId,
+        [FromQuery] string language = "az",
+        CancellationToken cancellationToken = default)
+    {
+        if (!TryGetOwnerId(out Guid ownerId))
+        {
+            return Unauthorized();
+        }
+
+        PreferredLanguage? preferredLanguage =
+            ParseLanguage(language);
+
+        if (!preferredLanguage.HasValue)
+        {
+            return BadRequest(
+                "Language must be az, ru or en.");
+        }
+
+        OwnedListingDetailsResult? result =
+            await listingQueryService.GetMineByIdAsync(
+                ownerId,
+                listingId,
+                preferredLanguage.Value,
+                cancellationToken);
+
+        if (result is null)
+        {
+            return NotFound();
+        }
+
+        ListingImageItemResponse[] images =
+            result.Images
+                .Select(image =>
+                    new ListingImageItemResponse(
+                        image.Id,
+                        $"/api/listing-images/{image.Id}",
+                        image.DisplayOrder,
+                        image.IsCover))
+                .ToArray();
+
+        ListingFieldValueDetailsResponse[] fields =
+            result.Fields
+                .Select(field =>
+                    new ListingFieldValueDetailsResponse(
+                        field.FieldId,
+                        field.Key,
+                        field.Label,
+                        field.Type,
+                        field.TextValue,
+                        field.NumericValue,
+                        field.FlagValue,
+                        field.CalendarValue,
+                        field.CustomValue,
+                        field.Selections
+                            .Select(selection =>
+                                new ListingFieldSelectionValueResponse(
+                                    selection.OptionId,
+                                    selection.Value,
+                                    selection.Label))
+                            .ToArray()))
+                .ToArray();
+
+        return Ok(new OwnedListingDetailsResponse(
+            result.Id,
+            result.OwnerId,
+            result.CategoryId,
+            result.Title,
+            result.Description,
+            result.Price,
+            result.Currency,
+            result.RentalPeriodUnit,
+            result.Status,
+            result.RejectionReason,
+            result.CreatedAtUtc,
+            result.UpdatedAtUtc,
+            result.PublishedAtUtc,
+            result.ExpiresAtUtc,
+            images,
+            fields));
+    }
+
+    [Authorize]
+    [HttpPut("{listingId:guid}")]
+    [ProducesResponseType<UpdateListingResponse>(
+    StatusCodes.Status200OK)]
+    [ProducesResponseType(
+    StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(
+    StatusCodes.Status401Unauthorized)]
+    public async Task<ActionResult<UpdateListingResponse>>
+    UpdateAsync(
+        Guid listingId,
+        UpdateListingRequest request,
+        CancellationToken cancellationToken)
+    {
+        if (!TryGetOwnerId(out Guid ownerId))
+        {
+            return Unauthorized();
+        }
+
+        UpdateListingCommand command = new(
+            ownerId,
+            listingId,
+            request.Title,
+            request.Description,
+            request.Price,
+            request.Currency,
+            request.RentalPeriodUnit);
+
+        UpdateListingResult result =
+            await listingUpdateService.UpdateAsync(
+                command,
+                cancellationToken);
+
+        return Ok(new UpdateListingResponse(
+            result.Id,
+            result.OwnerId,
+            result.CategoryId,
+            result.Title,
+            result.Description,
+            result.Price,
+            result.Currency,
+            result.RentalPeriodUnit,
+            result.Status,
+            result.UpdatedAtUtc));
+    }
+
+    [Authorize]
+    [HttpPut("{listingId:guid}/fields")]
+    [ProducesResponseType<UpdateListingFieldsResponse>(
+    StatusCodes.Status200OK)]
+    [ProducesResponseType(
+    StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(
+    StatusCodes.Status401Unauthorized)]
+    public async Task<ActionResult<
+    UpdateListingFieldsResponse>>
+    UpdateFieldsAsync(
+        Guid listingId,
+        UpdateListingFieldsRequest request,
+        CancellationToken cancellationToken)
+    {
+        if (!TryGetOwnerId(out Guid ownerId))
+        {
+            return Unauthorized();
+        }
+
+        CreateListingFieldInput[] fields =
+            request.Fields
+                .Select(field =>
+                    new CreateListingFieldInput(
+                        field.FieldId,
+                        field.TextValue,
+                        field.NumericValue,
+                        field.FlagValue,
+                        field.CalendarValue,
+                        field.CustomValue,
+                        field.OptionIds))
+                .ToArray();
+
+        UpdateListingFieldsCommand command = new(
+            ownerId,
+            listingId,
+            fields);
+
+        UpdateListingFieldsResult result =
+            await listingFieldUpdateService.UpdateAsync(
+                command,
+                cancellationToken);
+
+        return Ok(new UpdateListingFieldsResponse(
+            result.ListingId,
+            result.FieldCount,
+            result.Status,
+            result.UpdatedAtUtc));
+    }
+
     private bool TryGetOwnerId(out Guid ownerId)
     {
         string? userIdValue =
@@ -223,5 +470,17 @@ public sealed class ListingsController(
         return Guid.TryParse(
             userIdValue,
             out ownerId);
+    }
+
+    private static PreferredLanguage? ParseLanguage(
+    string language)
+    {
+        return language.Trim().ToLowerInvariant() switch
+        {
+            "az" => PreferredLanguage.Azerbaijani,
+            "ru" => PreferredLanguage.Russian,
+            "en" => PreferredLanguage.English,
+            _ => null
+        };
     }
 }

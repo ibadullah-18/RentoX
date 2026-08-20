@@ -359,4 +359,74 @@ public sealed class Listing : AuditableEntity
             image.ChangeDisplayOrder(index);
         }
     }
+
+    public void UpdateDetails(
+    string title,
+    string description,
+    decimal price,
+    string currency,
+    RentalPeriodUnit rentalPeriodUnit)
+    {
+        if (Status is not
+            (ListingStatus.Draft or
+             ListingStatus.Rejected))
+        {
+            throw new DomainException(
+                "Only draft or rejected listings can be edited.");
+        }
+
+        if (!Enum.IsDefined(rentalPeriodUnit))
+        {
+            throw new DomainException(
+                "Rental period unit is invalid.");
+        }
+
+        Title = ValidateTitle(title);
+        Description = ValidateDescription(description);
+        Price = ValidatePrice(price);
+        Currency = ValidateCurrency(currency);
+        RentalPeriodUnit = rentalPeriodUnit;
+
+        Status = ListingStatus.Draft;
+        RejectionReason = null;
+    }
+
+    public void ReplaceFieldValues(
+    IReadOnlyCollection<ListingFieldValue> fieldValues)
+    {
+        ArgumentNullException.ThrowIfNull(fieldValues);
+
+        if (Status is not
+            (ListingStatus.Draft or
+             ListingStatus.Rejected))
+        {
+            throw new DomainException(
+                "Only draft or rejected listing fields can be edited.");
+        }
+
+        bool duplicateFieldExists =
+            fieldValues
+                .GroupBy(value =>
+                    value.CategoryFieldId)
+                .Any(group => group.Count() > 1);
+
+        if (duplicateFieldExists)
+        {
+            throw new DomainException(
+                "A field cannot contain multiple values.");
+        }
+
+        if (fieldValues.Any(value =>
+                value.ListingId != Id))
+        {
+            throw new DomainException(
+                "A field value does not belong to this listing.");
+        }
+
+        _fieldValues.Clear();
+        _fieldValues.AddRange(fieldValues);
+
+        Status = ListingStatus.Draft;
+        RejectionReason = null;
+    }
 }

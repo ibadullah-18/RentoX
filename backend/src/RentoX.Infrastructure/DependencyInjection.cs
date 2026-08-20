@@ -180,6 +180,18 @@ public static class DependencyInjection
             IListingImageManagementService,
             ListingImageManagementService>();
 
+        services.AddScoped<
+            IListingQueryService,
+            ListingQueryService>();
+
+        services.AddScoped<
+            IListingUpdateService,
+            ListingUpdateService>();
+
+        services.AddScoped<
+            IListingFieldUpdateService,
+            ListingFieldUpdateService>();
+
         return services;
     }
 }
