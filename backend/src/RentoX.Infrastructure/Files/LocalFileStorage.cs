@@ -1,17 +1,18 @@
-﻿using Microsoft.Extensions.Hosting;
+﻿using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Hosting;
 using RentoX.Application.Files;
 using RentoX.Domain.Common.Exceptions;
 
 namespace RentoX.Infrastructure.Files;
 
 public sealed class LocalFileStorage(
-    IHostEnvironment environment)
+    IHostEnvironment environment,
+    IConfiguration configuration)
     : IFileStorage
 {
-    private const string ListingFolder =
-        "listing-images";
 
     public async Task<StoredFileResult> SaveAsync(
+        FileStorageArea area,
         Stream content,
         string contentType,
         string extension,
@@ -22,8 +23,10 @@ public sealed class LocalFileStorage(
         string safeExtension =
             NormalizeExtension(extension);
 
+        string folder = GetFolder(area);
+
         string storageKey =
-            $"{ListingFolder}/{Guid.NewGuid():N}{safeExtension}";
+            $"{folder}/{Guid.NewGuid():N}{safeExtension}";
 
         string fullPath = GetFullPath(storageKey);
 
@@ -38,14 +41,13 @@ public sealed class LocalFileStorage(
 
         Directory.CreateDirectory(directory);
 
-        await using FileStream output =
-            new(
-                fullPath,
-                FileMode.CreateNew,
-                FileAccess.Write,
-                FileShare.None,
-                bufferSize: 81_920,
-                useAsync: true);
+        await using FileStream output = new(
+            fullPath,
+            FileMode.CreateNew,
+            FileAccess.Write,
+            FileShare.None,
+            bufferSize: 81_920,
+            useAsync: true);
 
         await content.CopyToAsync(
             output,
@@ -99,10 +101,8 @@ public sealed class LocalFileStorage(
 
     private string GetFullPath(string storageKey)
     {
-        string rootPath = Path.GetFullPath(
-            Path.Combine(
-                environment.ContentRootPath,
-                "App_Data"));
+        string rootPath =
+            ResolveRootPath();
 
         string fullPath = Path.GetFullPath(
             Path.Combine(
@@ -127,6 +127,52 @@ public sealed class LocalFileStorage(
         }
 
         return fullPath;
+    }
+
+    private string ResolveRootPath()
+    {
+        string? configuredPath =
+            configuration["Storage:RootPath"];
+
+        if (string.IsNullOrWhiteSpace(configuredPath))
+        {
+            return Path.GetFullPath(
+                Path.Combine(
+                    environment.ContentRootPath,
+                    "App_Data"));
+        }
+
+        return Path.GetFullPath(
+            Path.IsPathRooted(configuredPath)
+                ? configuredPath
+                : Path.Combine(
+                    environment.ContentRootPath,
+                    configuredPath));
+    }
+
+    private static string GetFolder(
+    FileStorageArea area)
+    {
+        return area switch
+        {
+            FileStorageArea.ListingImages =>
+                "listing-images",
+
+            FileStorageArea.StoreLogos =>
+                "store-logos",
+
+            FileStorageArea.StoreCovers =>
+                "store-covers",
+
+            FileStorageArea.ProfileImages =>
+                "profile-images",
+
+            FileStorageArea.ChatAttachments =>
+                "chat-attachments",
+
+            _ => throw new DomainException(
+                "Storage area is invalid.")
+        };
     }
 
     private static string NormalizeExtension(

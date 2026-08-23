@@ -35,6 +35,10 @@ public sealed class ListingConfiguration
         builder.Property(listing => listing.Status)
             .IsRequired();
 
+        builder.Property(listing => listing.ViewCount)
+            .HasDefaultValue(0L)
+            .IsRequired();
+
         builder.Property(listing =>
                 listing.RentalPeriodUnit)
             .IsRequired();
@@ -42,6 +46,16 @@ public sealed class ListingConfiguration
         builder.Property(listing =>
                 listing.RejectionReason)
             .HasMaxLength(1000);
+
+        builder.Property(listing =>
+            listing.DeletedAtUtc);
+
+        builder.HasIndex(listing => new
+        {
+            listing.OwnerId,
+            listing.Status,
+            listing.CreatedAtUtc
+        });
 
         builder.HasIndex(listing => listing.OwnerId);
 

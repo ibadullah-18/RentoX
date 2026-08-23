@@ -66,13 +66,17 @@ public sealed class Listing : AuditableEntity
         private set;
     }
 
+
     public DateTimeOffset? ExpiresAtUtc
     {
         get;
         private set;
     }
 
+
     public string? RejectionReason { get; private set; }
+    public long ViewCount { get; private set; }
+
 
     public IReadOnlyCollection<ListingImage> Images =>
         _images.AsReadOnly();
@@ -157,6 +161,14 @@ public sealed class Listing : AuditableEntity
 
     public void SubmitForReview()
     {
+        if (Status is not
+            (ListingStatus.Draft or
+             ListingStatus.Rejected))
+        {
+            throw new DomainException(
+                "Only draft or rejected listings can be submitted.");
+        }
+
         if (_images.Count == 0)
         {
             throw new DomainException(
@@ -168,9 +180,15 @@ public sealed class Listing : AuditableEntity
     }
 
     public void Publish(
-        DateTimeOffset publishedAtUtc,
-        TimeSpan lifetime)
+    DateTimeOffset publishedAtUtc,
+    TimeSpan lifetime)
     {
+        if (Status != ListingStatus.PendingReview)
+        {
+            throw new DomainException(
+                "Only listings pending review can be published.");
+        }
+
         if (lifetime <= TimeSpan.Zero)
         {
             throw new DomainException(
@@ -181,6 +199,34 @@ public sealed class Listing : AuditableEntity
         PublishedAtUtc = publishedAtUtc;
         ExpiresAtUtc = publishedAtUtc.Add(lifetime);
         RejectionReason = null;
+    }
+
+    public void Reject(string reason)
+    {
+        if (Status != ListingStatus.PendingReview)
+        {
+            throw new DomainException(
+                "Only listings pending review can be rejected.");
+        }
+
+        if (string.IsNullOrWhiteSpace(reason))
+        {
+            throw new DomainException(
+                "Rejection reason is required.");
+        }
+
+        string normalizedReason = reason.Trim();
+
+        if (normalizedReason.Length > 1000)
+        {
+            throw new DomainException(
+                "Rejection reason cannot exceed 1000 characters.");
+        }
+
+        Status = ListingStatus.Rejected;
+        RejectionReason = normalizedReason;
+        PublishedAtUtc = null;
+        ExpiresAtUtc = null;
     }
 
     private static Guid ValidateId(
@@ -359,6 +405,47 @@ public sealed class Listing : AuditableEntity
             image.ChangeDisplayOrder(index);
         }
     }
+    public void Deactivate()
+    {
+        if (Status != ListingStatus.Active)
+        {
+            throw new DomainException(
+                "Only active listings can be deactivated.");
+        }
+
+        Status = ListingStatus.Deactivated;
+    }
+
+    public void Reactivate(
+        DateTimeOffset occurredAtUtc)
+    {
+        if (Status != ListingStatus.Deactivated)
+        {
+            throw new DomainException(
+                "Only deactivated listings can be reactivated.");
+        }
+
+        if (!ExpiresAtUtc.HasValue ||
+            ExpiresAtUtc.Value <= occurredAtUtc)
+        {
+            throw new DomainException(
+                "The listing has expired and must be renewed.");
+        }
+
+        Status = ListingStatus.Active;
+    }
+
+    public void MarkDeleted(
+        DateTimeOffset deletedAtUtc)
+    {
+        if (Status == ListingStatus.Deleted)
+        {
+            return;
+        }
+
+        Status = ListingStatus.Deleted;
+        MarkAsDeleted(deletedAtUtc);
+    }
 
     public void UpdateDetails(
     string title,
@@ -429,4 +516,5 @@ public sealed class Listing : AuditableEntity
         Status = ListingStatus.Draft;
         RejectionReason = null;
     }
+
 }

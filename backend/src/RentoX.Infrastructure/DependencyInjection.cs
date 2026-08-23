@@ -8,18 +8,22 @@ using RentoX.Application.Authentication;
 using RentoX.Application.Authorization;
 using RentoX.Application.Catalog.Categories;
 using RentoX.Application.Catalog.Fields;
+using RentoX.Application.Favorites;
 using RentoX.Application.Files;
 using RentoX.Application.Listings;
+using RentoX.Application.Stores;
 using RentoX.Application.Users;
 using RentoX.Infrastructure.Accounts;
 using RentoX.Infrastructure.Authentication;
 using RentoX.Infrastructure.Catalog.Categories;
 using RentoX.Infrastructure.Catalog.Fields;
+using RentoX.Infrastructure.Favorites;
 using RentoX.Infrastructure.Files;
 using RentoX.Infrastructure.Identity;
 using RentoX.Infrastructure.Listings;
 using RentoX.Infrastructure.Persistence;
 using RentoX.Infrastructure.Persistence.Interceptors;
+using RentoX.Infrastructure.Stores;
 using RentoX.Infrastructure.Time;
 using RentoX.Infrastructure.Users;
 
@@ -191,6 +195,46 @@ public static class DependencyInjection
         services.AddScoped<
             IListingFieldUpdateService,
             ListingFieldUpdateService>();
+
+        services.AddScoped<
+            IListingSubmissionService,
+            ListingSubmissionService>();
+
+        services.AddScoped<
+            IListingModerationService,
+            ListingModerationService>();
+
+        services.AddScoped<
+            IListingModerationQueryService,
+            ListingModerationQueryService>();
+
+        services.AddScoped<
+            IPublicListingQueryService,
+            PublicListingQueryService>();
+
+        services.AddScoped<
+            IListingViewRecorder,
+            ListingViewRecorder>();
+
+        services.AddScoped<
+            IFavoriteService,
+            FavoriteService>();
+
+        services.AddScoped<
+            IFavoriteQueryService,
+            FavoriteQueryService>();
+
+        services.AddScoped<
+            IListingLifecycleService,
+            ListingLifecycleService>();
+
+        services.AddScoped<
+            IStoreProfileService,
+            StoreProfileService>();
+
+        services.AddScoped<
+            IStoreImageService,
+            StoreImageService>();
 
         return services;
     }

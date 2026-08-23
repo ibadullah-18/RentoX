@@ -1,0 +1,12 @@
+﻿namespace RentoX.Contracts.Stores;
+
+public sealed record UpdateStoreRequest(
+    string Name,
+    string Description,
+    string PhoneNumber,
+    string? Email,
+    string? Address,
+    string? InstagramUrl,
+    string? TiktokUrl,
+    string? FacebookUrl,
+    string? WebsiteUrl);

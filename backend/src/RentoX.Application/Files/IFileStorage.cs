@@ -3,6 +3,7 @@
 public interface IFileStorage
 {
     Task<StoredFileResult> SaveAsync(
+        FileStorageArea area,
         Stream content,
         string contentType,
         string extension,

@@ -56,6 +56,7 @@ public sealed class ListingImageService(
 
         StoredFileResult storedFile =
             await fileStorage.SaveAsync(
+                FileStorageArea.ListingImages,
                 command.Content,
                 command.ContentType,
                 extension,

@@ -17,7 +17,9 @@ public sealed class ListingsController(
     IListingImageManagementService imageManagementService,
     IListingQueryService listingQueryService,
     IListingUpdateService listingUpdateService,
-    IListingFieldUpdateService listingFieldUpdateService)
+    IListingFieldUpdateService listingFieldUpdateService,
+    IListingSubmissionService listingSubmissionService,
+    IListingLifecycleService listingLifecycleService)
     : ControllerBase
 {
     [Authorize]
@@ -459,6 +461,133 @@ public sealed class ListingsController(
             result.FieldCount,
             result.Status,
             result.UpdatedAtUtc));
+    }
+
+    [Authorize]
+    [HttpPost("{listingId:guid}/submit")]
+    [ProducesResponseType<SubmitListingResponse>(
+    StatusCodes.Status200OK)]
+    [ProducesResponseType(
+    StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(
+    StatusCodes.Status401Unauthorized)]
+    public async Task<ActionResult<SubmitListingResponse>>
+    SubmitAsync(
+        Guid listingId,
+        CancellationToken cancellationToken)
+    {
+        if (!TryGetOwnerId(out Guid ownerId))
+        {
+            return Unauthorized();
+        }
+
+        SubmitListingCommand command = new(
+            ownerId,
+            listingId);
+
+        SubmitListingResult result =
+            await listingSubmissionService.SubmitAsync(
+                command,
+                cancellationToken);
+
+        return Ok(new SubmitListingResponse(
+            result.ListingId,
+            result.Status,
+            result.UpdatedAtUtc));
+    }
+
+    [Authorize]
+    [HttpPost("{listingId:guid}/deactivate")]
+    [ProducesResponseType<ListingLifecycleResponse>(
+    StatusCodes.Status200OK)]
+    [ProducesResponseType(
+    StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(
+    StatusCodes.Status401Unauthorized)]
+    public async Task<ActionResult<ListingLifecycleResponse>>
+    DeactivateAsync(
+        Guid listingId,
+        CancellationToken cancellationToken)
+    {
+        if (!TryGetOwnerId(out Guid ownerId))
+        {
+            return Unauthorized();
+        }
+
+        ListingLifecycleResult result =
+            await listingLifecycleService.DeactivateAsync(
+                ownerId,
+                listingId,
+                cancellationToken);
+
+        return Ok(MapLifecycleResponse(result));
+    }
+
+    [Authorize]
+    [HttpPost("{listingId:guid}/reactivate")]
+    [ProducesResponseType<ListingLifecycleResponse>(
+        StatusCodes.Status200OK)]
+    [ProducesResponseType(
+        StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(
+        StatusCodes.Status401Unauthorized)]
+    public async Task<ActionResult<ListingLifecycleResponse>>
+        ReactivateAsync(
+            Guid listingId,
+            CancellationToken cancellationToken)
+    {
+        if (!TryGetOwnerId(out Guid ownerId))
+        {
+            return Unauthorized();
+        }
+
+        ListingLifecycleResult result =
+            await listingLifecycleService.ReactivateAsync(
+                ownerId,
+                listingId,
+                cancellationToken);
+
+        return Ok(MapLifecycleResponse(result));
+    }
+
+    [Authorize]
+    [HttpDelete("{listingId:guid}")]
+    [ProducesResponseType<ListingLifecycleResponse>(
+        StatusCodes.Status200OK)]
+    [ProducesResponseType(
+        StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(
+        StatusCodes.Status401Unauthorized)]
+    public async Task<ActionResult<ListingLifecycleResponse>>
+        DeleteAsync(
+            Guid listingId,
+            CancellationToken cancellationToken)
+    {
+        if (!TryGetOwnerId(out Guid ownerId))
+        {
+            return Unauthorized();
+        }
+
+        ListingLifecycleResult result =
+            await listingLifecycleService.DeleteAsync(
+                ownerId,
+                listingId,
+                cancellationToken);
+
+        return Ok(MapLifecycleResponse(result));
+    }
+
+    private static ListingLifecycleResponse
+        MapLifecycleResponse(
+            ListingLifecycleResult result)
+    {
+        return new ListingLifecycleResponse(
+            result.ListingId,
+            result.Status,
+            result.PublishedAtUtc,
+            result.ExpiresAtUtc,
+            result.DeletedAtUtc,
+            result.UpdatedAtUtc);
     }
 
     private bool TryGetOwnerId(out Guid ownerId)

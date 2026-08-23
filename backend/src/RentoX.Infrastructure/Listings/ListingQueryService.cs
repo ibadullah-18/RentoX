@@ -4,6 +4,7 @@ using RentoX.Application.Listings;
 using RentoX.Domain.Catalog.Fields;
 using RentoX.Domain.Common.Exceptions;
 using RentoX.Domain.Listings;
+using RentoX.Domain.Listings.Enums;
 using RentoX.Domain.Users.Enums;
 using RentoX.Infrastructure.Persistence;
 
@@ -29,7 +30,8 @@ public sealed class ListingQueryService(
             dbContext.Listings
                 .AsNoTracking()
                 .Where(listing =>
-                    listing.OwnerId == ownerId);
+                    listing.OwnerId == ownerId &&
+                    listing.Status != ListingStatus.Deleted);
 
         int totalCount =
             await query.CountAsync(
@@ -94,8 +96,9 @@ public sealed class ListingQueryService(
                         value.Selections)
                 .SingleOrDefaultAsync(
                     item =>
-                        item.Id == listingId &&
-                        item.OwnerId == ownerId,
+                    item.Id == listingId &&
+                    item.OwnerId == ownerId &&
+                    item.Status != ListingStatus.Deleted,
                     cancellationToken);
 
         if (listing is null)

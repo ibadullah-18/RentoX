@@ -5,7 +5,9 @@ using RentoX.Application.Abstractions.Persistence;
 using RentoX.Domain.Authentication;
 using RentoX.Domain.Catalog.Categories;
 using RentoX.Domain.Catalog.Fields;
+using RentoX.Domain.Favorites;
 using RentoX.Domain.Listings;
+using RentoX.Domain.Stores;
 using RentoX.Domain.Users;
 using RentoX.Infrastructure.Identity;
 
@@ -57,6 +59,15 @@ public sealed class RentoXDbContext(
     public DbSet<CategoryFieldOptionTranslation>
         CategoryFieldOptionTranslations =>
             Set<CategoryFieldOptionTranslation>();
+
+    public DbSet<ListingView> ListingViews =>
+        Set<ListingView>();
+
+    public DbSet<Favorite> Favorites =>
+        Set<Favorite>();
+
+    public DbSet<StoreProfile> StoreProfiles =>
+        Set<StoreProfile>();
 
     protected override void OnModelCreating(
         ModelBuilder builder)
