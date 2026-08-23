@@ -236,6 +236,22 @@ public static class DependencyInjection
             IStoreImageService,
             StoreImageService>();
 
+        services.AddScoped<
+            IStoreSubmissionService,
+            StoreSubmissionService>();
+
+        services.AddScoped<
+            IStoreModerationService,
+            StoreModerationService>();
+
+        services.AddScoped<
+            IPublicStoreQueryService,
+            PublicStoreQueryService>();
+
+        services.AddScoped<
+            IStoreFollowService,
+            StoreFollowService>();
+
         return services;
     }
 }

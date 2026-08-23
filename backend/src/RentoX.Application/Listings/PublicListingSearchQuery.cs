@@ -4,4 +4,5 @@ public sealed record PublicListingSearchQuery(
     Guid? CategoryId,
     string? Search,
     int Page,
-    int PageSize);
+    int PageSize,
+    Guid? OwnerId = null);

@@ -11,6 +11,7 @@ namespace RentoX.Api.Controllers;
 [Route("api/stores")]
 public sealed class StoresController(
     IStoreProfileService storeProfileService,
+    IStoreSubmissionService storeSubmissionService,
     ICurrentUserContext currentUserContext)
     : ControllerBase
 {
@@ -141,6 +142,31 @@ public sealed class StoresController(
             result.RejectionReason,
             result.CreatedAtUtc,
             result.UpdatedAtUtc);
+    }
+
+    [HttpPost("mine/submit")]
+    [ProducesResponseType<StoreStatusResponse>(
+    StatusCodes.Status200OK)]
+    [ProducesResponseType(
+    StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(
+    StatusCodes.Status401Unauthorized)]
+    public async Task<ActionResult<StoreStatusResponse>>
+    SubmitAsync(
+        CancellationToken cancellationToken)
+    {
+        Guid ownerId = GetRequiredUserId();
+
+        StoreStatusResult result =
+            await storeSubmissionService.SubmitAsync(
+                ownerId,
+                cancellationToken);
+
+        return Ok(new StoreStatusResponse(
+            result.StoreId,
+            result.Status,
+            result.RejectionReason,
+            result.UpdatedAtUtc));
     }
 
     private Guid GetRequiredUserId()

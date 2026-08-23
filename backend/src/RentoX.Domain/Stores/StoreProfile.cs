@@ -187,6 +187,64 @@ public sealed class StoreProfile : AuditableEntity
             NormalizeOptionalText(storageKey, 500);
     }
 
+    public void SubmitForReview()
+    {
+        if (Status is not
+            (StoreStatus.Draft or
+             StoreStatus.Rejected))
+        {
+            throw new DomainException(
+                "Only draft or rejected stores can be submitted.");
+        }
+
+        if (string.IsNullOrWhiteSpace(LogoImageKey))
+        {
+            throw new DomainException(
+                "Store logo is required.");
+        }
+
+        Status = StoreStatus.PendingReview;
+        RejectionReason = null;
+    }
+
+    public void Approve()
+    {
+        if (Status != StoreStatus.PendingReview)
+        {
+            throw new DomainException(
+                "Only stores pending review can be approved.");
+        }
+
+        Status = StoreStatus.Active;
+        RejectionReason = null;
+    }
+
+    public void Reject(string reason)
+    {
+        if (Status != StoreStatus.PendingReview)
+        {
+            throw new DomainException(
+                "Only stores pending review can be rejected.");
+        }
+
+        if (string.IsNullOrWhiteSpace(reason))
+        {
+            throw new DomainException(
+                "Store rejection reason is required.");
+        }
+
+        string normalized = reason.Trim();
+
+        if (normalized.Length > 1000)
+        {
+            throw new DomainException(
+                "Store rejection reason cannot exceed 1000 characters.");
+        }
+
+        Status = StoreStatus.Rejected;
+        RejectionReason = normalized;
+    }
+
     private void EnsureEditable()
     {
         if (Status is not

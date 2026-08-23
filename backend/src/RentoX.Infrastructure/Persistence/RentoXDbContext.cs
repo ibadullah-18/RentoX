@@ -69,6 +69,9 @@ public sealed class RentoXDbContext(
     public DbSet<StoreProfile> StoreProfiles =>
         Set<StoreProfile>();
 
+    public DbSet<StoreFollower> StoreFollowers =>
+        Set<StoreFollower>();
+
     protected override void OnModelCreating(
         ModelBuilder builder)
     {

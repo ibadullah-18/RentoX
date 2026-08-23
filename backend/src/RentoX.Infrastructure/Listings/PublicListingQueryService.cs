@@ -64,6 +64,14 @@ public sealed class PublicListingQueryService(
                     listing.ExpiresAtUtc.HasValue &&
                     listing.ExpiresAtUtc > now);
 
+        if (query.OwnerId.HasValue)
+        {
+            listingQuery =
+                listingQuery.Where(listing =>
+                    listing.OwnerId ==
+                    query.OwnerId.Value);
+        }
+
         if (query.CategoryId.HasValue)
         {
             listingQuery =

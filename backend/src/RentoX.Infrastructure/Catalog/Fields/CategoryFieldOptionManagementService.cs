@@ -52,6 +52,8 @@ public sealed class CategoryFieldOptionManagementService(
 
         field.AddOption(option);
 
+        dbContext.CategoryFieldOptions.Add(option);
+
         await dbContext.SaveChangesAsync(
             cancellationToken);
 
