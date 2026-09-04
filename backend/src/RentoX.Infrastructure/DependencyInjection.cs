@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using RentoX.Application.Abstractions.Persistence;
@@ -13,6 +13,7 @@ using RentoX.Application.Files;
 using RentoX.Application.Listings;
 using RentoX.Application.Stores;
 using RentoX.Application.Users;
+using RentoX.Application.Wallets;
 using RentoX.Infrastructure.Accounts;
 using RentoX.Infrastructure.Authentication;
 using RentoX.Infrastructure.Catalog.Categories;
@@ -26,6 +27,7 @@ using RentoX.Infrastructure.Persistence.Interceptors;
 using RentoX.Infrastructure.Stores;
 using RentoX.Infrastructure.Time;
 using RentoX.Infrastructure.Users;
+using RentoX.Infrastructure.Wallets;
 
 namespace RentoX.Infrastructure;
 
@@ -252,6 +254,10 @@ public static class DependencyInjection
             IStoreFollowService,
             StoreFollowService>();
 
+
+        services.AddScoped<
+            IWalletService,
+            WalletService>();
         return services;
     }
 }

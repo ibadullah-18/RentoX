@@ -71,7 +71,16 @@ public sealed class ListingFieldUpdateService(
                     input));
         }
 
+        List<ListingFieldValue> existingValues =
+            listing.FieldValues.ToList();
+
         listing.ReplaceFieldValues(newValues);
+
+        dbContext.Set<ListingFieldValue>()
+            .RemoveRange(existingValues);
+
+        dbContext.Set<ListingFieldValue>()
+            .AddRange(newValues);
 
         await dbContext.SaveChangesAsync(
             cancellationToken);

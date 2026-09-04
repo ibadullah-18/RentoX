@@ -9,6 +9,7 @@ using RentoX.Domain.Favorites;
 using RentoX.Domain.Listings;
 using RentoX.Domain.Stores;
 using RentoX.Domain.Users;
+using RentoX.Domain.Wallets;
 using RentoX.Infrastructure.Identity;
 
 namespace RentoX.Infrastructure.Persistence;
@@ -47,7 +48,7 @@ public sealed class RentoXDbContext(
         Set<CategoryTranslation>();
 
     public DbSet<CategoryField> CategoryFields =>
-    Set<CategoryField>();
+        Set<CategoryField>();
 
     public DbSet<CategoryFieldTranslation>
         CategoryFieldTranslations =>
@@ -71,6 +72,12 @@ public sealed class RentoXDbContext(
 
     public DbSet<StoreFollower> StoreFollowers =>
         Set<StoreFollower>();
+
+    public DbSet<Wallet> Wallets =>
+        Set<Wallet>();
+
+    public DbSet<WalletTransaction> WalletTransactions =>
+        Set<WalletTransaction>();
 
     protected override void OnModelCreating(
         ModelBuilder builder)

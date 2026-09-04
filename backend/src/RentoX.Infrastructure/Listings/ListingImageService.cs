@@ -69,6 +69,8 @@ public sealed class ListingImageService(
                 storedFile.ContentType,
                 storedFile.SizeBytes);
 
+            dbContext.Set<ListingImage>().Add(image);
+
             await dbContext.SaveChangesAsync(
                 cancellationToken);
 
