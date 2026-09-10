@@ -1,4 +1,4 @@
-﻿using RentoX.Domain.Common;
+using RentoX.Domain.Common;
 using RentoX.Domain.Common.Exceptions;
 using RentoX.Domain.Listings.Enums;
 
@@ -179,14 +179,29 @@ public sealed class Listing : AuditableEntity
         RejectionReason = null;
     }
 
-    public void Publish(
-    DateTimeOffset publishedAtUtc,
-    TimeSpan lifetime)
+    public void RequirePayment()
     {
         if (Status != ListingStatus.PendingReview)
         {
             throw new DomainException(
-                "Only listings pending review can be published.");
+                "Only listings pending review can require payment.");
+        }
+
+        Status = ListingStatus.PaymentRequired;
+        RejectionReason = null;
+        PublishedAtUtc = null;
+        ExpiresAtUtc = null;
+    }
+    public void Publish(
+    DateTimeOffset publishedAtUtc,
+    TimeSpan lifetime)
+    {
+        if (Status is not
+            (ListingStatus.PendingReview or
+             ListingStatus.PaymentRequired))
+        {
+            throw new DomainException(
+                "Only reviewed listings can be published.");
         }
 
         if (lifetime <= TimeSpan.Zero)

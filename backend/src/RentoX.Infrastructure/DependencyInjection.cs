@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Identity;
+﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using RentoX.Application.Abstractions.Persistence;
@@ -11,6 +11,8 @@ using RentoX.Application.Catalog.Fields;
 using RentoX.Application.Favorites;
 using RentoX.Application.Files;
 using RentoX.Application.Listings;
+using RentoX.Application.Listings.Billing;
+using RentoX.Application.Listings.Promotions;
 using RentoX.Application.Stores;
 using RentoX.Application.Users;
 using RentoX.Application.Wallets;
@@ -22,6 +24,8 @@ using RentoX.Infrastructure.Favorites;
 using RentoX.Infrastructure.Files;
 using RentoX.Infrastructure.Identity;
 using RentoX.Infrastructure.Listings;
+using RentoX.Infrastructure.Listings.Billing;
+using RentoX.Infrastructure.Listings.Promotions;
 using RentoX.Infrastructure.Persistence;
 using RentoX.Infrastructure.Persistence.Interceptors;
 using RentoX.Infrastructure.Stores;
@@ -258,6 +262,19 @@ public static class DependencyInjection
         services.AddScoped<
             IWalletService,
             WalletService>();
+
+        services.AddScoped<
+            IListingActivationPricingService,
+            ListingActivationPricingService>();
+
+        services.AddScoped<
+            IListingActivationPaymentService,
+            ListingActivationPaymentService>();
+        services.AddScoped<
+            IListingPromotionPricingService,
+            ListingPromotionPricingService>();
         return services;
     }
 }
+
+

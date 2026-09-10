@@ -7,6 +7,8 @@ using RentoX.Domain.Catalog.Categories;
 using RentoX.Domain.Catalog.Fields;
 using RentoX.Domain.Favorites;
 using RentoX.Domain.Listings;
+using RentoX.Domain.Listings.Billing;
+using RentoX.Domain.Listings.Promotions;
 using RentoX.Domain.Stores;
 using RentoX.Domain.Users;
 using RentoX.Domain.Wallets;
@@ -33,6 +35,12 @@ public sealed class RentoXDbContext(
 
     public DbSet<Listing> Listings =>
         Set<Listing>();
+
+    public DbSet<ListingBillingCycle> ListingBillingCycles =>
+        Set<ListingBillingCycle>();
+
+    public DbSet<ListingPromotion> ListingPromotions =>
+        Set<ListingPromotion>();
 
     public DbSet<ListingImage> ListingImages =>
         Set<ListingImage>();
@@ -115,3 +123,4 @@ public sealed class RentoXDbContext(
             .ToTable("user_tokens", "identity");
     }
 }
+

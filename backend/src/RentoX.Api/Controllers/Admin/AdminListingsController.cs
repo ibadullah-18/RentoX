@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using RentoX.Application.Authorization;
 using RentoX.Application.Common;
@@ -192,7 +192,11 @@ public sealed class AdminListingsController(
             result.RejectionReason,
             result.PublishedAtUtc,
             result.ExpiresAtUtc,
-            result.UpdatedAtUtc);
+            result.UpdatedAtUtc,
+            result.RequiresPayment,
+            result.ActivationFee,
+            result.ChargedAmount,
+            result.WalletTransactionId);
     }
 
     private static PreferredLanguage? ParseLanguage(

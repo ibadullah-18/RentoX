@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using RentoX.Infrastructure.Persistence;
@@ -11,9 +12,11 @@ using RentoX.Infrastructure.Persistence;
 namespace RentoX.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(RentoXDbContext))]
-    partial class RentoXDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260906060343_AddListingBillingCycles")]
+    partial class AddListingBillingCycles
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -670,46 +673,6 @@ namespace RentoX.Infrastructure.Persistence.Migrations
                     b.ToTable("listing_views", "listings");
                 });
 
-            modelBuilder.Entity("RentoX.Domain.Listings.Promotions.ListingPromotion", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<decimal>("ChargedAmount")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("numeric(18,2)");
-
-                    b.Property<DateTimeOffset?>("EndsAtUtc")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid>("ListingId")
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTimeOffset>("PurchasedAtUtc")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateTimeOffset>("StartsAtUtc")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int>("Type")
-                        .HasColumnType("integer");
-
-                    b.Property<Guid>("WalletTransactionId")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("WalletTransactionId")
-                        .IsUnique();
-
-                    b.HasIndex("ListingId", "Type", "EndsAtUtc");
-
-                    b.HasIndex("ListingId", "Type", "StartsAtUtc");
-
-                    b.ToTable("listing_promotions", "payments");
-                });
-
             modelBuilder.Entity("RentoX.Domain.Stores.StoreFollower", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1291,21 +1254,6 @@ namespace RentoX.Infrastructure.Persistence.Migrations
                         .WithMany()
                         .HasForeignKey("ViewerUserId")
                         .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
-            modelBuilder.Entity("RentoX.Domain.Listings.Promotions.ListingPromotion", b =>
-                {
-                    b.HasOne("RentoX.Domain.Listings.Listing", null)
-                        .WithMany()
-                        .HasForeignKey("ListingId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("RentoX.Domain.Wallets.WalletTransaction", null)
-                        .WithMany()
-                        .HasForeignKey("WalletTransactionId")
-                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });
 

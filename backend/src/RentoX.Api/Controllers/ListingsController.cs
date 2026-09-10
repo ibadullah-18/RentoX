@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using RentoX.Application.Common;
 using RentoX.Application.Listings;
+using RentoX.Application.Listings.Billing;
 using RentoX.Contracts.Common;
 using RentoX.Contracts.Listings;
 using RentoX.Domain.Users.Enums;
@@ -19,7 +20,8 @@ public sealed class ListingsController(
     IListingUpdateService listingUpdateService,
     IListingFieldUpdateService listingFieldUpdateService,
     IListingSubmissionService listingSubmissionService,
-    IListingLifecycleService listingLifecycleService)
+    IListingLifecycleService listingLifecycleService,
+    IListingActivationPaymentService listingActivationPaymentService)
     : ControllerBase
 {
     [Authorize]
@@ -577,6 +579,46 @@ public sealed class ListingsController(
         return Ok(MapLifecycleResponse(result));
     }
 
+    [Authorize]
+    [HttpPost(
+        "{listingId:guid}/pay-and-activate")]
+    [ProducesResponseType<
+        PayListingActivationResponse>(
+            StatusCodes.Status200OK)]
+    [ProducesResponseType(
+        StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(
+        StatusCodes.Status401Unauthorized)]
+    public async Task<ActionResult<
+        PayListingActivationResponse>>
+        PayAndActivateAsync(
+            Guid listingId,
+            CancellationToken cancellationToken)
+    {
+        if (!TryGetOwnerId(out Guid ownerId))
+        {
+            return Unauthorized();
+        }
+
+        ListingActivationPaymentResult result =
+            await listingActivationPaymentService
+                .PayAsync(
+                    new PayListingActivationCommand(
+                        ownerId,
+                        listingId),
+                    cancellationToken);
+
+        return Ok(
+            new PayListingActivationResponse(
+                result.ListingId,
+                result.Status,
+                result.ChargedAmount,
+                result.RemainingBalance,
+                result.WalletTransactionId,
+                result.PublishedAtUtc,
+                result.ExpiresAtUtc,
+                result.WasAlreadyProcessed));
+    }
     private static ListingLifecycleResponse
         MapLifecycleResponse(
             ListingLifecycleResult result)

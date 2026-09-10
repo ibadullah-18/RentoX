@@ -6,4 +6,8 @@ public sealed record ListingModerationResponse(
     string? RejectionReason,
     DateTimeOffset? PublishedAtUtc,
     DateTimeOffset? ExpiresAtUtc,
-    DateTimeOffset? UpdatedAtUtc);
+    DateTimeOffset? UpdatedAtUtc,
+    bool RequiresPayment,
+    decimal ActivationFee,
+    decimal ChargedAmount,
+    Guid? WalletTransactionId);
