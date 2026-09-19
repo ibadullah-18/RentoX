@@ -308,7 +308,7 @@ public sealed class ListingFieldUpdateService(
     }
 
     private static string RequireText(string? value)
-    {   
+    {
         if (string.IsNullOrWhiteSpace(value))
         {
             throw new DomainException(
