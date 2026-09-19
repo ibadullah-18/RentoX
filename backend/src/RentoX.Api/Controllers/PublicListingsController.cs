@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using RentoX.Application.Abstractions.Authentication;
 using RentoX.Application.Common;
 using RentoX.Application.Listings;
@@ -29,6 +29,13 @@ public sealed class PublicListingsController(
             [FromQuery] string language = "az",
             [FromQuery] int page = 1,
             [FromQuery] int pageSize = 20,
+            [FromQuery] decimal? minPrice = null,
+            [FromQuery] decimal? maxPrice = null,
+            [FromQuery] Guid? optionId = null,
+            [FromQuery] Guid[]? optionIds = null,
+            [FromQuery] Guid? numericFieldId = null,
+            [FromQuery] decimal? numericMin = null,
+            [FromQuery] decimal? numericMax = null,
             CancellationToken cancellationToken = default)
     {
         PreferredLanguage? preferredLanguage =
@@ -45,11 +52,36 @@ public sealed class PublicListingsController(
                 ? currentUserContext.UserId
                 : null;
 
+        if ((minPrice.HasValue && minPrice.Value < 0) ||
+            (maxPrice.HasValue && maxPrice.Value < 0))
+        {
+            return BadRequest(
+                "Price cannot be negative.");
+        }
+
+        if (minPrice.HasValue &&
+            maxPrice.HasValue &&
+            minPrice.Value > maxPrice.Value)
+        {
+            return BadRequest(
+                "Minimum price cannot exceed maximum price.");
+        }
         PublicListingSearchQuery query = new(
             categoryId,
             search,
             page,
-            pageSize);
+            pageSize,
+            MinPrice: minPrice,
+            MaxPrice: maxPrice);
+
+        query = query with
+        {
+            OptionId = optionId,
+            OptionIds = optionIds,
+            NumericFieldId = numericFieldId,
+            NumericMin = numericMin,
+            NumericMax = numericMax
+        };
 
         PagedResult<PublicListingSummaryResult> result =
         await queryService.SearchAsync(
@@ -77,7 +109,10 @@ public sealed class PublicListingsController(
                         item.FavoriteCount,
                         item.IsFavorite,
                         item.PublishedAtUtc,
-                        item.ExpiresAtUtc))
+                        item.ExpiresAtUtc)
+                    {
+                        IsVip = item.IsVip
+                    })
                 .ToArray();
 
         return Ok(
@@ -182,7 +217,10 @@ public sealed class PublicListingsController(
                 result.Owner.FullName,
                 result.Owner.PhoneNumber),
             images,
-            fields);
+            fields)
+        {
+            IsVip = result.IsVip
+        };
 
         return Ok(response);
     }

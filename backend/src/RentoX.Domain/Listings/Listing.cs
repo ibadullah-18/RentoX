@@ -216,6 +216,39 @@ public sealed class Listing : AuditableEntity
         RejectionReason = null;
     }
 
+    public void Renew(
+        DateTimeOffset renewedAtUtc,
+        TimeSpan lifetime)
+    {
+        if (renewedAtUtc == default)
+        {
+            throw new DomainException(
+                "Renewal time is required.");
+        }
+
+        if (lifetime <= TimeSpan.Zero)
+        {
+            throw new DomainException(
+                "Listing lifetime must be positive.");
+        }
+
+        if (Status is not
+            (ListingStatus.Expired or
+             ListingStatus.Active or
+             ListingStatus.Deactivated) ||
+            !ExpiresAtUtc.HasValue ||
+            ExpiresAtUtc.Value > renewedAtUtc)
+        {
+            throw new DomainException(
+                "Only expired listings can be renewed.");
+        }
+
+        Status = ListingStatus.Active;
+        PublishedAtUtc = renewedAtUtc;
+        ExpiresAtUtc = renewedAtUtc.Add(lifetime);
+        RejectionReason = null;
+    }
+
     public void Reject(string reason)
     {
         if (Status != ListingStatus.PendingReview)

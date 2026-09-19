@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using RentoX.Application.Abstractions.Persistence;
@@ -273,8 +273,16 @@ public static class DependencyInjection
         services.AddScoped<
             IListingPromotionPricingService,
             ListingPromotionPricingService>();
+        services.AddScoped<
+            IListingPromotionService,
+            ListingPromotionService>();
+        services.AddScoped<
+            IListingRenewalService,
+            ListingRenewalService>();
+
         return services;
     }
 }
+
 
 

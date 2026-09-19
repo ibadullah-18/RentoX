@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using RentoX.Application.Common;
 using RentoX.Application.Listings;
@@ -21,7 +21,8 @@ public sealed class ListingsController(
     IListingFieldUpdateService listingFieldUpdateService,
     IListingSubmissionService listingSubmissionService,
     IListingLifecycleService listingLifecycleService,
-    IListingActivationPaymentService listingActivationPaymentService)
+    IListingActivationPaymentService listingActivationPaymentService,
+    IListingRenewalService listingRenewalService)
     : ControllerBase
 {
     [Authorize]
@@ -619,6 +620,42 @@ public sealed class ListingsController(
                 result.ExpiresAtUtc,
                 result.WasAlreadyProcessed));
     }
+    [Authorize]
+    [HttpPost("{listingId:guid}/renew")]
+    [ProducesResponseType<ListingRenewalResponse>(
+        StatusCodes.Status200OK)]
+    [ProducesResponseType(
+        StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(
+        StatusCodes.Status401Unauthorized)]
+    public async Task<ActionResult<ListingRenewalResponse>>
+        RenewAsync(
+            Guid listingId,
+            CancellationToken cancellationToken)
+    {
+        if (!TryGetOwnerId(out Guid ownerId))
+        {
+            return Unauthorized();
+        }
+
+        ListingRenewalResult result =
+            await listingRenewalService.RenewAsync(
+                ownerId,
+                listingId,
+                cancellationToken);
+
+        return Ok(new ListingRenewalResponse(
+            result.ListingId,
+            result.Status,
+            result.CycleNumber,
+            result.ChargedAmount,
+            result.RemainingBalance,
+            result.WalletTransactionId,
+            result.PublishedAtUtc,
+            result.ExpiresAtUtc,
+            result.WasAlreadyProcessed));
+    }
+
     private static ListingLifecycleResponse
         MapLifecycleResponse(
             ListingLifecycleResult result)

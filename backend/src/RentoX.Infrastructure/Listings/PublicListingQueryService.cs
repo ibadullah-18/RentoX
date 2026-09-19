@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using RentoX.Application.Abstractions.Time;
 using RentoX.Application.Common;
 using RentoX.Application.Listings;
@@ -7,6 +7,7 @@ using RentoX.Domain.Catalog.Fields;
 using RentoX.Domain.Common.Exceptions;
 using RentoX.Domain.Listings;
 using RentoX.Domain.Listings.Enums;
+using RentoX.Domain.Listings.Promotions.Enums;
 using RentoX.Domain.Users;
 using RentoX.Domain.Users.Enums;
 using RentoX.Infrastructure.Persistence;
@@ -36,6 +37,23 @@ public sealed class PublicListingQueryService(
             query.Page,
             query.PageSize);
 
+        if ((query.MinPrice.HasValue &&
+             query.MinPrice.Value < 0) ||
+            (query.MaxPrice.HasValue &&
+             query.MaxPrice.Value < 0))
+        {
+            throw new DomainException(
+                "Price cannot be negative.");
+        }
+
+        if (query.MinPrice.HasValue &&
+            query.MaxPrice.HasValue &&
+            query.MinPrice.Value >
+                query.MaxPrice.Value)
+        {
+            throw new DomainException(
+                "Minimum price cannot exceed maximum price.");
+        }
         string? search =
             NormalizeSearch(query.Search);
 
@@ -94,6 +112,140 @@ public sealed class PublicListingQueryService(
                         searchPattern));
         }
 
+        if (query.MinPrice is decimal minPrice)
+        {
+            listingQuery =
+                listingQuery.Where(listing =>
+                    listing.Price >= minPrice);
+        }
+
+        if (query.MaxPrice is decimal maxPrice)
+        {
+            listingQuery =
+                listingQuery.Where(listing =>
+                    listing.Price <= maxPrice);
+        }
+        Guid[] requestedOptionIds =
+            query.OptionIds?.Distinct().ToArray() ?? [];
+
+        if (query.OptionId.HasValue)
+        {
+            if (requestedOptionIds.Length > 0)
+            {
+                throw new DomainException(
+                    "Use either optionId or optionIds.");
+            }
+
+            requestedOptionIds = [query.OptionId.Value];
+        }
+
+        if (requestedOptionIds.Length > 0)
+        {
+            var validOptions =
+                await (
+                    from option in dbContext.CategoryFieldOptions
+                        .AsNoTracking()
+                    join field in dbContext.CategoryFields
+                        .AsNoTracking()
+                        on option.CategoryFieldId equals field.Id
+                    where requestedOptionIds.Contains(option.Id) &&
+                          option.IsActive &&
+                          field.IsActive &&
+                          field.IsFilterable &&
+                          (field.Type ==
+                              CategoryFieldType.SingleSelect ||
+                           field.Type ==
+                              CategoryFieldType.MultiSelect)
+                    select new
+                    {
+                        option.Id,
+                        FieldId = field.Id
+                    }
+                ).ToListAsync(cancellationToken);
+
+            if (validOptions.Count != requestedOptionIds.Length)
+            {
+                throw new DomainException(
+                    "A filter option was not found or is not filterable.");
+            }
+
+            Guid[] fieldIds =
+                validOptions
+                    .Select(option => option.FieldId)
+                    .Distinct()
+                    .ToArray();
+
+            if (fieldIds.Length != 1)
+            {
+                throw new DomainException(
+                    "All filter options must belong to the same field.");
+            }
+
+            Guid fieldId = fieldIds[0];
+
+            listingQuery =
+                listingQuery.Where(listing =>
+                    listing.FieldValues.Any(value =>
+                        value.CategoryFieldId == fieldId &&
+                        value.Selections.Any(selection =>
+                            requestedOptionIds.Contains(
+                                selection.CategoryFieldOptionId))));
+        }
+
+        bool hasNumericBound =
+            query.NumericMin.HasValue ||
+            query.NumericMax.HasValue;
+
+        if (query.NumericFieldId.HasValue != hasNumericBound)
+        {
+            throw new DomainException(
+                "Numeric field id and at least one numeric bound are required together.");
+        }
+
+        if (query.NumericMin.HasValue &&
+            query.NumericMax.HasValue &&
+            query.NumericMin.Value > query.NumericMax.Value)
+        {
+            throw new DomainException(
+                "Numeric minimum cannot exceed maximum.");
+        }
+
+        if (query.NumericFieldId.HasValue)
+        {
+            Guid numericFieldId = query.NumericFieldId.Value;
+
+            bool validNumericField =
+                await dbContext.CategoryFields
+                    .AsNoTracking()
+                    .AnyAsync(
+                        field =>
+                            field.Id == numericFieldId &&
+                            field.IsActive &&
+                            field.IsFilterable &&
+                            (field.Type == (CategoryFieldType)2 ||
+                             field.Type == (CategoryFieldType)3),
+                        cancellationToken);
+
+            if (!validNumericField)
+            {
+                throw new DomainException(
+                    "Numeric filter field was not found or is not filterable.");
+            }
+
+            decimal? minimum = query.NumericMin;
+            decimal? maximum = query.NumericMax;
+
+            listingQuery =
+                listingQuery.Where(listing =>
+                    listing.FieldValues.Any(value =>
+                        value.CategoryFieldId == numericFieldId &&
+                        value.NumericValue.HasValue &&
+                        (!minimum.HasValue ||
+                         value.NumericValue >= minimum) &&
+                        (!maximum.HasValue ||
+                         value.NumericValue <= maximum)));
+        }
+
         int totalCount =
             await listingQuery.CountAsync(
                 cancellationToken);
@@ -101,7 +253,22 @@ public sealed class PublicListingQueryService(
         List<ListingProjection> projections =
             await listingQuery
                 .OrderByDescending(listing =>
-                    listing.PublishedAtUtc)
+                    dbContext.ListingPromotions.Any(promotion =>
+                        promotion.ListingId == listing.Id &&
+                        promotion.Type == ListingPromotionType.Vip &&
+                        promotion.StartsAtUtc <= now &&
+                        promotion.EndsAtUtc > now))
+                .ThenByDescending(listing =>
+                    dbContext.ListingPromotions
+                        .Where(promotion =>
+                            promotion.ListingId == listing.Id &&
+                            promotion.Type == ListingPromotionType.Bump &&
+                            promotion.StartsAtUtc >= listing.PublishedAtUtc)
+                        .Max(promotion =>
+                            (DateTimeOffset?)promotion.StartsAtUtc)
+                    ?? listing.PublishedAtUtc)
+                .ThenByDescending(listing =>
+                    listing.Id)
                 .Skip(
                     (query.Page - 1) *
                     query.PageSize)
@@ -174,6 +341,28 @@ public sealed class PublicListingQueryService(
                 favoriteIds.ToHashSet();
         }
 
+        HashSet<Guid> vipListingIds = [];
+
+        if (projectedListingIds.Length > 0)
+        {
+            List<Guid> ids =
+                await dbContext.ListingPromotions
+                    .AsNoTracking()
+                    .Where(promotion =>
+                        projectedListingIds.Contains(
+                            promotion.ListingId) &&
+                        promotion.Type ==
+                            ListingPromotionType.Vip &&
+                        promotion.StartsAtUtc <= now &&
+                        promotion.EndsAtUtc > now)
+                    .Select(promotion =>
+                        promotion.ListingId)
+                    .Distinct()
+                    .ToListAsync(cancellationToken);
+
+            vipListingIds = ids.ToHashSet();
+        }
+
         Dictionary<Guid, string> categoryNames =
             categories.ToDictionary(
                 category => category.Id,
@@ -202,7 +391,11 @@ public sealed class PublicListingQueryService(
                     viewerFavoriteIds.Contains(
                         item.Id),
                     item.PublishedAtUtc,
-                    item.ExpiresAtUtc))
+                    item.ExpiresAtUtc)
+                    {
+                        IsVip =
+                            vipListingIds.Contains(item.Id)
+                    })
                 .ToList();
 
         int totalPages =
@@ -481,6 +674,18 @@ public sealed class PublicListingQueryService(
                 .OrderBy(field => field.Key)
                 .ToList();
 
+        bool isVip =
+            await dbContext.ListingPromotions
+                .AsNoTracking()
+                .AnyAsync(
+                    promotion =>
+                        promotion.ListingId == listing.Id &&
+                        promotion.Type ==
+                            ListingPromotionType.Vip &&
+                        promotion.StartsAtUtc <= now &&
+                        promotion.EndsAtUtc > now,
+                    cancellationToken);
+
         return new PublicListingDetailsResult(
             listing.Id,
             listing.CategoryId,
@@ -500,7 +705,10 @@ public sealed class PublicListingQueryService(
                 owner?.FullName ?? "RentoX user",
                 phoneNumber ?? string.Empty),
             images,
-            fields);
+            fields)
+        {
+            IsVip = isVip
+        };
     }
 
     private static ListingFieldValueDetailsResult MapFieldValue(

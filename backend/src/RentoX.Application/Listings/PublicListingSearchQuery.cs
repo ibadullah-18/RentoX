@@ -1,8 +1,15 @@
-﻿namespace RentoX.Application.Listings;
+namespace RentoX.Application.Listings;
 
 public sealed record PublicListingSearchQuery(
     Guid? CategoryId,
     string? Search,
     int Page,
     int PageSize,
-    Guid? OwnerId = null);
+    Guid? OwnerId = null,
+    decimal? MinPrice = null,
+    decimal? MaxPrice = null,
+    Guid? OptionId = null,
+    Guid[]? OptionIds = null,
+    Guid? NumericFieldId = null,
+    decimal? NumericMin = null,
+    decimal? NumericMax = null);

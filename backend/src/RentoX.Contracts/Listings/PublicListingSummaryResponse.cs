@@ -14,4 +14,7 @@ public sealed record PublicListingSummaryResponse(
     int FavoriteCount,
     bool IsFavorite,
     DateTimeOffset PublishedAtUtc,
-    DateTimeOffset ExpiresAtUtc);
+    DateTimeOffset ExpiresAtUtc)
+{
+    public bool IsVip { get; init; }
+}

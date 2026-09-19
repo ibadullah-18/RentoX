@@ -16,4 +16,7 @@ public sealed record PublicListingDetailsResponse(
     DateTimeOffset ExpiresAtUtc,
     PublicListingOwnerResponse Owner,
     List<ListingImageItemResponse> Images,
-    List<ListingFieldValueDetailsResponse> Fields);
+    List<ListingFieldValueDetailsResponse> Fields)
+{
+    public bool IsVip { get; init; }
+}

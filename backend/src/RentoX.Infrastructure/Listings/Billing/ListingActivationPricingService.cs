@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
+using RentoX.Application.Abstractions.Time;
 using RentoX.Application.Listings.Billing;
 using RentoX.Domain.Common.Exceptions;
 using RentoX.Domain.Listings.Enums;
@@ -7,7 +8,8 @@ using RentoX.Infrastructure.Persistence;
 namespace RentoX.Infrastructure.Listings.Billing;
 
 public sealed class ListingActivationPricingService(
-    RentoXDbContext dbContext)
+    RentoXDbContext dbContext,
+    IClock clock)
     : IListingActivationPricingService
 {
     public const int FreeActiveListingLimit = 5;
@@ -49,6 +51,8 @@ public sealed class ListingActivationPricingService(
                 "Listing was not found.");
         }
 
+        DateTimeOffset now = clock.UtcNow;
+
         int otherActiveListingCount =
             await dbContext.Listings
                 .AsNoTracking()
@@ -57,7 +61,9 @@ public sealed class ListingActivationPricingService(
                         listing.OwnerId == ownerId &&
                         listing.Id != listingId &&
                         listing.Status ==
-                        ListingStatus.Active,
+                        ListingStatus.Active &&
+                        listing.ExpiresAtUtc.HasValue &&
+                        listing.ExpiresAtUtc.Value > now,
                     cancellationToken);
 
         bool requiresPayment =

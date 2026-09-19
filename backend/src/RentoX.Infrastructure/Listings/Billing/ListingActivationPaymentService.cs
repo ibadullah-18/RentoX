@@ -1,4 +1,4 @@
-﻿using System.Data;
+using System.Data;
 using Microsoft.EntityFrameworkCore;
 using RentoX.Application.Abstractions.Time;
 using RentoX.Application.Listings.Billing;
@@ -168,6 +168,12 @@ public sealed class ListingActivationPaymentService(
                 .AsNoTracking()
                 .Where(cycle =>
                     cycle.ListingId == listing.Id &&
+                    cycle.Type ==
+                        ListingBillingCycleType.InitialActivation &&
+                    cycle.PeriodStartUtc ==
+                        listing.PublishedAtUtc &&
+                    cycle.PeriodEndUtc ==
+                        listing.ExpiresAtUtc &&
                     cycle.WalletTransactionId.HasValue &&
                     !cycle.RefundedAtUtc.HasValue)
                 .OrderByDescending(cycle =>
