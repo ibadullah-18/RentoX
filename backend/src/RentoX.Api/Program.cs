@@ -12,6 +12,9 @@ using RentoX.Infrastructure;
 using RentoX.Infrastructure.Authentication;
 using RentoX.Infrastructure.Identity;
 
+using RentoX.Api.Messaging;
+using RentoX.Application.Messaging;
+
 WebApplicationBuilder builder =
     WebApplication.CreateBuilder(args);
 
@@ -44,6 +47,16 @@ IdentitySeedOptions identitySeedOptions = new()
             "IdentitySeed:SuperAdminPhoneNumber"]
 };
 
+builder.Logging.AddFilter(
+    "Microsoft.AspNetCore.Hosting",
+    LogLevel.Warning);
+
+builder.Services.AddSignalR();
+
+builder.Services.AddSingleton<
+    IConversationEventPublisher,
+    SignalRConversationEventPublisher>();
+
 builder.Services.AddControllers();
 
 builder.Services
@@ -51,6 +64,28 @@ builder.Services
         JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
+        options.Events = new JwtBearerEvents
+        {
+            OnMessageReceived = context =>
+            {
+                if (context.Request.Path.StartsWithSegments(
+                        "/hubs/conversations") &&
+                    !context.Request.Headers.ContainsKey(
+                        "Authorization"))
+                {
+                    string accessToken =
+                        context.Request.Query[
+                            "access_token"].ToString();
+
+                    if (!string.IsNullOrEmpty(accessToken))
+                    {
+                        context.Token = accessToken;
+                    }
+                }
+
+                return Task.CompletedTask;
+            }
+        };
         options.TokenValidationParameters =
             new TokenValidationParameters
             {
@@ -221,6 +256,12 @@ app.UseRateLimiter();
 
 app.UseAuthentication();
 app.UseAuthorization();
+
+app.MapHub<ConversationsHub>(
+    "/hubs/conversations",
+    options =>
+        options.CloseOnAuthenticationExpiration = true)
+    .RequireAuthorization();
 
 app.MapControllers();
 

@@ -36,6 +36,11 @@ public sealed class PublicListingsController(
             [FromQuery] Guid? numericFieldId = null,
             [FromQuery] decimal? numericMin = null,
             [FromQuery] decimal? numericMax = null,
+            [FromQuery] Guid? booleanFieldId = null,
+            [FromQuery] bool? booleanValue = null,
+            [FromQuery] Guid? dateFieldId = null,
+            [FromQuery] DateOnly? dateFrom = null,
+            [FromQuery] DateOnly? dateTo = null,
             CancellationToken cancellationToken = default)
     {
         PreferredLanguage? preferredLanguage =
@@ -80,7 +85,12 @@ public sealed class PublicListingsController(
             OptionIds = optionIds,
             NumericFieldId = numericFieldId,
             NumericMin = numericMin,
-            NumericMax = numericMax
+            NumericMax = numericMax,
+            BooleanFieldId = booleanFieldId,
+            BooleanValue = booleanValue,
+            DateFieldId = dateFieldId,
+            DateFrom = dateFrom,
+            DateTo = dateTo
         };
 
         PagedResult<PublicListingSummaryResult> result =

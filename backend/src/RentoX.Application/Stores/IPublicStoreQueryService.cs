@@ -15,7 +15,6 @@ public interface IPublicStoreQueryService
             string slug,
             PreferredLanguage language,
             Guid? viewerUserId,
-            int page,
-            int pageSize,
+            PublicListingSearchQuery searchQuery,
             CancellationToken cancellationToken = default);
 }

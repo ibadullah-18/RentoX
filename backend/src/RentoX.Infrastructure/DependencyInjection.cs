@@ -33,6 +33,8 @@ using RentoX.Infrastructure.Time;
 using RentoX.Infrastructure.Users;
 using RentoX.Infrastructure.Wallets;
 
+using RentoX.Application.Messaging;
+using RentoX.Infrastructure.Messaging;
 namespace RentoX.Infrastructure;
 
 public static class DependencyInjection
@@ -279,6 +281,10 @@ public static class DependencyInjection
         services.AddScoped<
             IListingRenewalService,
             ListingRenewalService>();
+
+        services.AddScoped<
+            IConversationService,
+            ConversationService>();
 
         return services;
     }

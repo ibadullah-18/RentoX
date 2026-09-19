@@ -12,4 +12,9 @@ public sealed record PublicListingSearchQuery(
     Guid[]? OptionIds = null,
     Guid? NumericFieldId = null,
     decimal? NumericMin = null,
-    decimal? NumericMax = null);
+    decimal? NumericMax = null,
+    Guid? BooleanFieldId = null,
+    bool? BooleanValue = null,
+    Guid? DateFieldId = null,
+    DateOnly? DateFrom = null,
+    DateOnly? DateTo = null);

@@ -83,6 +83,20 @@ public sealed class PublicStoresController(
             [FromQuery] string language = "az",
             [FromQuery] int page = 1,
             [FromQuery] int pageSize = 20,
+            [FromQuery] Guid? categoryId = null,
+            [FromQuery] string? search = null,
+            [FromQuery] decimal? minPrice = null,
+            [FromQuery] decimal? maxPrice = null,
+            [FromQuery] Guid? optionId = null,
+            [FromQuery] Guid[]? optionIds = null,
+            [FromQuery] Guid? numericFieldId = null,
+            [FromQuery] decimal? numericMin = null,
+            [FromQuery] decimal? numericMax = null,
+            [FromQuery] Guid? booleanFieldId = null,
+            [FromQuery] bool? booleanValue = null,
+            [FromQuery] Guid? dateFieldId = null,
+            [FromQuery] DateOnly? dateFrom = null,
+            [FromQuery] DateOnly? dateTo = null,
             CancellationToken cancellationToken = default)
     {
         PreferredLanguage? preferredLanguage =
@@ -99,13 +113,30 @@ public sealed class PublicStoresController(
                 ? currentUserContext.UserId
                 : null;
 
+        PublicListingSearchQuery searchQuery = new(
+            categoryId,
+            search,
+            page,
+            pageSize,
+            MinPrice: minPrice,
+            MaxPrice: maxPrice,
+            OptionId: optionId,
+            OptionIds: optionIds,
+            NumericFieldId: numericFieldId,
+            NumericMin: numericMin,
+            NumericMax: numericMax,
+            BooleanFieldId: booleanFieldId,
+            BooleanValue: booleanValue,
+            DateFieldId: dateFieldId,
+            DateFrom: dateFrom,
+            DateTo: dateTo);
+
         PagedResult<PublicListingSummaryResult>? result =
             await queryService.GetListingsAsync(
                 slug,
                 preferredLanguage.Value,
                 viewerUserId,
-                page,
-                pageSize,
+                searchQuery,
                 cancellationToken);
 
         if (result is null)
@@ -146,7 +177,10 @@ public sealed class PublicStoresController(
             result.FavoriteCount,
             result.IsFavorite,
             result.PublishedAtUtc,
-            result.ExpiresAtUtc);
+            result.ExpiresAtUtc)
+        {
+            IsVip = result.IsVip
+        };
     }
 
     private static PreferredLanguage? ParseLanguage(

@@ -109,7 +109,38 @@ public sealed class PublicListingQueryService(
                         searchPattern) ||
                     EF.Functions.ILike(
                         listing.Description,
-                        searchPattern));
+                        searchPattern) ||
+                    listing.FieldValues.Any(value =>
+                        dbContext.CategoryFields.Any(field =>
+                            field.Id == value.CategoryFieldId &&
+                            field.IsActive &&
+                            field.IsSearchable) &&
+                        (
+                            (value.TextValue != null &&
+                             EF.Functions.ILike(
+                                 value.TextValue!,
+                                 searchPattern)) ||
+                            (value.CustomValue != null &&
+                             EF.Functions.ILike(
+                                 value.CustomValue!,
+                                 searchPattern)) ||
+                            value.Selections.Any(selection =>
+                                dbContext.CategoryFieldOptions.Any(
+                                    option =>
+                                        option.Id ==
+                                            selection.CategoryFieldOptionId &&
+                                        option.IsActive &&
+                                        (
+                                            EF.Functions.ILike(
+                                                option.Value,
+                                                searchPattern) ||
+                                            option.Translations.Any(
+                                                translation =>
+                                                    EF.Functions.ILike(
+                                                        translation.Label,
+                                                        searchPattern))
+                                        )))
+                        )));
         }
 
         if (query.MinPrice is decimal minPrice)
@@ -222,8 +253,8 @@ public sealed class PublicListingQueryService(
                             field.Id == numericFieldId &&
                             field.IsActive &&
                             field.IsFilterable &&
-                            (field.Type == (CategoryFieldType)2 ||
-                             field.Type == (CategoryFieldType)3),
+                            (field.Type == CategoryFieldType.WholeNumber ||
+                             field.Type == CategoryFieldType.FractionalNumber),
                         cancellationToken);
 
             if (!validNumericField)
@@ -244,6 +275,101 @@ public sealed class PublicListingQueryService(
                          value.NumericValue >= minimum) &&
                         (!maximum.HasValue ||
                          value.NumericValue <= maximum)));
+        }
+
+        if (query.BooleanFieldId.HasValue !=
+            query.BooleanValue.HasValue)
+        {
+            throw new DomainException(
+                "Boolean field id and value are required together.");
+        }
+
+        if (query.BooleanFieldId.HasValue)
+        {
+            Guid booleanFieldId =
+                query.BooleanFieldId.Value;
+
+            bool validBooleanField =
+                await dbContext.CategoryFields
+                    .AsNoTracking()
+                    .AnyAsync(
+                        field =>
+                            field.Id == booleanFieldId &&
+                            field.IsActive &&
+                            field.IsFilterable &&
+                            field.Type ==
+                                CategoryFieldType.Boolean,
+                        cancellationToken);
+
+            if (!validBooleanField)
+            {
+                throw new DomainException(
+                    "Boolean filter field was not found or is not filterable.");
+            }
+
+            bool requiredValue =
+                query.BooleanValue!.Value;
+
+            listingQuery =
+                listingQuery.Where(listing =>
+                    listing.FieldValues.Any(value =>
+                        value.CategoryFieldId ==
+                            booleanFieldId &&
+                        value.FlagValue ==
+                            requiredValue));
+        }
+
+        bool hasDateBound =
+            query.DateFrom.HasValue ||
+            query.DateTo.HasValue;
+
+        if (query.DateFieldId.HasValue != hasDateBound)
+        {
+            throw new DomainException(
+                "Date field id and at least one date bound are required together.");
+        }
+
+        if (query.DateFrom.HasValue &&
+            query.DateTo.HasValue &&
+            query.DateFrom.Value > query.DateTo.Value)
+        {
+            throw new DomainException(
+                "Start date cannot exceed end date.");
+        }
+
+        if (query.DateFieldId.HasValue)
+        {
+            Guid dateFieldId = query.DateFieldId.Value;
+
+            bool validDateField =
+                await dbContext.CategoryFields
+                    .AsNoTracking()
+                    .AnyAsync(
+                        field =>
+                            field.Id == dateFieldId &&
+                            field.IsActive &&
+                            field.IsFilterable &&
+                            field.Type == CategoryFieldType.Date,
+                        cancellationToken);
+
+            if (!validDateField)
+            {
+                throw new DomainException(
+                    "Date filter field was not found or is not filterable.");
+            }
+
+            DateOnly? dateFrom = query.DateFrom;
+            DateOnly? dateTo = query.DateTo;
+
+            listingQuery =
+                listingQuery.Where(listing =>
+                    listing.FieldValues.Any(value =>
+                        value.CategoryFieldId == dateFieldId &&
+                        value.CalendarValue.HasValue &&
+                        (!dateFrom.HasValue ||
+                         value.CalendarValue >= dateFrom) &&
+                        (!dateTo.HasValue ||
+                         value.CalendarValue <= dateTo)));
         }
 
         int totalCount =

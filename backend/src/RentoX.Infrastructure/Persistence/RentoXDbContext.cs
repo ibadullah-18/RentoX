@@ -9,6 +9,7 @@ using RentoX.Domain.Favorites;
 using RentoX.Domain.Listings;
 using RentoX.Domain.Listings.Billing;
 using RentoX.Domain.Listings.Promotions;
+using RentoX.Domain.Messaging;
 using RentoX.Domain.Stores;
 using RentoX.Domain.Users;
 using RentoX.Domain.Wallets;
@@ -71,6 +72,12 @@ public sealed class RentoXDbContext(
 
     public DbSet<ListingView> ListingViews =>
         Set<ListingView>();
+
+    public DbSet<Conversation> Conversations =>
+        Set<Conversation>();
+
+    public DbSet<Message> Messages =>
+        Set<Message>();
 
     public DbSet<Favorite> Favorites =>
         Set<Favorite>();

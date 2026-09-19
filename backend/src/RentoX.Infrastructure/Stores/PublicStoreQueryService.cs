@@ -109,8 +109,7 @@ public sealed class PublicStoreQueryService(
             string slug,
             PreferredLanguage language,
             Guid? viewerUserId,
-            int page,
-            int pageSize,
+            PublicListingSearchQuery searchQuery,
             CancellationToken cancellationToken = default)
     {
         string normalizedSlug = NormalizeSlug(slug);
@@ -131,15 +130,14 @@ public sealed class PublicStoreQueryService(
             return null;
         }
 
-        PublicListingSearchQuery query = new(
-            CategoryId: null,
-            Search: null,
-            Page: page,
-            PageSize: pageSize,
-            OwnerId: ownerId.Value);
+        PublicListingSearchQuery ownerQuery =
+            searchQuery with
+            {
+                OwnerId = ownerId.Value
+            };
 
         return await listingQueryService.SearchAsync(
-            query,
+            ownerQuery,
             language,
             viewerUserId,
             cancellationToken);
