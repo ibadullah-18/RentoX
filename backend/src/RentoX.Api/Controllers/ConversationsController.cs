@@ -217,6 +217,11 @@ public sealed class ConversationsController(
             item.SenderId,
             item.Body,
             item.SentAtUtc,
-            item.ReadAtUtc);
+            item.ReadAtUtc)
+        {
+            Images = item.Images.Select(image => new MessageImageResponse(
+                image.Id, image.Url, image.ContentType, image.SizeBytes, image.DisplayOrder))
+                .ToArray()
+        };
     }
 }

@@ -285,6 +285,7 @@ public static class DependencyInjection
         services.AddScoped<
             IConversationService,
             ConversationService>();
+        services.AddScoped<RentoX.Application.Messaging.IMessageImageService, RentoX.Infrastructure.Messaging.MessageImageService>();
 
         return services;
     }

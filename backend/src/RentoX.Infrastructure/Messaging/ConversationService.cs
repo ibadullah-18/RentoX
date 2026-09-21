@@ -193,7 +193,7 @@ public sealed class ConversationService(
                         message.SentAtUtc)
                     .ThenByDescending(message =>
                         message.Id)
-                    .Select(message => message.Body)
+                    .Select(message => message.Body == string.Empty ? "📷" : message.Body)
                     .FirstOrDefault(),
                 LastMessageAtUtc = dbContext.Messages
                     .Where(message =>
@@ -266,19 +266,15 @@ public sealed class ConversationService(
         int totalCount =
             await query.CountAsync(cancellationToken);
 
-        MessageResult[] items = await query
+        Message[] messages = await query
+            .Include(item => item.Images)
             .OrderByDescending(item => item.SentAtUtc)
             .ThenByDescending(item => item.Id)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
-            .Select(item => new MessageResult(
-                item.Id,
-                item.ConversationId,
-                item.SenderId,
-                item.Body,
-                item.SentAtUtc,
-                item.ReadAtUtc))
             .ToArrayAsync(cancellationToken);
+
+        MessageResult[] items = messages.Select(MessageResultMapper.Map).ToArray();
 
         return new PagedResult<MessageResult>(
             items,
@@ -430,13 +426,7 @@ public sealed class ConversationService(
     private static MessageResult MapMessage(
         Message message)
     {
-        return new MessageResult(
-            message.Id,
-            message.ConversationId,
-            message.SenderId,
-            message.Body,
-            message.SentAtUtc,
-            message.ReadAtUtc);
+        return MessageResultMapper.Map(message);
     }
 
     private static void RequireUser(Guid userId)

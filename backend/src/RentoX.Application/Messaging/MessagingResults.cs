@@ -6,7 +6,17 @@ public sealed record MessageResult(
     Guid SenderId,
     string Body,
     DateTimeOffset SentAtUtc,
-    DateTimeOffset? ReadAtUtc);
+    DateTimeOffset? ReadAtUtc)
+{
+    public IReadOnlyList<MessageImageResult> Images { get; init; } = [];
+}
+
+public sealed record MessageImageResult(
+    Guid Id,
+    string Url,
+    string ContentType,
+    long SizeBytes,
+    int DisplayOrder);
 
 public sealed record StartConversationResult(
     Guid ConversationId,

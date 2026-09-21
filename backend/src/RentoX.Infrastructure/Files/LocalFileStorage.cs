@@ -41,22 +41,28 @@ public sealed class LocalFileStorage(
 
         Directory.CreateDirectory(directory);
 
-        await using FileStream output = new(
-            fullPath,
-            FileMode.CreateNew,
-            FileAccess.Write,
-            FileShare.None,
-            bufferSize: 81_920,
-            useAsync: true);
-
-        await content.CopyToAsync(
-            output,
-            cancellationToken);
-
-        return new StoredFileResult(
-            storageKey,
-            contentType,
-            output.Length);
+        bool created = false;
+        try
+        {
+            await using FileStream output = new(
+                fullPath,
+                FileMode.CreateNew,
+                FileAccess.Write,
+                FileShare.None,
+                bufferSize: 81_920,
+                useAsync: true);
+            created = true;
+            await content.CopyToAsync(output, cancellationToken);
+            return new StoredFileResult(storageKey, contentType, output.Length);
+        }
+        catch
+        {
+            if (created)
+            {
+                File.Delete(fullPath);
+            }
+            throw;
+        }
     }
 
     public Task<Stream?> OpenReadAsync(

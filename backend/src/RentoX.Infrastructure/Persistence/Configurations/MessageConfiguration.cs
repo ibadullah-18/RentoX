@@ -15,6 +15,13 @@ public sealed class MessageConfiguration
 
         builder.HasKey(message => message.Id);
 
+        builder.HasMany(message => message.Images)
+            .WithOne()
+            .HasForeignKey(image => image.MessageId)
+            .OnDelete(DeleteBehavior.Cascade);
+        builder.Navigation(message => message.Images)
+            .UsePropertyAccessMode(PropertyAccessMode.Field);
+
         builder.Property(message => message.Body)
             .HasMaxLength(2000)
             .IsRequired();

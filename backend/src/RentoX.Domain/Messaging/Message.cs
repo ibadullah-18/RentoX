@@ -5,6 +5,10 @@ namespace RentoX.Domain.Messaging;
 
 public sealed class Message : Entity
 {
+    public const int MaximumImageCount = 5;
+    private readonly List<MessageImage> _images = [];
+
+    public IReadOnlyCollection<MessageImage> Images => _images.AsReadOnly();
     private Message()
     {
     }
@@ -14,7 +18,8 @@ public sealed class Message : Entity
         Guid conversationId,
         Guid senderId,
         string body,
-        DateTimeOffset sentAtUtc)
+        DateTimeOffset sentAtUtc,
+        bool hasImages = false)
         : base(id)
     {
         if (conversationId == Guid.Empty ||
@@ -24,7 +29,7 @@ public sealed class Message : Entity
                 "Message conversation and sender ids are required.");
         }
 
-        if (string.IsNullOrWhiteSpace(body))
+        if (!hasImages && string.IsNullOrWhiteSpace(body))
         {
             throw new DomainException(
                 "Message text is required.");
@@ -72,6 +77,31 @@ public sealed class Message : Entity
             senderId,
             body,
             sentAtUtc);
+    }
+
+    public static Message CreateWithImages(
+        Guid conversationId,
+        Guid senderId,
+        string? body,
+        DateTimeOffset sentAtUtc,
+        IReadOnlyList<MessageImageFile> files)
+    {
+        ArgumentNullException.ThrowIfNull(files);
+        if (files.Count is < 1 or > MaximumImageCount)
+        {
+            throw new DomainException("A message must contain 1 to 5 images.");
+        }
+
+        Message message = new(
+            Guid.NewGuid(), conversationId, senderId,
+            body ?? string.Empty, sentAtUtc, hasImages: true);
+
+        for (int index = 0; index < files.Count; index++)
+        {
+            message._images.Add(MessageImage.Create(message.Id, files[index], index));
+        }
+
+        return message;
     }
 
     public void MarkRead(DateTimeOffset readAtUtc)

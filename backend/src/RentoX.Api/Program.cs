@@ -53,6 +53,11 @@ builder.Logging.AddFilter(
 
 builder.Services.AddSignalR();
 
+builder.Services.AddRentoXPresence(
+    builder.Configuration.GetConnectionString("Redis")
+    ?? throw new InvalidOperationException(
+        "Redis connection string is missing."));
+
 builder.Services.AddSingleton<
     IConversationEventPublisher,
     SignalRConversationEventPublisher>();
