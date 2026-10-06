@@ -326,3 +326,6 @@ public sealed class ListingFieldUpdateService(
                 "Numeric field value is required.");
     }
 }
+
+// developer Ibadulla Huseynzade
+// proyect RentoX
