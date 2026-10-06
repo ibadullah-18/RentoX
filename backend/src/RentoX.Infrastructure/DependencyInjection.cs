@@ -310,6 +310,10 @@ public static class DependencyInjection
             RentoX.Application.Auditing.IAuditLogQueryService,
             RentoX.Infrastructure.Auditing.AuditLogQueryService>();
 
+        services.AddScoped<
+            IOtpOperationScopeFactory,
+            OtpOperationScopeFactory>();
+
         return services;
     }
 }

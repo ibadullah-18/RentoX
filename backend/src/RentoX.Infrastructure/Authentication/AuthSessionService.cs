@@ -1,46 +1,87 @@
 ﻿using System.Security.Cryptography;
 using System.Text;
 using Microsoft.EntityFrameworkCore;
+using RentoX.Application.Abstractions.Authentication;
+using RentoX.Application.Abstractions.Time;
 using RentoX.Application.Authentication;
 using RentoX.Domain.Authentication;
+using RentoX.Domain.Common.Exceptions;
 using RentoX.Infrastructure.Persistence;
 
 namespace RentoX.Infrastructure.Authentication;
 
 public sealed class AuthSessionService(
-    RentoXDbContext dbContext)
+    RentoXDbContext dbContext,
+    IClock clock,
+    ICurrentUserContext currentUserContext)
     : IAuthSessionService
 {
     public async Task<bool> RevokeAsync(
         string refreshToken,
         CancellationToken cancellationToken = default)
     {
-        if (string.IsNullOrWhiteSpace(refreshToken))
+        Guid? currentUserId = currentUserContext.UserId;
+
+        if (!currentUserContext.IsAuthenticated ||
+            !currentUserId.HasValue ||
+            currentUserId.Value == Guid.Empty ||
+            string.IsNullOrWhiteSpace(refreshToken))
         {
             return false;
         }
+
+        Guid userId = currentUserId.Value;
 
         string tokenHash = Convert.ToHexString(
-            SHA256.HashData(
-                Encoding.UTF8.GetBytes(refreshToken)));
+            SHA256.HashData(Encoding.UTF8.GetBytes(refreshToken)));
 
-        RefreshToken? storedToken =
-            await dbContext.RefreshTokens
-                .SingleOrDefaultAsync(
-                    token => token.TokenHash == tokenHash,
-                    cancellationToken);
+        await using AuthSessionTransaction operation =
+            await AuthSessionTransaction.BeginAsync(
+                dbContext,
+                userId,
+                cancellationToken);
 
-        if (storedToken is null ||
-            storedToken.RevokedAtUtc is not null)
+        RefreshToken? token =
+            await dbContext.RefreshTokens.SingleOrDefaultAsync(
+                item =>
+                    item.UserId == userId &&
+                    item.TokenHash == tokenHash,
+                cancellationToken);
+
+        if (token is null)
         {
             return false;
         }
 
-        storedToken.Revoke(
-            DateTimeOffset.UtcNow,
-            null);
+        DateTimeOffset utcNow = clock.UtcNow;
+        HashSet<Guid> visited = [];
+
+        while (token is not null)
+        {
+            if (!visited.Add(token.Id))
+            {
+                throw new InvalidOperationException(
+                    "Refresh token replacement chain contains a cycle.");
+            }
+
+            Guid? replacementId = token.ReplacedByTokenId;
+
+            token.Revoke(utcNow, replacementId);
+
+            if (!replacementId.HasValue)
+            {
+                break;
+            }
+
+            token = await dbContext.RefreshTokens.SingleOrDefaultAsync(
+                item =>
+                    item.Id == replacementId.Value &&
+                    item.UserId == userId,
+                cancellationToken);
+        }
 
         await dbContext.SaveChangesAsync(cancellationToken);
+        await operation.CommitAsync(cancellationToken);
 
         return true;
     }
@@ -49,21 +90,34 @@ public sealed class AuthSessionService(
         Guid userId,
         CancellationToken cancellationToken = default)
     {
-        DateTimeOffset utcNow = DateTimeOffset.UtcNow;
-
-        List<RefreshToken> activeTokens =
-            await dbContext.RefreshTokens
-                .Where(token =>
-                    token.UserId == userId &&
-                    token.RevokedAtUtc == null &&
-                    token.ExpiresAtUtc > utcNow)
-                .ToListAsync(cancellationToken);
-
-        foreach (RefreshToken token in activeTokens)
+        if (!currentUserContext.IsAuthenticated ||
+            userId == Guid.Empty ||
+            currentUserContext.UserId != userId)
         {
-            token.Revoke(utcNow, null);
+            throw new DomainException(
+                "You can only revoke your own sessions.");
+        }
+
+        await using AuthSessionTransaction operation =
+            await AuthSessionTransaction.BeginAsync(
+                dbContext,
+                userId,
+                cancellationToken);
+
+        DateTimeOffset utcNow = clock.UtcNow;
+
+        List<RefreshToken> tokens = await dbContext.RefreshTokens
+            .Where(token =>
+                token.UserId == userId &&
+                token.RevokedAtUtc == null)
+            .ToListAsync(cancellationToken);
+
+        foreach (RefreshToken token in tokens)
+        {
+            token.Revoke(utcNow);
         }
 
         await dbContext.SaveChangesAsync(cancellationToken);
+        await operation.CommitAsync(cancellationToken);
     }
 }

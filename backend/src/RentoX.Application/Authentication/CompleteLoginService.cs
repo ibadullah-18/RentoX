@@ -12,13 +12,19 @@ public sealed class CompleteLoginService(
     ILoginAccountService loginAccountService,
     IClock clock,
     IUnitOfWork unitOfWork,
-    ITokenService tokenService)
+    ITokenService tokenService,
+    IOtpOperationScopeFactory operations)
 {
     public async Task<CompleteLoginResult> CompleteAsync(
         Guid challengeId,
         string code,
         CancellationToken cancellationToken = default)
     {
+        await using IOtpOperationScope operation =
+            await operations.BeginForChallengeAsync(
+                challengeId,
+                cancellationToken);
+
         OtpChallenge challenge =
             await challengeRepository.GetByIdAsync(
                 challengeId,
@@ -30,6 +36,18 @@ public sealed class CompleteLoginService(
         {
             throw new DomainException(
                 "OTP challenge is not valid for login.");
+        }
+
+        OtpChallenge? latest =
+            await challengeRepository.GetLatestAsync(
+                challenge.PhoneNumber,
+                challenge.Purpose,
+                cancellationToken);
+
+        if (latest is null || latest.Id != challenge.Id)
+        {
+            throw new DomainException(
+                "A newer OTP code has been requested. Please use the latest code.");
         }
 
         string candidateHash = codeHasher.Hash(
@@ -47,6 +65,8 @@ public sealed class CompleteLoginService(
         if (verificationResult !=
             OtpVerificationResult.Verified)
         {
+            await operation.CommitAsync(cancellationToken);
+
             throw new DomainException(
                 GetVerificationError(verificationResult));
         }
@@ -67,6 +87,8 @@ public sealed class CompleteLoginService(
                 userId.Value,
                 challenge.PhoneNumber,
                 cancellationToken);
+
+        await operation.CommitAsync(cancellationToken);
 
         return new CompleteLoginResult(
             userId.Value,

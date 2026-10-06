@@ -1,4 +1,5 @@
-﻿using RentoX.Application.Abstractions.Time;
+﻿using RentoX.Application.Abstractions.Persistence;
+using RentoX.Application.Abstractions.Time;
 using RentoX.Application.Authorization;
 using RentoX.Domain.Authentication;
 using RentoX.Domain.Authentication.Enums;
@@ -14,7 +15,9 @@ public sealed class CompleteRegistrationService(
     IIdentityUserLookup identityUserLookup,
     IClock clock,
     ITokenService tokenService,
-    IUserRoleService userRoleService)
+    IUserRoleService userRoleService,
+    IUnitOfWork unitOfWork,
+    IOtpOperationScopeFactory operations)
 {
     public async Task<CompleteRegistrationResult> CompleteAsync(
         Guid challengeId,
@@ -23,6 +26,11 @@ public sealed class CompleteRegistrationService(
         int preferredLanguage,
         CancellationToken cancellationToken = default)
     {
+        await using IOtpOperationScope operation =
+            await operations.BeginForChallengeAsync(
+                challengeId,
+                cancellationToken);
+
         OtpChallenge challenge =
             await challengeRepository.GetByIdAsync(
                 challengeId,
@@ -34,6 +42,18 @@ public sealed class CompleteRegistrationService(
         {
             throw new DomainException(
                 "OTP challenge is not valid for registration.");
+        }
+
+        OtpChallenge? latest =
+            await challengeRepository.GetLatestAsync(
+                challenge.PhoneNumber,
+                challenge.Purpose,
+                cancellationToken);
+
+        if (latest is null || latest.Id != challenge.Id)
+        {
+            throw new DomainException(
+                "A newer OTP code has been requested. Please use the latest code.");
         }
 
         if (!Enum.IsDefined(
@@ -67,6 +87,10 @@ public sealed class CompleteRegistrationService(
         if (verificationResult !=
             OtpVerificationResult.Verified)
         {
+            await unitOfWork.SaveChangesAsync(
+                cancellationToken);
+            await operation.CommitAsync(cancellationToken);
+
             throw new DomainException(
                 GetVerificationError(verificationResult));
         }
@@ -86,6 +110,9 @@ public sealed class CompleteRegistrationService(
         userId,
         challenge.PhoneNumber,
         cancellationToken);
+
+        await unitOfWork.SaveChangesAsync(cancellationToken);
+        await operation.CommitAsync(cancellationToken);
 
         return new CompleteRegistrationResult(
             userId,

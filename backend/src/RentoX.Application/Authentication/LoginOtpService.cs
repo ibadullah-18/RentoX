@@ -14,7 +14,8 @@ public sealed class LoginOtpService(
     IIdentityUserLookup identityUserLookup,
     IOtpPolicy policy,
     IClock clock,
-    IUnitOfWork unitOfWork)
+    IUnitOfWork unitOfWork,
+    IOtpOperationScopeFactory operations)
 {
     public async Task<LoginOtpResult> RequestAsync(
         string phoneNumber,
@@ -22,6 +23,11 @@ public sealed class LoginOtpService(
     {
         PhoneNumber normalizedPhone =
             PhoneNumber.Create(phoneNumber);
+
+        await using IOtpOperationScope operation =
+            await operations.BeginForPhoneAsync(
+                normalizedPhone.Value,
+                cancellationToken);
 
         bool phoneExists =
             await identityUserLookup.PhoneExistsAsync(
@@ -73,6 +79,8 @@ public sealed class LoginOtpService(
 
         await unitOfWork.SaveChangesAsync(
             cancellationToken);
+
+        await operation.CommitAsync(cancellationToken);
 
         await smsSender.SendOtpAsync(
             normalizedPhone.Value,

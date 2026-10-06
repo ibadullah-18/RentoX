@@ -1,10 +1,12 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using RentoX.Application.Authentication;
 
 namespace RentoX.Infrastructure.Authentication;
 
 public sealed partial class DevelopmentSmsSender(
-    ILogger<DevelopmentSmsSender> logger)
+    ILogger<DevelopmentSmsSender> logger,
+    IHostEnvironment environment)
     : ISmsSender
 {
     public Task SendOtpAsync(
@@ -12,6 +14,15 @@ public sealed partial class DevelopmentSmsSender(
         string code,
         CancellationToken cancellationToken = default)
     {
+        cancellationToken.ThrowIfCancellationRequested();
+
+        if (!environment.IsDevelopment())
+        {
+            throw new InvalidOperationException(
+                "Development SMS delivery is disabled outside Development. " +
+                "Configure a real SMS provider.");
+        }
+
         LogDevelopmentOtp(
             logger,
             phoneNumber,

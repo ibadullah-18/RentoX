@@ -88,53 +88,7 @@ builder.Services
     .AddAuthentication(
         JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
-    {
-        options.Events = new JwtBearerEvents
-        {
-            OnMessageReceived = context =>
-            {
-                bool isHubRequest =
-                    context.Request.Path.StartsWithSegments(
-                        "/hubs/conversations") ||
-                    context.Request.Path.StartsWithSegments(
-                        "/hubs/notifications");
-
-                if (isHubRequest &&
-                    !context.Request.Headers.ContainsKey(
-                        "Authorization"))
-                {
-                    string accessToken =
-                        context.Request.Query[
-                            "access_token"].ToString();
-
-                    if (!string.IsNullOrEmpty(accessToken))
-                    {
-                        context.Token = accessToken;
-                    }
-                }
-
-                return Task.CompletedTask;
-            }
-        };
-        options.TokenValidationParameters =
-            new TokenValidationParameters
-            {
-                ValidateIssuer = true,
-                ValidIssuer = jwtOptions.Issuer,
-
-                ValidateAudience = true,
-                ValidAudience = jwtOptions.Audience,
-
-                ValidateIssuerSigningKey = true,
-                IssuerSigningKey =
-                    new SymmetricSecurityKey(
-                        Encoding.UTF8.GetBytes(
-                            jwtOptions.SigningKey)),
-
-                ValidateLifetime = true,
-                ClockSkew = TimeSpan.FromSeconds(30)
-            };
-    });
+        RentoX.Api.Authentication.JwtBearerConfiguration.Configure(options, jwtOptions));
 
 builder.Services.AddAuthorization(options =>
 {

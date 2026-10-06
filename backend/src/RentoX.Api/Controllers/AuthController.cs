@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using RentoX.Application.Authentication;
 using RentoX.Contracts.Authentication;
-using System.Security.Claims;
 
 namespace RentoX.Api.Controllers;
 
@@ -185,10 +184,10 @@ public sealed class AuthController(
     public async Task<IActionResult> LogoutAllAsync(
     CancellationToken cancellationToken)
     {
-        string? userIdValue =
-            User.FindFirstValue(ClaimTypes.NameIdentifier);
+        Guid? currentUserId =
+            RentoX.Api.Authentication.AuthenticatedUserId.Resolve(User);
 
-        if (!Guid.TryParse(userIdValue, out Guid userId))
+        if (currentUserId is not Guid userId)
         {
             return Unauthorized();
         }

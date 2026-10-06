@@ -23,9 +23,12 @@ public sealed class RegistrationAccountService(
         PreferredLanguage preferredLanguage,
         CancellationToken cancellationToken = default)
     {
-        await using var transaction =
-            await dbContext.Database.BeginTransactionAsync(
-                cancellationToken);
+        await using Microsoft.EntityFrameworkCore.Storage.IDbContextTransaction?
+            transaction =
+                dbContext.Database.CurrentTransaction is null
+                    ? await dbContext.Database.BeginTransactionAsync(
+                        cancellationToken)
+                    : null;
 
         bool phoneExists = await userManager.Users.AnyAsync(
             user => user.PhoneNumber == phoneNumber,
@@ -71,8 +74,10 @@ public sealed class RegistrationAccountService(
         await dbContext.SaveChangesAsync(
             cancellationToken);
 
-        await transaction.CommitAsync(
-            cancellationToken);
+        if (transaction is not null)
+        {
+            await transaction.CommitAsync(cancellationToken);
+        }
 
         return userId;
     }

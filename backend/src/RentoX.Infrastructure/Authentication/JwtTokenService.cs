@@ -27,6 +27,12 @@ public sealed class JwtTokenService(
     {
         ValidateOptions();
 
+        await using AuthSessionTransaction operation =
+            await AuthSessionTransaction.BeginAsync(
+                dbContext,
+                userId,
+                cancellationToken);
+
         DateTimeOffset now = clock.UtcNow;
 
         DateTimeOffset accessTokenExpiresAt =
@@ -115,6 +121,8 @@ public sealed class JwtTokenService(
 
         await dbContext.SaveChangesAsync(
             cancellationToken);
+
+        await operation.CommitAsync(cancellationToken);
 
         return new AuthTokenResult(
             accessToken,
