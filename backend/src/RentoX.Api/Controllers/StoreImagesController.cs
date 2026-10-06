@@ -35,6 +35,7 @@ public sealed class StoreImagesController(
     }
 
     [Authorize]
+    [Microsoft.AspNetCore.RateLimiting.EnableRateLimiting("image-upload")]
     [HttpPost("mine/logo")]
     [Consumes("multipart/form-data")]
     public Task<IActionResult> UploadLogoAsync(
@@ -48,6 +49,7 @@ public sealed class StoreImagesController(
     }
 
     [Authorize]
+    [Microsoft.AspNetCore.RateLimiting.EnableRateLimiting("image-upload")]
     [HttpPost("mine/cover")]
     [Consumes("multipart/form-data")]
     public Task<IActionResult> UploadCoverAsync(

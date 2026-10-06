@@ -13,7 +13,9 @@ using RentoX.Infrastructure.Authentication;
 using RentoX.Infrastructure.Identity;
 
 using RentoX.Api.Messaging;
+using RentoX.Api.Notifications;
 using RentoX.Application.Messaging;
+using RentoX.Application.Notifications;
 
 WebApplicationBuilder builder =
     WebApplication.CreateBuilder(args);
@@ -51,7 +53,21 @@ builder.Logging.AddFilter(
     "Microsoft.AspNetCore.Hosting",
     LogLevel.Warning);
 
-builder.Services.AddSignalR();
+builder.Services.AddSingleton<
+    RentoX.Api.Messaging.ConversationRateLimitFilter>();
+
+builder.Services.AddSignalR()
+    .AddHubOptions<ConversationsHub>(options =>
+    {
+        options.MaximumReceiveMessageSize = 8 * 1024;
+        options.MaximumParallelInvocationsPerClient = 1;
+        options.EnableDetailedErrors = false;
+
+        Microsoft.AspNetCore.SignalR.HubOptionsExtensions
+            .AddFilter<
+                RentoX.Api.Messaging.ConversationRateLimitFilter>(
+                options);
+    });
 
 builder.Services.AddRentoXPresence(
     builder.Configuration.GetConnectionString("Redis")
@@ -61,6 +77,10 @@ builder.Services.AddRentoXPresence(
 builder.Services.AddSingleton<
     IConversationEventPublisher,
     SignalRConversationEventPublisher>();
+
+builder.Services.AddSingleton<
+    INotificationEventPublisher,
+    SignalRNotificationEventPublisher>();
 
 builder.Services.AddControllers();
 
@@ -73,8 +93,13 @@ builder.Services
         {
             OnMessageReceived = context =>
             {
-                if (context.Request.Path.StartsWithSegments(
-                        "/hubs/conversations") &&
+                bool isHubRequest =
+                    context.Request.Path.StartsWithSegments(
+                        "/hubs/conversations") ||
+                    context.Request.Path.StartsWithSegments(
+                        "/hubs/notifications");
+
+                if (isHubRequest &&
                     !context.Request.Headers.ContainsKey(
                         "Authorization"))
                 {
@@ -182,6 +207,9 @@ builder.Services.AddRateLimiter(options =>
                     }));
 });
 
+RentoX.Api.RateLimiting.WriteRateLimitingExtensions
+    .AddRentoXWriteRateLimiting(builder.Services);
+
 builder.Services.AddEndpointsApiExplorer();
 
 builder.Services.AddSwaggerGen(options =>
@@ -257,13 +285,19 @@ if (!app.Environment.IsDevelopment())
 
 app.UseRouting();
 
-app.UseRateLimiter();
-
 app.UseAuthentication();
 app.UseAuthorization();
 
+app.UseRateLimiter();
+
 app.MapHub<ConversationsHub>(
     "/hubs/conversations",
+    options =>
+        options.CloseOnAuthenticationExpiration = true)
+    .RequireAuthorization();
+
+app.MapHub<NotificationsHub>(
+    "/hubs/notifications",
     options =>
         options.CloseOnAuthenticationExpiration = true)
     .RequireAuthorization();

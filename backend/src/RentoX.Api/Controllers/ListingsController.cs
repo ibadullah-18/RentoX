@@ -94,6 +94,7 @@ public sealed class ListingsController(
     }
 
     [Authorize]
+    [Microsoft.AspNetCore.RateLimiting.EnableRateLimiting("image-upload")]
     [HttpPost("{listingId:guid}/images")]
     [Consumes("multipart/form-data")]
     [ProducesResponseType<ListingImageResponse>(

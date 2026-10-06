@@ -15,6 +15,7 @@ public sealed class ConversationsController(
     IConversationService conversationService)
     : ControllerBase
 {
+    [Microsoft.AspNetCore.RateLimiting.EnableRateLimiting("conversation-create")]
     [HttpPost]
     [ProducesResponseType<StartConversationResponse>(
         StatusCodes.Status201Created)]
@@ -146,6 +147,7 @@ public sealed class ConversationsController(
             result.TotalPages));
     }
 
+    [Microsoft.AspNetCore.RateLimiting.EnableRateLimiting("message-send")]
     [HttpPost("{conversationId:guid}/messages")]
     [ProducesResponseType<MessageResponse>(
         StatusCodes.Status201Created)]

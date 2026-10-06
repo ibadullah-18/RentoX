@@ -1,9 +1,13 @@
-﻿using System.Data;
+using RentoX.Domain.Auditing;
+using RentoX.Application.Abstractions.Authentication;
+using System.Data;
 using Microsoft.EntityFrameworkCore;
 using RentoX.Application.Abstractions.Time;
 using RentoX.Application.Common;
 using RentoX.Application.Listings;
 using RentoX.Application.Listings.Billing;
+using RentoX.Application.Notifications;
+using RentoX.Domain.Notifications;
 using RentoX.Application.Wallets;
 using RentoX.Domain.Common.Exceptions;
 using RentoX.Domain.Listings;
@@ -19,7 +23,9 @@ public sealed class ListingModerationService(
     RentoXDbContext dbContext,
     IClock clock,
     IListingActivationPricingService pricingService,
-    IWalletService walletService)
+    IWalletService walletService,
+    INotificationService notificationService,
+    ICurrentUserContext currentUserContext)
     : IListingModerationService
 {
     private const int MaximumPageSize = 50;
@@ -94,6 +100,9 @@ public sealed class ListingModerationService(
             Guid listingId,
             CancellationToken cancellationToken = default)
     {
+        Guid actorUserId = RequireAuditActor();
+        Guid operationId = Guid.NewGuid();
+
         await using var databaseTransaction =
             await dbContext.Database
                 .BeginTransactionAsync(
@@ -124,6 +133,7 @@ public sealed class ListingModerationService(
                 listing.Id,
                 cancellationToken);
 
+        ListingStatus previousStatus = listing.Status;
         DateTimeOffset now = clock.UtcNow;
         DateTimeOffset periodEndUtc =
             now.Add(ListingLifetime);
@@ -133,6 +143,9 @@ public sealed class ListingModerationService(
             listing.Publish(
                 now,
                 ListingLifetime);
+
+            RecordListingStatusChange(
+                listing, previousStatus, actorUserId, operationId);
 
             ListingBillingCycle freeCycle =
                 ListingBillingCycle.CreateFree(
@@ -151,6 +164,16 @@ public sealed class ListingModerationService(
                 cancellationToken);
 
             await databaseTransaction.CommitAsync(
+                cancellationToken);
+
+            await notificationService.CreateAsync(
+                new CreateNotificationCommand(
+                    listing.OwnerId,
+                    (int)NotificationType.ListingApproved,
+                    "Elan təsdiqləndi",
+                    $"\"{listing.Title}\" elanı yayımlandı.",
+                    listing.Id,
+                    $"/listings/{listing.Id:D}"),
                 cancellationToken);
 
             return CreateResult(
@@ -174,11 +197,24 @@ public sealed class ListingModerationService(
             {
                 listing.RequirePayment();
 
+                RecordListingStatusChange(
+                    listing, previousStatus, actorUserId, operationId);
+
                 await dbContext.SaveChangesAsync(
                     cancellationToken);
             }
 
             await databaseTransaction.CommitAsync(
+                cancellationToken);
+
+            await notificationService.CreateAsync(
+                new CreateNotificationCommand(
+                    listing.OwnerId,
+                    (int)NotificationType.ListingPaymentRequired,
+                    "Ödəniş tələb olunur",
+                    $"\"{listing.Title}\" elanını aktivləşdirmək üçün balans ödənişi tələb olunur.",
+                    listing.Id,
+                    $"/listings/{listing.Id:D}"),
                 cancellationToken);
 
             return CreateResult(
@@ -207,6 +243,9 @@ public sealed class ListingModerationService(
             now,
             ListingLifetime);
 
+        RecordListingStatusChange(
+            listing, previousStatus, actorUserId, operationId);
+
         ListingBillingCycle paidCycle =
             ListingBillingCycle.CreatePaid(
                 listing.Id,
@@ -228,6 +267,16 @@ public sealed class ListingModerationService(
         await databaseTransaction.CommitAsync(
             cancellationToken);
 
+        await notificationService.CreateAsync(
+            new CreateNotificationCommand(
+                listing.OwnerId,
+                (int)NotificationType.ListingApproved,
+                "Elan təsdiqləndi",
+                $"\"{listing.Title}\" elanı yayımlandı.",
+                listing.Id,
+                $"/listings/{listing.Id:D}"),
+            cancellationToken);
+
         return CreateResult(
             listing,
             false,
@@ -242,14 +291,39 @@ public sealed class ListingModerationService(
             string reason,
             CancellationToken cancellationToken = default)
     {
+        Guid actorUserId = RequireAuditActor();
+        Guid operationId = Guid.NewGuid();
+
+        await using var auditTransaction =
+            await dbContext.Database.BeginTransactionAsync(
+                IsolationLevel.Serializable,
+                cancellationToken);
+
         Listing listing =
             await GetListingAsync(
                 listingId,
                 cancellationToken);
 
+        ListingStatus previousStatus = listing.Status;
+
         listing.Reject(reason);
 
+        RecordListingStatusChange(
+            listing, previousStatus, actorUserId, operationId);
+
         await dbContext.SaveChangesAsync(
+            cancellationToken);
+
+        await auditTransaction.CommitAsync(cancellationToken);
+
+        await notificationService.CreateAsync(
+            new CreateNotificationCommand(
+                listing.OwnerId,
+                (int)NotificationType.ListingRejected,
+                "Elan rədd edildi",
+                $"\"{listing.Title}\" elanı rədd edildi. Səbəb: {reason.Trim()}",
+                listing.Id,
+                $"/listings/{listing.Id:D}"),
             cancellationToken);
 
         return CreateResult(
@@ -258,6 +332,42 @@ public sealed class ListingModerationService(
             0,
             0,
             null);
+    }
+
+    private Guid RequireAuditActor()
+    {
+        Guid? userId = currentUserContext.UserId;
+
+        if (!currentUserContext.IsAuthenticated ||
+            !userId.HasValue ||
+            userId.Value == Guid.Empty)
+        {
+            throw new DomainException(
+                "An authenticated audit actor is required.");
+        }
+
+        return userId.Value;
+    }
+
+    private void RecordListingStatusChange(
+        Listing listing,
+        ListingStatus previousStatus,
+        Guid actorUserId,
+        Guid operationId)
+    {
+        if (previousStatus == listing.Status)
+        {
+            return;
+        }
+
+        dbContext.Set<AuditLogEntry>().Add(
+            AuditLogEntry.ForListingStatusChange(
+                operationId,
+                actorUserId,
+                listing.Id,
+                previousStatus,
+                listing.Status,
+                clock.UtcNow));
     }
 
     private async Task<Listing> GetListingAsync(

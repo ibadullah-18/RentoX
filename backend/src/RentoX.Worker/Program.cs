@@ -7,6 +7,7 @@ using RentoX.Infrastructure.Listings;
 using RentoX.Infrastructure.Persistence;
 using RentoX.Infrastructure.Time;
 using RentoX.Worker;
+using RentoX.Worker.PushNotifications;
 
 HostApplicationBuilder builder =
     Host.CreateApplicationBuilder(args);
@@ -20,6 +21,10 @@ string connectionString =
 builder.Services.Configure<ListingMaintenanceOptions>(
     builder.Configuration.GetSection(
         "ListingMaintenance"));
+
+builder.Services.Configure<PushNotificationOptions>(
+    builder.Configuration.GetSection(
+        PushNotificationOptions.SectionName));
 
 builder.Services.AddDbContext<RentoXDbContext>(
     options =>
@@ -35,7 +40,17 @@ builder.Services.AddScoped<
     IListingMaintenanceService,
     ListingMaintenanceService>();
 
+builder.Services.AddSingleton<
+    IPushNotificationSender,
+    FirebasePushNotificationSender>();
+
+builder.Services.AddScoped<
+    PushNotificationProcessor>();
+
 builder.Services.AddHostedService<Worker>();
+
+builder.Services.AddHostedService<
+    PushNotificationWorker>();
 
 IHost host = builder.Build();
 

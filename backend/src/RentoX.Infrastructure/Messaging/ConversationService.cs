@@ -55,6 +55,13 @@ public sealed class ConversationService(
                 "You cannot message your own listing.");
         }
 
+        await using var messagingTransaction =
+            await dbContext.Database.BeginTransactionAsync(cancellationToken);
+        await MessagingBlockGuard.AcquirePairLockAsync(
+            dbContext, buyerId, listing.OwnerId, cancellationToken);
+        await MessagingBlockGuard.EnsureAllowedAsync(
+            dbContext, buyerId, listing.OwnerId, cancellationToken);
+
         Conversation? conversation =
             await dbContext.Conversations
                 .SingleOrDefaultAsync(
@@ -83,6 +90,10 @@ public sealed class ConversationService(
 
         dbContext.Messages.Add(message);
 
+        await messagingTransaction.CreateSavepointAsync(
+            "BeforeConversationInsert",
+            cancellationToken);
+
         try
         {
             await dbContext.SaveChangesAsync(
@@ -95,6 +106,10 @@ public sealed class ConversationService(
                       SqlState: PostgresErrorCodes.UniqueViolation
                   })
         {
+            await messagingTransaction.RollbackToSavepointAsync(
+                "BeforeConversationInsert",
+                cancellationToken);
+
             // Eyni alıcı eyni elan üçün iki sorğunu eyni anda
             // göndəribsə, unikal söhbəti tapıb mesajı ona əlavə et.
             dbContext.ChangeTracker.Clear();
@@ -121,6 +136,8 @@ public sealed class ConversationService(
             await dbContext.SaveChangesAsync(
                 cancellationToken);
         }
+
+        await messagingTransaction.CommitAsync(cancellationToken);
 
         await eventPublisher.MessageCreatedAsync(
             conversation.BuyerId,
@@ -293,30 +310,21 @@ public sealed class ConversationService(
     {
         RequireUser(userId);
 
-        if (!await CanAccessAsync(
-                userId,
-                conversationId,
-                cancellationToken))
-        {
-            return null;
-        }
+        Conversation? participants = await dbContext.Conversations.AsNoTracking()
+            .SingleOrDefaultAsync(item => item.Id == conversationId &&
+                (item.BuyerId == userId || item.SellerId == userId), cancellationToken);
+        if (participants is null) { return null; }
 
-        Message message = Message.Create(
-            conversationId,
-            userId,
-            body,
-            clock.UtcNow);
+        await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
+        await MessagingBlockGuard.AcquirePairLockAsync(
+            dbContext, participants.BuyerId, participants.SellerId, cancellationToken);
+        await MessagingBlockGuard.EnsureAllowedAsync(
+            dbContext, participants.BuyerId, participants.SellerId, cancellationToken);
 
+        Message message = Message.Create(conversationId, userId, body, clock.UtcNow);
         dbContext.Messages.Add(message);
-        await dbContext.SaveChangesAsync(
-            cancellationToken);
-
-        Conversation participants =
-            await dbContext.Conversations
-                .AsNoTracking()
-                .SingleAsync(
-                    item => item.Id == conversationId,
-                    cancellationToken);
+        await dbContext.SaveChangesAsync(cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
 
         await eventPublisher.MessageCreatedAsync(
             participants.BuyerId,
@@ -363,6 +371,12 @@ public sealed class ConversationService(
                         item => item.Id == conversationId,
                         cancellationToken);
 
+            if (await MessagingBlockGuard.IsBlockedAsync(
+                dbContext, participants.BuyerId, participants.SellerId, cancellationToken))
+            {
+                return true;
+            }
+
             await eventPublisher.MessagesReadAsync(
                 participants.BuyerId,
                 participants.SellerId,
@@ -400,6 +414,12 @@ public sealed class ConversationService(
             .SingleOrDefaultAsync(cancellationToken);
 
         if (participants is null)
+        {
+            return null;
+        }
+
+        if (await MessagingBlockGuard.IsBlockedAsync(
+            dbContext, participants.BuyerId, participants.SellerId, cancellationToken))
         {
             return null;
         }

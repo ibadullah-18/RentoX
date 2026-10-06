@@ -125,6 +125,57 @@ namespace RentoX.Infrastructure.Persistence.Migrations
                     b.ToTable("user_tokens", "identity");
                 });
 
+            modelBuilder.Entity("RentoX.Domain.Auditing.AuditLogEntry", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Action")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("ActorUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int?>("CurrentValue")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset>("OccurredAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("OperationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int?>("PreviousValue")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid?>("RelatedEntityId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("TargetId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OccurredAtUtc", "Id");
+
+                    b.HasIndex("ActorUserId", "OccurredAtUtc", "Id");
+
+                    b.HasIndex("OperationId", "Action", "TargetId")
+                        .IsUnique();
+
+                    b.HasIndex("TargetId", "Action", "OccurredAtUtc", "Id");
+
+                    b.ToTable("entries", "audit", t =>
+                        {
+                            t.HasCheckConstraint("CK_audit_entries_Action", "\"Action\" BETWEEN 1 AND 5");
+
+                            t.HasCheckConstraint("CK_audit_entries_Payload", "(\n    \"Action\" BETWEEN 1 AND 4\n    AND \"PreviousValue\" IS NOT NULL\n    AND \"CurrentValue\" IS NOT NULL\n    AND \"PreviousValue\" <> \"CurrentValue\"\n    AND \"RelatedEntityId\" IS NULL\n    AND (\n        (\"Action\" = 1\n            AND \"PreviousValue\" BETWEEN 1 AND 8\n            AND \"CurrentValue\" BETWEEN 1 AND 8)\n        OR (\"Action\" = 2\n            AND \"PreviousValue\" BETWEEN 1 AND 6\n            AND \"CurrentValue\" BETWEEN 1 AND 6)\n        OR (\"Action\" IN (3, 4)\n            AND \"PreviousValue\" BETWEEN 1 AND 4\n            AND \"CurrentValue\" BETWEEN 1 AND 4)\n    )\n)\nOR\n(\n    \"Action\" = 5\n    AND \"PreviousValue\" IS NULL\n    AND \"CurrentValue\" IS NULL\n    AND \"RelatedEntityId\" IS NOT NULL\n    AND \"RelatedEntityId\" <>\n        '00000000-0000-0000-0000-000000000000'::uuid\n)");
+
+                            t.HasCheckConstraint("CK_audit_entries_RequiredIds", "\"OperationId\" <> '00000000-0000-0000-0000-000000000000'::uuid\nAND \"ActorUserId\" <> '00000000-0000-0000-0000-000000000000'::uuid\nAND \"TargetId\" <> '00000000-0000-0000-0000-000000000000'::uuid");
+                        });
+                });
+
             modelBuilder.Entity("RentoX.Domain.Authentication.OtpChallenge", b =>
                 {
                     b.Property<Guid>("Id")
@@ -740,6 +791,61 @@ namespace RentoX.Infrastructure.Persistence.Migrations
                     b.ToTable("conversations", "messaging");
                 });
 
+            modelBuilder.Entity("RentoX.Domain.Messaging.ConversationReport", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ConversationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Details")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<Guid?>("EvidenceMessageId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Reason")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("ReporterId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ResolutionNote")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<DateTimeOffset?>("ReviewedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ReviewedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EvidenceMessageId");
+
+                    b.HasIndex("ReporterId");
+
+                    b.HasIndex("ReviewedByUserId");
+
+                    b.HasIndex("ConversationId", "ReporterId")
+                        .IsUnique()
+                        .HasFilter("\"Status\" IN (1, 2)");
+
+                    b.HasIndex("Status", "CreatedAtUtc");
+
+                    b.ToTable("conversation_reports", "messaging");
+                });
+
             modelBuilder.Entity("RentoX.Domain.Messaging.Message", b =>
                 {
                     b.Property<Guid>("Id")
@@ -810,6 +916,165 @@ namespace RentoX.Infrastructure.Persistence.Migrations
 
                             t.HasCheckConstraint("CK_message_images_SizeBytes", "\"SizeBytes\" > 0 AND \"SizeBytes\" <= 10485760");
                         });
+                });
+
+            modelBuilder.Entity("RentoX.Domain.Messaging.UserBlock", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("BlockedUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("BlockerId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BlockedUserId");
+
+                    b.HasIndex("BlockerId", "BlockedUserId")
+                        .IsUnique();
+
+                    b.ToTable("user_blocks", "messaging", t =>
+                        {
+                            t.HasCheckConstraint("CK_user_blocks_DifferentUsers", "\"BlockerId\" <> \"BlockedUserId\"");
+                        });
+                });
+
+            modelBuilder.Entity("RentoX.Domain.Notifications.Notification", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ActionUrl")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("Body")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<DateTimeOffset>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset?>("ReadAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("RelatedEntityId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(160)
+                        .HasColumnType("character varying(160)");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId", "CreatedAtUtc");
+
+                    b.HasIndex("UserId", "ReadAtUtc");
+
+                    b.ToTable("notifications", "notifications");
+                });
+
+            modelBuilder.Entity("RentoX.Domain.Notifications.PushDevice", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset?>("DeactivatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DeviceId")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTimeOffset>("LastSeenAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("Platform")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset>("RegisteredAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Token")
+                        .IsRequired()
+                        .HasMaxLength(2048)
+                        .HasColumnType("character varying(2048)");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Token")
+                        .IsUnique();
+
+                    b.HasIndex("UserId", "DeviceId", "IsActive");
+
+                    b.ToTable("push_devices", "notifications");
+                });
+
+            modelBuilder.Entity("RentoX.Domain.Notifications.PushNotificationDelivery", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("AttemptCount")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("LastError")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<DateTimeOffset>("NextAttemptAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("NotificationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset?>("SentAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("NotificationId")
+                        .IsUnique();
+
+                    b.HasIndex("UserId");
+
+                    b.HasIndex("Status", "NextAttemptAtUtc");
+
+                    b.ToTable("push_deliveries", "notifications");
                 });
 
             modelBuilder.Entity("RentoX.Domain.Stores.StoreFollower", b =>
@@ -931,6 +1196,89 @@ namespace RentoX.Infrastructure.Persistence.Migrations
                     b.HasIndex("Status", "CreatedAtUtc");
 
                     b.ToTable("store_profiles", "stores");
+                });
+
+            modelBuilder.Entity("RentoX.Domain.Support.SupportTicket", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Category")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset?>("ClosedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("Priority")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset?>("ResolvedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Subject")
+                        .IsRequired()
+                        .HasMaxLength(160)
+                        .HasColumnType("character varying(160)");
+
+                    b.Property<DateTimeOffset>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId", "UpdatedAtUtc");
+
+                    b.HasIndex("Status", "Priority", "UpdatedAtUtc");
+
+                    b.ToTable("support_tickets", "support", t =>
+                        {
+                            t.HasCheckConstraint("CK_support_tickets_Category", "\"Category\" >= 1 AND \"Category\" <= 7");
+
+                            t.HasCheckConstraint("CK_support_tickets_Priority", "\"Priority\" >= 1 AND \"Priority\" <= 4");
+
+                            t.HasCheckConstraint("CK_support_tickets_Status", "\"Status\" >= 1 AND \"Status\" <= 4");
+                        });
+                });
+
+            modelBuilder.Entity("RentoX.Domain.Support.SupportTicketMessage", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Body")
+                        .IsRequired()
+                        .HasMaxLength(4000)
+                        .HasColumnType("character varying(4000)");
+
+                    b.Property<bool>("IsAdmin")
+                        .HasColumnType("boolean");
+
+                    b.Property<Guid>("SenderId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("SentAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("SupportTicketId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SenderId");
+
+                    b.HasIndex("SupportTicketId", "SentAtUtc", "Id");
+
+                    b.ToTable("support_ticket_messages", "support");
                 });
 
             modelBuilder.Entity("RentoX.Domain.Users.UserProfile", b =>
@@ -1432,6 +1780,31 @@ namespace RentoX.Infrastructure.Persistence.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("RentoX.Domain.Messaging.ConversationReport", b =>
+                {
+                    b.HasOne("RentoX.Domain.Messaging.Conversation", null)
+                        .WithMany()
+                        .HasForeignKey("ConversationId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("RentoX.Domain.Messaging.Message", null)
+                        .WithMany()
+                        .HasForeignKey("EvidenceMessageId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("RentoX.Infrastructure.Identity.AppUser", null)
+                        .WithMany()
+                        .HasForeignKey("ReporterId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("RentoX.Infrastructure.Identity.AppUser", null)
+                        .WithMany()
+                        .HasForeignKey("ReviewedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+                });
+
             modelBuilder.Entity("RentoX.Domain.Messaging.Message", b =>
                 {
                     b.HasOne("RentoX.Domain.Messaging.Conversation", null)
@@ -1452,6 +1825,54 @@ namespace RentoX.Infrastructure.Persistence.Migrations
                     b.HasOne("RentoX.Domain.Messaging.Message", null)
                         .WithMany("Images")
                         .HasForeignKey("MessageId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("RentoX.Domain.Messaging.UserBlock", b =>
+                {
+                    b.HasOne("RentoX.Infrastructure.Identity.AppUser", null)
+                        .WithMany()
+                        .HasForeignKey("BlockedUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("RentoX.Infrastructure.Identity.AppUser", null)
+                        .WithMany()
+                        .HasForeignKey("BlockerId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("RentoX.Domain.Notifications.Notification", b =>
+                {
+                    b.HasOne("RentoX.Infrastructure.Identity.AppUser", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("RentoX.Domain.Notifications.PushDevice", b =>
+                {
+                    b.HasOne("RentoX.Infrastructure.Identity.AppUser", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("RentoX.Domain.Notifications.PushNotificationDelivery", b =>
+                {
+                    b.HasOne("RentoX.Domain.Notifications.Notification", null)
+                        .WithMany()
+                        .HasForeignKey("NotificationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("RentoX.Infrastructure.Identity.AppUser", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
@@ -1477,6 +1898,30 @@ namespace RentoX.Infrastructure.Persistence.Migrations
                         .WithOne()
                         .HasForeignKey("RentoX.Domain.Stores.StoreProfile", "OwnerId")
                         .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("RentoX.Domain.Support.SupportTicket", b =>
+                {
+                    b.HasOne("RentoX.Infrastructure.Identity.AppUser", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("RentoX.Domain.Support.SupportTicketMessage", b =>
+                {
+                    b.HasOne("RentoX.Infrastructure.Identity.AppUser", null)
+                        .WithMany()
+                        .HasForeignKey("SenderId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("RentoX.Domain.Support.SupportTicket", null)
+                        .WithMany("Messages")
+                        .HasForeignKey("SupportTicketId")
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
 
@@ -1530,6 +1975,11 @@ namespace RentoX.Infrastructure.Persistence.Migrations
             modelBuilder.Entity("RentoX.Domain.Messaging.Message", b =>
                 {
                     b.Navigation("Images");
+                });
+
+            modelBuilder.Entity("RentoX.Domain.Support.SupportTicket", b =>
+                {
+                    b.Navigation("Messages");
                 });
 
             modelBuilder.Entity("RentoX.Domain.Wallets.Wallet", b =>

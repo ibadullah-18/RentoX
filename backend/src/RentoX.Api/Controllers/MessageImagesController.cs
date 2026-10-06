@@ -19,6 +19,7 @@ public sealed class SendMessageImagesForm
 [Route("api/conversations/{conversationId:guid}")]
 public sealed class MessageImagesController(IMessageImageService imageService) : ControllerBase
 {
+    [Microsoft.AspNetCore.RateLimiting.EnableRateLimiting("image-upload")]
     [HttpPost("messages/images")]
     [Consumes("multipart/form-data")]
     [RequestSizeLimit(55 * 1024 * 1024)]

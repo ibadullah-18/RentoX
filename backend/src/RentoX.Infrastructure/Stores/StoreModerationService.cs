@@ -1,5 +1,11 @@
-﻿using Microsoft.EntityFrameworkCore;
+using RentoX.Application.Abstractions.Time;
+using System.Data;
+using RentoX.Domain.Auditing;
+using RentoX.Application.Abstractions.Authentication;
+using Microsoft.EntityFrameworkCore;
 using RentoX.Application.Common;
+using RentoX.Application.Notifications;
+using RentoX.Domain.Notifications;
 using RentoX.Application.Stores;
 using RentoX.Domain.Common.Exceptions;
 using RentoX.Domain.Stores;
@@ -9,7 +15,10 @@ using RentoX.Infrastructure.Persistence;
 namespace RentoX.Infrastructure.Stores;
 
 public sealed class StoreModerationService(
-    RentoXDbContext dbContext)
+    RentoXDbContext dbContext,
+    INotificationService notificationService,
+    ICurrentUserContext currentUserContext,
+    IClock clock)
     : IStoreModerationService
 {
     private const int MaximumPageSize = 50;
@@ -84,14 +93,39 @@ public sealed class StoreModerationService(
         Guid storeId,
         CancellationToken cancellationToken = default)
     {
+        Guid actorUserId = RequireAuditActor();
+        Guid operationId = Guid.NewGuid();
+
+        await using var auditTransaction =
+            await dbContext.Database.BeginTransactionAsync(
+                IsolationLevel.Serializable,
+                cancellationToken);
+
         StoreProfile store =
             await GetRequiredStoreAsync(
                 storeId,
                 cancellationToken);
 
+        StoreStatus previousStatus = store.Status;
+
         store.Approve();
 
+        RecordStoreStatusChange(
+            store, previousStatus, actorUserId, operationId);
+
         await dbContext.SaveChangesAsync(
+            cancellationToken);
+
+        await auditTransaction.CommitAsync(cancellationToken);
+
+        await notificationService.CreateAsync(
+            new CreateNotificationCommand(
+                store.OwnerId,
+                (int)NotificationType.StoreApproved,
+                "Mağaza təsdiqləndi",
+                $"\"{store.Name}\" mağazası təsdiqləndi və aktivləşdirildi.",
+                store.Id,
+                $"/stores/{store.Slug}"),
             cancellationToken);
 
         return MapStatus(store);
@@ -102,17 +136,78 @@ public sealed class StoreModerationService(
         string reason,
         CancellationToken cancellationToken = default)
     {
+        Guid actorUserId = RequireAuditActor();
+        Guid operationId = Guid.NewGuid();
+
+        await using var auditTransaction =
+            await dbContext.Database.BeginTransactionAsync(
+                IsolationLevel.Serializable,
+                cancellationToken);
+
         StoreProfile store =
             await GetRequiredStoreAsync(
                 storeId,
                 cancellationToken);
 
+        StoreStatus previousStatus = store.Status;
+
         store.Reject(reason);
+
+        RecordStoreStatusChange(
+            store, previousStatus, actorUserId, operationId);
 
         await dbContext.SaveChangesAsync(
             cancellationToken);
 
+        await auditTransaction.CommitAsync(cancellationToken);
+
+        await notificationService.CreateAsync(
+            new CreateNotificationCommand(
+                store.OwnerId,
+                (int)NotificationType.StoreRejected,
+                "Mağaza rədd edildi",
+                $"\"{store.Name}\" mağazası rədd edildi. Səbəb: {reason.Trim()}",
+                store.Id,
+                $"/profile/store"),
+            cancellationToken);
+
         return MapStatus(store);
+    }
+
+    private Guid RequireAuditActor()
+    {
+        Guid? userId = currentUserContext.UserId;
+
+        if (!currentUserContext.IsAuthenticated ||
+            !userId.HasValue ||
+            userId.Value == Guid.Empty)
+        {
+            throw new DomainException(
+                "An authenticated audit actor is required.");
+        }
+
+        return userId.Value;
+    }
+
+    private void RecordStoreStatusChange(
+        StoreProfile store,
+        StoreStatus previousStatus,
+        Guid actorUserId,
+        Guid operationId)
+    {
+        if (previousStatus == store.Status)
+        {
+            return;
+        }
+
+        dbContext.Set<AuditLogEntry>().Add(
+            AuditLogEntry.ForStoreStatusChange(
+                operationId,
+                actorUserId,
+                store.Id,
+                previousStatus,
+                store.Status,
+                clock.UtcNow));
     }
 
     private async Task<StoreProfile> GetRequiredStoreAsync(

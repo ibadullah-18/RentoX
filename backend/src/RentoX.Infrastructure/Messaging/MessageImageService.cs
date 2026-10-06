@@ -39,6 +39,9 @@ public sealed class MessageImageService(
             .SingleOrDefaultAsync(cancellationToken);
         if (participants is null) { return null; }
 
+        await MessagingBlockGuard.EnsureAllowedAsync(
+            dbContext, participants.BuyerId, participants.SellerId, cancellationToken);
+
         if (images.Count is < 1 or > Message.MaximumImageCount)
         {
             throw new DomainException("A message must contain 1 to 5 images.");
@@ -78,6 +81,11 @@ public sealed class MessageImageService(
 
             message = Message.CreateWithImages(conversationId, userId, body, clock.UtcNow, stored);
             await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
+            await MessagingBlockGuard.AcquirePairLockAsync(
+                dbContext, participants.BuyerId, participants.SellerId, cancellationToken);
+            // Recheck after storing files: a block may have been created during upload.
+            await MessagingBlockGuard.EnsureAllowedAsync(
+                dbContext, participants.BuyerId, participants.SellerId, cancellationToken);
             dbContext.Messages.Add(message);
             await dbContext.SaveChangesAsync(cancellationToken);
             // Once COMMIT has been sent, a lost connection can hide a successful commit.

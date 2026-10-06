@@ -13,7 +13,9 @@ using RentoX.Application.Files;
 using RentoX.Application.Listings;
 using RentoX.Application.Listings.Billing;
 using RentoX.Application.Listings.Promotions;
+using RentoX.Application.Notifications;
 using RentoX.Application.Stores;
+using RentoX.Application.Support;
 using RentoX.Application.Users;
 using RentoX.Application.Wallets;
 using RentoX.Infrastructure.Accounts;
@@ -26,9 +28,11 @@ using RentoX.Infrastructure.Identity;
 using RentoX.Infrastructure.Listings;
 using RentoX.Infrastructure.Listings.Billing;
 using RentoX.Infrastructure.Listings.Promotions;
+using RentoX.Infrastructure.Notifications;
 using RentoX.Infrastructure.Persistence;
 using RentoX.Infrastructure.Persistence.Interceptors;
 using RentoX.Infrastructure.Stores;
+using RentoX.Infrastructure.Support;
 using RentoX.Infrastructure.Time;
 using RentoX.Infrastructure.Users;
 using RentoX.Infrastructure.Wallets;
@@ -260,7 +264,18 @@ public static class DependencyInjection
             IStoreFollowService,
             StoreFollowService>();
 
+        services.AddScoped<
+            INotificationService,
+            NotificationService>();
 
+        services.AddScoped<
+            IPushDeviceService,
+            PushDeviceService>();
+
+
+        services.AddScoped<
+            ISupportTicketService,
+            SupportTicketService>();
         services.AddScoped<
             IWalletService,
             WalletService>();
@@ -285,7 +300,15 @@ public static class DependencyInjection
         services.AddScoped<
             IConversationService,
             ConversationService>();
+        services.AddScoped<RentoX.Application.Messaging.IConversationBlockService, RentoX.Infrastructure.Messaging.ConversationBlockService>();
+        services.AddScoped<RentoX.Application.Messaging.IConversationReportService, RentoX.Infrastructure.Messaging.ConversationReportService>();
         services.AddScoped<RentoX.Application.Messaging.IMessageImageService, RentoX.Infrastructure.Messaging.MessageImageService>();
+
+        services.AddScoped<RentoX.Application.Analytics.IAdminAnalyticsService, RentoX.Infrastructure.Analytics.AdminAnalyticsService>();
+
+        services.AddScoped<
+            RentoX.Application.Auditing.IAuditLogQueryService,
+            RentoX.Infrastructure.Auditing.AuditLogQueryService>();
 
         return services;
     }
