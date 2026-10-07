@@ -161,6 +161,10 @@ public static class DependencyInjection
             AccountProfileService>();
 
         services.AddScoped<
+            RentoX.Application.Accounts.IProfileImageService,
+            RentoX.Infrastructure.Accounts.ProfileImageService>();
+
+        services.AddScoped<
             ICategoryQueryService,
             CategoryQueryService>();
 

@@ -96,6 +96,13 @@ public sealed class AccountProfileService(
             profile.FullName,
             profile.Bio,
             (int)profile.PreferredLanguage,
-            (int)profile.Status);
+            (int)profile.Status)
+        {
+            ProfileImageUrl =
+                profile.Status == RentoX.Domain.Users.Enums.UserStatus.Active &&
+                !string.IsNullOrWhiteSpace(profile.ProfileImageKey)
+                    ? $"/api/users/{profile.Id}/profile-image"
+                    : null
+        };
     }
 }

@@ -40,7 +40,12 @@ public sealed class StoreImageService(
             await dbContext.StoreProfiles
                 .SingleOrDefaultAsync(
                     item =>
-                        item.OwnerId == command.OwnerId,
+                        item.OwnerId == command.OwnerId &&
+                        item.DeletedAtUtc == null &&
+                        (item.Status ==
+                            RentoX.Domain.Stores.Enums.StoreStatus.Draft ||
+                         item.Status ==
+                            RentoX.Domain.Stores.Enums.StoreStatus.Rejected),
                     cancellationToken)
             ?? throw new DomainException(
                 "Store was not found.");
@@ -56,13 +61,26 @@ public sealed class StoreImageService(
                 : FileStorageArea.StoreCovers;
 
         string extension =
-            Path.GetExtension(command.FileName);
+            Path.GetExtension(command.FileName)
+                .ToLowerInvariant();
+
+        string contentType =
+            command.ContentType.Trim().ToLowerInvariant();
+
+        using MemoryStream validatedContent =
+            await RentoX.Infrastructure.Files.ImageUploadValidator
+                .ReadValidatedAsync(
+                    command.Content,
+                    command.SizeBytes,
+                    contentType,
+                    extension,
+                    cancellationToken);
 
         StoredFileResult storedFile =
             await fileStorage.SaveAsync(
                 storageArea,
-                command.Content,
-                command.ContentType,
+                validatedContent,
+                contentType,
                 extension,
                 cancellationToken);
 
@@ -101,16 +119,57 @@ public sealed class StoreImageService(
             command.Kind);
     }
 
-    public async Task<StoreImageContentResult?> OpenAsync(
+    public Task<StoreImageContentResult?> OpenAsync(
         Guid storeId,
         StoreImageKind kind,
         CancellationToken cancellationToken = default)
     {
+        return OpenAsync(
+            storeId,
+            kind,
+            null,
+            false,
+            cancellationToken);
+    }
+
+    public async Task<StoreImageContentResult?> OpenAsync(
+        Guid storeId,
+        StoreImageKind kind,
+        Guid? viewerUserId,
+        bool canModerate,
+        CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+
+        if (storeId == Guid.Empty || !Enum.IsDefined(kind))
+        {
+            return null;
+        }
+
+        if (viewerUserId == Guid.Empty)
+        {
+            viewerUserId = null;
+        }
+
+        bool hasModeratorAccess =
+            viewerUserId.HasValue && canModerate;
+
         StoreProfile? store =
             await dbContext.StoreProfiles
                 .AsNoTracking()
                 .SingleOrDefaultAsync(
-                    item => item.Id == storeId,
+                    item =>
+                        item.Id == storeId &&
+                        item.DeletedAtUtc == null &&
+                        item.Status !=
+                            RentoX.Domain.Stores.Enums.StoreStatus.Deleted &&
+                        (
+                            item.Status ==
+                                RentoX.Domain.Stores.Enums.StoreStatus.Active ||
+                            (viewerUserId.HasValue &&
+                             item.OwnerId == viewerUserId.Value) ||
+                            hasModeratorAccess
+                        ),
                     cancellationToken);
 
         if (store is null)
@@ -148,10 +207,22 @@ public sealed class StoreImageService(
         StoreImageKind kind,
         CancellationToken cancellationToken = default)
     {
+        if (!Enum.IsDefined(kind))
+        {
+            throw new DomainException(
+                "Store image kind is invalid.");
+        }
+
         StoreProfile store =
             await dbContext.StoreProfiles
                 .SingleOrDefaultAsync(
-                    item => item.OwnerId == ownerId,
+                    item =>
+                        item.OwnerId == ownerId &&
+                        item.DeletedAtUtc == null &&
+                        (item.Status ==
+                            RentoX.Domain.Stores.Enums.StoreStatus.Draft ||
+                         item.Status ==
+                            RentoX.Domain.Stores.Enums.StoreStatus.Rejected),
                     cancellationToken)
             ?? throw new DomainException(
                 "Store was not found.");

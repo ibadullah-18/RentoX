@@ -93,6 +93,9 @@ public sealed class AccountController(
             result.FullName,
             result.Bio,
             result.PreferredLanguage,
-            result.Status);
+            result.Status)
+        {
+            ProfileImageUrl = result.ProfileImageUrl
+        };
     }
 }

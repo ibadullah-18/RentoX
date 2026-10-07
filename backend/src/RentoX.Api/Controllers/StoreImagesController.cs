@@ -9,7 +9,8 @@ namespace RentoX.Api.Controllers;
 [Route("api/stores")]
 public sealed class StoreImagesController(
     IStoreImageService storeImageService,
-    ICurrentUserContext currentUserContext)
+    ICurrentUserContext currentUserContext,
+    IAuthorizationService authorizationService)
     : ControllerBase
 {
     [HttpGet("{storeId:guid}/logo")]
@@ -87,10 +88,27 @@ public sealed class StoreImagesController(
     StoreImageKind kind,
     CancellationToken cancellationToken)
     {
+        Guid? viewerUserId =
+            RentoX.Api.Authentication.AuthenticatedUserId.Resolve(User);
+
+        bool canModerate = false;
+
+        if (viewerUserId.HasValue)
+        {
+            AuthorizationResult authorization =
+                await authorizationService.AuthorizeAsync(
+                    User,
+                    RentoX.Application.Authorization.PolicyNames.AdminAccess);
+
+            canModerate = authorization.Succeeded;
+        }
+
         StoreImageContentResult? result =
             await storeImageService.OpenAsync(
                 storeId,
                 kind,
+                viewerUserId,
+                canModerate,
                 cancellationToken);
 
         if (result is null)
@@ -102,7 +120,10 @@ public sealed class StoreImagesController(
         }
 
         Response.Headers.CacheControl =
-            "public, max-age=86400";
+            "no-store, no-cache";
+
+        Response.Headers["X-Content-Type-Options"] =
+            "nosniff";
 
         return File(
             result.Content,

@@ -39,7 +39,10 @@ public sealed class ListingImageService(
                 .SingleOrDefaultAsync(
                     item =>
                         item.Id == command.ListingId &&
-                        item.OwnerId == command.OwnerId,
+                        item.OwnerId == command.OwnerId &&
+                        item.DeletedAtUtc == null &&
+                        item.Status !=
+                            RentoX.Domain.Listings.Enums.ListingStatus.Deleted,
                     cancellationToken)
             ?? throw new DomainException(
                 "Listing was not found.");
@@ -52,13 +55,25 @@ public sealed class ListingImageService(
         }
 
         string extension =
-            Path.GetExtension(command.FileName);
+            Path.GetExtension(command.FileName).ToLowerInvariant();
+
+        string contentType =
+            command.ContentType.Trim().ToLowerInvariant();
+
+        using MemoryStream validatedContent =
+            await RentoX.Infrastructure.Files.ImageUploadValidator
+                .ReadValidatedAsync(
+                    command.Content,
+                    command.SizeBytes,
+                    contentType,
+                    extension,
+                    cancellationToken);
 
         StoredFileResult storedFile =
             await fileStorage.SaveAsync(
                 FileStorageArea.ListingImages,
-                command.Content,
-                command.ContentType,
+                validatedContent,
+                contentType,
                 extension,
                 cancellationToken);
 

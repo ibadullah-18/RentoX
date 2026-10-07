@@ -11,6 +11,13 @@ public interface IStoreImageService
         StoreImageKind kind,
         CancellationToken cancellationToken = default);
 
+    Task<StoreImageContentResult?> OpenAsync(
+        Guid storeId,
+        StoreImageKind kind,
+        Guid? viewerUserId,
+        bool canModerate,
+        CancellationToken cancellationToken = default);
+
     Task DeleteAsync(
         Guid ownerId,
         StoreImageKind kind,

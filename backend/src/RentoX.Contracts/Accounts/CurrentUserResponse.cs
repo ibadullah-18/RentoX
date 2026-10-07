@@ -6,4 +6,7 @@ public sealed record CurrentUserResponse(
     string FullName,
     string? Bio,
     int PreferredLanguage,
-    int Status);
+    int Status)
+{
+    public string? ProfileImageUrl { get; init; }
+}
