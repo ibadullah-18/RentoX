@@ -107,6 +107,38 @@ public sealed class LocalFileStorage(
 
     private string GetFullPath(string storageKey)
     {
+        if (string.IsNullOrWhiteSpace(storageKey) ||
+            Path.IsPathRooted(storageKey) ||
+            storageKey.Contains('\\') ||
+            storageKey.Contains(':') ||
+            storageKey.Contains('\0'))
+        {
+            throw new DomainException(
+                "Storage key is invalid.");
+        }
+
+        foreach (string segment in storageKey.Split('/'))
+        {
+            if (segment.Length == 0 ||
+                segment is "." or ".." ||
+                segment.EndsWith('.') ||
+                segment.EndsWith(' '))
+            {
+                throw new DomainException(
+                    "Storage key is invalid.");
+            }
+
+            foreach (char character in segment)
+            {
+                if (char.IsControl(character) ||
+                    character is '<' or '>' or '"' or '|' or '?' or '*')
+                {
+                    throw new DomainException(
+                        "Storage key is invalid.");
+                }
+            }
+        }
+
         string rootPath =
             ResolveRootPath();
 
@@ -124,9 +156,14 @@ public sealed class LocalFileStorage(
                 : rootPath +
                   Path.DirectorySeparatorChar;
 
+        StringComparison comparison =
+            OperatingSystem.IsWindows()
+                ? StringComparison.OrdinalIgnoreCase
+                : StringComparison.Ordinal;
+
         if (!fullPath.StartsWith(
                 requiredPrefix,
-                StringComparison.OrdinalIgnoreCase))
+                comparison))
         {
             throw new DomainException(
                 "Storage key is invalid.");

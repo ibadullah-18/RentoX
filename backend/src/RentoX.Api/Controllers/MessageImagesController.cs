@@ -1,5 +1,4 @@
 using System.ComponentModel.DataAnnotations;
-using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using RentoX.Application.Messaging;
@@ -31,7 +30,7 @@ public sealed class MessageImagesController(IMessageImageService imageService) :
         Guid conversationId, [FromForm] SendMessageImagesForm form,
         CancellationToken cancellationToken)
     {
-        if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out Guid userId) || userId == Guid.Empty)
+        if (RentoX.Api.Authentication.AuthenticatedUserId.Resolve(User) is not Guid userId)
         {
             return Unauthorized();
         }
@@ -72,7 +71,7 @@ public sealed class MessageImagesController(IMessageImageService imageService) :
     public async Task<IActionResult> DownloadAsync(
         Guid conversationId, Guid imageId, CancellationToken cancellationToken)
     {
-        if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out Guid userId) || userId == Guid.Empty)
+        if (RentoX.Api.Authentication.AuthenticatedUserId.Resolve(User) is not Guid userId)
         {
             return Unauthorized();
         }

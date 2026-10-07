@@ -48,6 +48,12 @@ public sealed class UserProfile : AuditableEntity
                 "User ID cannot be empty.");
         }
 
+        if (!Enum.IsDefined(preferredLanguage))
+        {
+            throw new DomainException(
+                "Preferred language is invalid.");
+        }
+
         return new UserProfile(
             userId,
             fullName,
@@ -59,8 +65,20 @@ public sealed class UserProfile : AuditableEntity
         string? bio,
         PreferredLanguage preferredLanguage)
     {
-        FullName = ValidateFullName(fullName);
-        Bio = NormalizeOptionalText(bio, 500);
+        if (!Enum.IsDefined(preferredLanguage))
+        {
+            throw new DomainException(
+                "Preferred language is invalid.");
+        }
+
+        string normalizedFullName =
+            ValidateFullName(fullName);
+
+        string? normalizedBio =
+            NormalizeOptionalText(bio, 500);
+
+        FullName = normalizedFullName;
+        Bio = normalizedBio;
         PreferredLanguage = preferredLanguage;
 
         RaiseDomainEvent(
@@ -75,6 +93,12 @@ public sealed class UserProfile : AuditableEntity
 
     public void ChangeStatus(UserStatus status)
     {
+        if (!Enum.IsDefined(status))
+        {
+            throw new DomainException(
+                "User status is invalid.");
+        }
+
         if (Status == status)
         {
             return;

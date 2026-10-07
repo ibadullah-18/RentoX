@@ -1,4 +1,7 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using RentoX.Api.Authentication;
+using RentoX.Application.Authorization;
 using RentoX.Application.Listings;
 
 namespace RentoX.Api.Controllers;
@@ -6,13 +9,14 @@ namespace RentoX.Api.Controllers;
 [ApiController]
 [Route("api/listing-images")]
 public sealed class ListingImagesController(
-    IListingImageManagementService imageService)
+    IListingImageManagementService imageService,
+    IAuthorizationService authorizationService)
     : ControllerBase
 {
     [HttpGet("{imageId:guid}")]
     [ResponseCache(
-        Duration = 86400,
-        Location = ResponseCacheLocation.Any)]
+        NoStore = true,
+        Location = ResponseCacheLocation.None)]
     [ProducesResponseType(
         StatusCodes.Status200OK)]
     [ProducesResponseType(
@@ -21,15 +25,34 @@ public sealed class ListingImagesController(
         Guid imageId,
         CancellationToken cancellationToken)
     {
+        Guid? viewerUserId =
+            AuthenticatedUserId.Resolve(User);
+
+        bool canModerate = false;
+
+        if (viewerUserId.HasValue)
+        {
+            AuthorizationResult authorization =
+                await authorizationService.AuthorizeAsync(
+                    User,
+                    PolicyNames.AdminAccess);
+
+            canModerate = authorization.Succeeded;
+        }
+
         ListingImageContentResult? result =
             await imageService.OpenAsync(
                 imageId,
+                viewerUserId,
+                canModerate,
                 cancellationToken);
 
         if (result is null)
         {
             return NotFound();
         }
+
+        Response.Headers["X-Content-Type-Options"] = "nosniff";
 
         return File(
             result.Content,

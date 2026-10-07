@@ -281,6 +281,10 @@ public static class DependencyInjection
             WalletService>();
 
         services.AddScoped<
+            RentoX.Application.Wallets.IDemoWalletTopUpService,
+            RentoX.Infrastructure.Wallets.DemoWalletTopUpService>();
+
+        services.AddScoped<
             IListingActivationPricingService,
             ListingActivationPricingService>();
 

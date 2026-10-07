@@ -6,6 +6,12 @@ public interface IListingImageManagementService
         Guid imageId,
         CancellationToken cancellationToken = default);
 
+    Task<ListingImageContentResult?> OpenAsync(
+        Guid imageId,
+        Guid? viewerUserId,
+        bool canModerate,
+        CancellationToken cancellationToken = default);
+
     Task DeleteAsync(
         Guid ownerId,
         Guid listingId,

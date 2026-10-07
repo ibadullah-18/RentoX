@@ -1,11 +1,9 @@
-﻿using System.Security.Claims;
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Hosting;
+using RentoX.Api.Authentication;
 using RentoX.Application.Wallets;
 using RentoX.Contracts.Wallets;
-using RentoX.Domain.Common.Exceptions;
-using RentoX.Domain.Wallets.Enums;
 
 namespace RentoX.Api.Controllers;
 
@@ -14,19 +12,17 @@ namespace RentoX.Api.Controllers;
 [Route("api/wallet")]
 public sealed class WalletController(
     IWalletService walletService,
-    IHostEnvironment environment)
+    IHostEnvironment environment,
+    IDemoWalletTopUpService demoTopUpService)
     : ControllerBase
 {
     [HttpGet]
     [ProducesResponseType(
         typeof(WalletBalanceResponse),
         StatusCodes.Status200OK)]
-    [ProducesResponseType(
-        StatusCodes.Status401Unauthorized)]
-    public async Task<
-        ActionResult<WalletBalanceResponse>>
-        GetAsync(
-            CancellationToken cancellationToken)
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public async Task<ActionResult<WalletBalanceResponse>> GetAsync(
+        CancellationToken cancellationToken)
     {
         if (!TryGetCurrentUserId(out Guid userId))
         {
@@ -45,10 +41,8 @@ public sealed class WalletController(
     [ProducesResponseType(
         typeof(WalletTransactionPageResponse),
         StatusCodes.Status200OK)]
-    [ProducesResponseType(
-        StatusCodes.Status401Unauthorized)]
-    public async Task<
-        ActionResult<WalletTransactionPageResponse>>
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public async Task<ActionResult<WalletTransactionPageResponse>>
         GetTransactionsAsync(
             [FromQuery] int page = 1,
             [FromQuery] int pageSize = 20,
@@ -81,14 +75,10 @@ public sealed class WalletController(
     [ProducesResponseType(
         typeof(WalletOperationResponse),
         StatusCodes.Status200OK)]
-    [ProducesResponseType(
-        StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(
-        StatusCodes.Status401Unauthorized)]
-    [ProducesResponseType(
-        StatusCodes.Status404NotFound)]
-    public async Task<
-        ActionResult<WalletOperationResponse>>
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<WalletOperationResponse>>
         DemoTopUpAsync(
             DemoWalletTopUpRequest request,
             CancellationToken cancellationToken)
@@ -98,46 +88,32 @@ public sealed class WalletController(
             return NotFound();
         }
 
-        if (!TryGetCurrentUserId(out Guid userId))
+        if (!TryGetCurrentUserId(out _))
         {
             return Unauthorized();
         }
 
-        if (request.Amount is < 0.01m or > 10_000m)
-        {
-            throw new DomainException(
-                "Demo top-up amount must be between 0.01 and 10000 AZN.");
-        }
-
         WalletOperationResult result =
-            await walletService.CreditAsync(
-                new CreditWalletCommand(
-                    userId,
-                    request.Amount,
-                    WalletTransactionType.TopUp,
-                    "Development demo balance top-up",
-                    null,
-                    request.IdempotencyKey),
+            await demoTopUpService.TopUpAsync(
+                request.Amount,
+                request.IdempotencyKey,
                 cancellationToken);
 
         return Ok(CreateOperationResponse(result));
     }
 
-    private bool TryGetCurrentUserId(
-        out Guid userId)
+    private bool TryGetCurrentUserId(out Guid userId)
     {
-        string? userIdValue =
-            User.FindFirstValue(
-                ClaimTypes.NameIdentifier);
+        Guid? currentUserId =
+            AuthenticatedUserId.Resolve(User);
 
-        return Guid.TryParse(
-            userIdValue,
-            out userId);
+        userId = currentUserId.GetValueOrDefault();
+
+        return currentUserId.HasValue;
     }
 
-    private static WalletBalanceResponse
-        CreateBalanceResponse(
-            WalletBalanceResult result)
+    private static WalletBalanceResponse CreateBalanceResponse(
+        WalletBalanceResult result)
     {
         return new WalletBalanceResponse(
             result.WalletId,
@@ -146,9 +122,8 @@ public sealed class WalletController(
             result.Currency);
     }
 
-    private static WalletTransactionResponse
-        CreateTransactionResponse(
-            WalletTransactionResult result)
+    private static WalletTransactionResponse CreateTransactionResponse(
+        WalletTransactionResult result)
     {
         return new WalletTransactionResponse(
             result.Id,
@@ -164,14 +139,12 @@ public sealed class WalletController(
             result.OccurredAtUtc);
     }
 
-    private static WalletOperationResponse
-        CreateOperationResponse(
-            WalletOperationResult result)
+    private static WalletOperationResponse CreateOperationResponse(
+        WalletOperationResult result)
     {
         return new WalletOperationResponse(
             CreateBalanceResponse(result.Wallet),
-            CreateTransactionResponse(
-                result.Transaction),
+            CreateTransactionResponse(result.Transaction),
             result.WasAlreadyProcessed);
     }
 }

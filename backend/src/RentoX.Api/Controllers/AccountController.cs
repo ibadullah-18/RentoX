@@ -1,5 +1,4 @@
-﻿using System.Security.Claims;
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using RentoX.Application.Accounts;
 using RentoX.Contracts.Accounts;
@@ -77,11 +76,12 @@ public sealed class AccountController(
 
     private bool TryGetUserId(out Guid userId)
     {
-        string? userIdValue =
-            User.FindFirstValue(
-                ClaimTypes.NameIdentifier);
+        Guid? resolvedUserId =
+            RentoX.Api.Authentication.AuthenticatedUserId.Resolve(User);
 
-        return Guid.TryParse(userIdValue, out userId);
+        userId = resolvedUserId.GetValueOrDefault();
+
+        return resolvedUserId.HasValue;
     }
 
     private static CurrentUserResponse CreateResponse(

@@ -3,35 +3,83 @@ using RentoX.Application.Files;
 using RentoX.Application.Listings;
 using RentoX.Domain.Common.Exceptions;
 using RentoX.Domain.Listings;
+using RentoX.Domain.Listings.Enums;
 using RentoX.Infrastructure.Persistence;
 
 namespace RentoX.Infrastructure.Listings;
 
 public sealed class ListingImageManagementService(
     RentoXDbContext dbContext,
-    IFileStorage fileStorage)
+    IFileStorage fileStorage,
+    RentoX.Application.Abstractions.Time.IClock clock)
     : IListingImageManagementService
 {
-    public async Task<ListingImageContentResult?> OpenAsync(
+    public Task<ListingImageContentResult?> OpenAsync(
         Guid imageId,
         CancellationToken cancellationToken = default)
     {
-        ListingImage? image =
-            await dbContext.ListingImages
-                .AsNoTracking()
-                .SingleOrDefaultAsync(
-                    item => item.Id == imageId,
-                    cancellationToken);
+        return OpenAsync(
+            imageId,
+            null,
+            false,
+            cancellationToken);
+    }
+
+    public async Task<ListingImageContentResult?> OpenAsync(
+        Guid imageId,
+        Guid? viewerUserId,
+        bool canModerate,
+        CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+
+        if (imageId == Guid.Empty)
+        {
+            return null;
+        }
+
+        Guid? validViewerId =
+            viewerUserId.HasValue && viewerUserId.Value != Guid.Empty
+                ? viewerUserId
+                : null;
+
+        bool hasModerationAccess =
+            validViewerId.HasValue && canModerate;
+
+        DateTimeOffset utcNow = clock.UtcNow;
+
+        var image = await (
+            from item in dbContext.ListingImages.AsNoTracking()
+            join listing in dbContext.Listings.AsNoTracking()
+                on item.ListingId equals listing.Id
+            where item.Id == imageId
+                && listing.DeletedAtUtc == null
+                && listing.Status != ListingStatus.Deleted
+                && (
+                    hasModerationAccess
+                    || (validViewerId != null
+                        && listing.OwnerId == validViewerId)
+                    || (listing.Status == ListingStatus.Active
+                        && listing.PublishedAtUtc != null
+                        && listing.PublishedAtUtc <= utcNow
+                        && listing.ExpiresAtUtc != null
+                        && listing.ExpiresAtUtc > utcNow)
+                )
+            select new
+            {
+                item.StorageKey,
+                item.ContentType
+            })
+            .SingleOrDefaultAsync(cancellationToken);
 
         if (image is null)
         {
             return null;
         }
 
-        Stream? content =
-            await fileStorage.OpenReadAsync(
-                image.StorageKey,
-                cancellationToken);
+        Stream? content = await fileStorage.OpenReadAsync(
+            image.StorageKey,
+            cancellationToken);
 
         return content is null
             ? null
