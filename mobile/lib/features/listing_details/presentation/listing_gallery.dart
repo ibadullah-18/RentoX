@@ -156,6 +156,7 @@ class _FullscreenGalleryState extends State<FullscreenGallery> {
               child: Row(
                 children: [
                   GlassIconButton(
+                    onPhoto: true,
                     icon: AppIcons.close,
                     semanticLabel: l10n.backAction,
                     onPressed: () => Navigator.of(context).pop(),

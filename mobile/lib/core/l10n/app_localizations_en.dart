@@ -618,6 +618,260 @@ class AppL10nEn extends AppL10n {
   String get vipActive => 'VIP listing is active';
 
   @override
+  String get messagesTitle => 'Messages';
+
+  @override
+  String get messagesAll => 'All';
+
+  @override
+  String get messagesUnreadFilter => 'Unread';
+
+  @override
+  String get messagesEmpty => 'No messages yet';
+
+  @override
+  String get messagesEmptyHint =>
+      'Write to a listing owner and the chat will show up here.';
+
+  @override
+  String get messagesUnreadEmpty => 'No unread messages';
+
+  @override
+  String get chatUser => 'User';
+
+  @override
+  String get chatTyping => 'typing…';
+
+  @override
+  String get chatOnline => 'Online';
+
+  @override
+  String get chatOffline => 'Offline';
+
+  @override
+  String get chatInputHint => 'Write a message';
+
+  @override
+  String get chatEmpty => 'Start the conversation';
+
+  @override
+  String get chatPhoto => 'Photo';
+
+  @override
+  String get chatAttach => 'Attach photos';
+
+  @override
+  String get chatToday => 'Today';
+
+  @override
+  String get chatYesterday => 'Yesterday';
+
+  @override
+  String get chatViewListing => 'View listing';
+
+  @override
+  String get chatSendFailed => 'Not sent';
+
+  @override
+  String get chatRetry => 'Send again';
+
+  @override
+  String get chatDiscard => 'Delete';
+
+  @override
+  String get chatTooLong => 'Message is too long (2000 characters max)';
+
+  @override
+  String get chatBlock => 'Block user';
+
+  @override
+  String get chatUnblock => 'Unblock';
+
+  @override
+  String get chatBlockedByMe => 'You blocked this user';
+
+  @override
+  String get chatCannotSend => 'You can\'t send messages in this chat';
+
+  @override
+  String get chatBlockedDone => 'User blocked';
+
+  @override
+  String get chatUnblockedDone => 'User unblocked';
+
+  @override
+  String get chatReport => 'Report';
+
+  @override
+  String get chatReportTitle => 'Reason for the report';
+
+  @override
+  String get chatReportDetails => 'More details (optional)';
+
+  @override
+  String get chatReportSend => 'Submit';
+
+  @override
+  String get chatReportSent => 'Report sent';
+
+  @override
+  String get reportSpam => 'Spam';
+
+  @override
+  String get reportFraud => 'Fraud';
+
+  @override
+  String get reportHarassment => 'Harassment';
+
+  @override
+  String get reportProhibited => 'Prohibited content';
+
+  @override
+  String get reportOther => 'Other';
+
+  @override
+  String get chatReconnecting => 'Reconnecting…';
+
+  @override
+  String get notificationsMarkAll => 'Mark all read';
+
+  @override
+  String get notificationsEmpty => 'No notifications';
+
+  @override
+  String get notificationsEmptyHint =>
+      'Updates about your listings and account will show up here.';
+
+  @override
+  String get notificationView => 'View';
+
+  @override
+  String get profileEditTitle => 'Edit profile';
+
+  @override
+  String get profileAddName => 'Add your name';
+
+  @override
+  String get profileName => 'Full name';
+
+  @override
+  String get profileNameHint => 'For example, Murad Aliyev';
+
+  @override
+  String get profileNameInvalid => 'The name must be 2 to 100 characters';
+
+  @override
+  String get profileBio => 'About you';
+
+  @override
+  String get profileBioHint => 'A few words about you (optional)';
+
+  @override
+  String get profilePhone => 'Phone number';
+
+  @override
+  String get profileSave => 'Save';
+
+  @override
+  String get profileSaved => 'Profile updated';
+
+  @override
+  String get profilePhotoAdd => 'Add a photo';
+
+  @override
+  String get profilePhotoChange => 'Change photo';
+
+  @override
+  String get profilePhotoTooLarge => 'The photo can\'t be larger than 5 MB';
+
+  @override
+  String get languageTitle => 'Language';
+
+  @override
+  String get cancelAction => 'Cancel';
+
+  @override
+  String get logoutAllTitle => 'Sign out everywhere';
+
+  @override
+  String get logoutAllMessage =>
+      'You\'ll be signed out on every device and will need to sign in again.';
+
+  @override
+  String get logoutAllConfirm => 'Sign out';
+
+  @override
+  String get editListingTitle => 'Edit listing';
+
+  @override
+  String get editAction => 'Edit';
+
+  @override
+  String get editSave => 'Save changes';
+
+  @override
+  String get editSaved => 'Listing updated. You can send it for review now.';
+
+  @override
+  String get editNote =>
+      'After you save, the listing has to be sent for review again.';
+
+  @override
+  String get editNotAllowed => 'This listing can\'t be edited right now';
+
+  @override
+  String get editNotAllowedHint =>
+      'Only drafts and rejected listings can be edited.';
+
+  @override
+  String get editPhotosTitle => 'Photos';
+
+  @override
+  String get editPhotoRemoveTitle => 'Remove this photo?';
+
+  @override
+  String get editPhotoNeeded =>
+      'You need at least one photo to send it for review';
+
+  @override
+  String get deleteListingAction => 'Delete listing';
+
+  @override
+  String get deleteListingTitle => 'Delete this listing?';
+
+  @override
+  String get deleteListingMessage =>
+      'The listing will be deleted. This can\'t be undone.';
+
+  @override
+  String get deleteListingConfirm => 'Delete';
+
+  @override
+  String get listingDeleted => 'Listing deleted';
+
+  @override
+  String get renewAction => 'Renew listing';
+
+  @override
+  String get renewHint =>
+      'This listing has expired. You can renew it for another 30 days.';
+
+  @override
+  String get payForRenewal => 'Listing renewal (30 days)';
+
+  @override
+  String get paymentSuccessRenew => 'Listing renewed and active again';
+
+  @override
+  String get bumpAction => 'Bump to top';
+
+  @override
+  String get payForBump => 'Bump the listing up the list';
+
+  @override
+  String get paymentSuccessBump => 'Listing bumped';
+
+  @override
   String get unitHour => 'hour';
 
   @override

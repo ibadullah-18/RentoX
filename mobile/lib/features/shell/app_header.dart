@@ -7,7 +7,7 @@ import '../../core/l10n/app_localizations.dart';
 import '../../core/theme/app_icons.dart';
 import '../../shared/widgets/glass.dart';
 import '../../shared/widgets/rentox_logo.dart';
-import '../notifications/data/notifications_repository.dart';
+import '../notifications/presentation/notifications_controller.dart';
 
 /// Frosted header shared by every main tab: wordmark on the left, the
 /// notifications bell on the right. It floats above the scroll view, so the

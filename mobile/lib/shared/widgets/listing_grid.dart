@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/theme/app_spacing.dart';
 import '../../features/catalog/domain/catalog_models.dart';
 import 'listing_card.dart';
+import 'motion.dart';
 
 /// Responsive grid of [ListingCard]s used by every listing page, so cards
 /// look and size identically everywhere (2 columns on phones, more on wide
@@ -37,9 +38,13 @@ class SliverListingGrid extends StatelessWidget {
               mainAxisExtent: extent,
             ),
             itemCount: items.length,
-            itemBuilder: (_, i) => ListingCard(
-              listing: items[i],
-              onOpen: onOpen == null ? null : () => onOpen!(items[i]),
+            itemBuilder: (_, i) => Reveal(
+              id: 'listing-${items[i].id}',
+              index: i,
+              child: ListingCard(
+                listing: items[i],
+                onOpen: onOpen == null ? null : () => onOpen!(items[i]),
+              ),
             ),
           );
         },

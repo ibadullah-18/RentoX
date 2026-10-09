@@ -1179,6 +1179,498 @@ abstract class AppL10n {
   /// **'VIP elan aktivdir'**
   String get vipActive;
 
+  /// No description provided for @messagesTitle.
+  ///
+  /// In az, this message translates to:
+  /// **'Mesajlar'**
+  String get messagesTitle;
+
+  /// No description provided for @messagesAll.
+  ///
+  /// In az, this message translates to:
+  /// **'Hamısı'**
+  String get messagesAll;
+
+  /// No description provided for @messagesUnreadFilter.
+  ///
+  /// In az, this message translates to:
+  /// **'Oxunmamış'**
+  String get messagesUnreadFilter;
+
+  /// No description provided for @messagesEmpty.
+  ///
+  /// In az, this message translates to:
+  /// **'Hələ mesajınız yoxdur'**
+  String get messagesEmpty;
+
+  /// No description provided for @messagesEmptyHint.
+  ///
+  /// In az, this message translates to:
+  /// **'Elan sahibinə yazın, söhbət burada görünəcək.'**
+  String get messagesEmptyHint;
+
+  /// No description provided for @messagesUnreadEmpty.
+  ///
+  /// In az, this message translates to:
+  /// **'Oxunmamış mesaj yoxdur'**
+  String get messagesUnreadEmpty;
+
+  /// No description provided for @chatUser.
+  ///
+  /// In az, this message translates to:
+  /// **'İstifadəçi'**
+  String get chatUser;
+
+  /// No description provided for @chatTyping.
+  ///
+  /// In az, this message translates to:
+  /// **'yazır…'**
+  String get chatTyping;
+
+  /// No description provided for @chatOnline.
+  ///
+  /// In az, this message translates to:
+  /// **'Onlayn'**
+  String get chatOnline;
+
+  /// No description provided for @chatOffline.
+  ///
+  /// In az, this message translates to:
+  /// **'Oflayn'**
+  String get chatOffline;
+
+  /// No description provided for @chatInputHint.
+  ///
+  /// In az, this message translates to:
+  /// **'Mesaj yazın'**
+  String get chatInputHint;
+
+  /// No description provided for @chatEmpty.
+  ///
+  /// In az, this message translates to:
+  /// **'Söhbəti başladın'**
+  String get chatEmpty;
+
+  /// No description provided for @chatPhoto.
+  ///
+  /// In az, this message translates to:
+  /// **'Şəkil'**
+  String get chatPhoto;
+
+  /// No description provided for @chatAttach.
+  ///
+  /// In az, this message translates to:
+  /// **'Şəkil əlavə et'**
+  String get chatAttach;
+
+  /// No description provided for @chatToday.
+  ///
+  /// In az, this message translates to:
+  /// **'Bu gün'**
+  String get chatToday;
+
+  /// No description provided for @chatYesterday.
+  ///
+  /// In az, this message translates to:
+  /// **'Dünən'**
+  String get chatYesterday;
+
+  /// No description provided for @chatViewListing.
+  ///
+  /// In az, this message translates to:
+  /// **'Elana bax'**
+  String get chatViewListing;
+
+  /// No description provided for @chatSendFailed.
+  ///
+  /// In az, this message translates to:
+  /// **'Göndərilmədi'**
+  String get chatSendFailed;
+
+  /// No description provided for @chatRetry.
+  ///
+  /// In az, this message translates to:
+  /// **'Yenidən göndər'**
+  String get chatRetry;
+
+  /// No description provided for @chatDiscard.
+  ///
+  /// In az, this message translates to:
+  /// **'Sil'**
+  String get chatDiscard;
+
+  /// No description provided for @chatTooLong.
+  ///
+  /// In az, this message translates to:
+  /// **'Mesaj çox uzundur (ən çox 2000 simvol)'**
+  String get chatTooLong;
+
+  /// No description provided for @chatBlock.
+  ///
+  /// In az, this message translates to:
+  /// **'İstifadəçini əngəllə'**
+  String get chatBlock;
+
+  /// No description provided for @chatUnblock.
+  ///
+  /// In az, this message translates to:
+  /// **'Əngəli ləğv et'**
+  String get chatUnblock;
+
+  /// No description provided for @chatBlockedByMe.
+  ///
+  /// In az, this message translates to:
+  /// **'Bu istifadəçini əngəlləmisiniz'**
+  String get chatBlockedByMe;
+
+  /// No description provided for @chatCannotSend.
+  ///
+  /// In az, this message translates to:
+  /// **'Bu söhbətə mesaj yazmaq mümkün deyil'**
+  String get chatCannotSend;
+
+  /// No description provided for @chatBlockedDone.
+  ///
+  /// In az, this message translates to:
+  /// **'İstifadəçi əngəlləndi'**
+  String get chatBlockedDone;
+
+  /// No description provided for @chatUnblockedDone.
+  ///
+  /// In az, this message translates to:
+  /// **'Əngəl ləğv edildi'**
+  String get chatUnblockedDone;
+
+  /// No description provided for @chatReport.
+  ///
+  /// In az, this message translates to:
+  /// **'Şikayət et'**
+  String get chatReport;
+
+  /// No description provided for @chatReportTitle.
+  ///
+  /// In az, this message translates to:
+  /// **'Şikayətin səbəbi'**
+  String get chatReportTitle;
+
+  /// No description provided for @chatReportDetails.
+  ///
+  /// In az, this message translates to:
+  /// **'Əlavə məlumat (istəyə görə)'**
+  String get chatReportDetails;
+
+  /// No description provided for @chatReportSend.
+  ///
+  /// In az, this message translates to:
+  /// **'Göndər'**
+  String get chatReportSend;
+
+  /// No description provided for @chatReportSent.
+  ///
+  /// In az, this message translates to:
+  /// **'Şikayət göndərildi'**
+  String get chatReportSent;
+
+  /// No description provided for @reportSpam.
+  ///
+  /// In az, this message translates to:
+  /// **'Spam'**
+  String get reportSpam;
+
+  /// No description provided for @reportFraud.
+  ///
+  /// In az, this message translates to:
+  /// **'Dələduzluq'**
+  String get reportFraud;
+
+  /// No description provided for @reportHarassment.
+  ///
+  /// In az, this message translates to:
+  /// **'Təhqir və ya təzyiq'**
+  String get reportHarassment;
+
+  /// No description provided for @reportProhibited.
+  ///
+  /// In az, this message translates to:
+  /// **'Qadağan olunmuş məzmun'**
+  String get reportProhibited;
+
+  /// No description provided for @reportOther.
+  ///
+  /// In az, this message translates to:
+  /// **'Digər'**
+  String get reportOther;
+
+  /// No description provided for @chatReconnecting.
+  ///
+  /// In az, this message translates to:
+  /// **'Bağlantı bərpa olunur…'**
+  String get chatReconnecting;
+
+  /// No description provided for @notificationsMarkAll.
+  ///
+  /// In az, this message translates to:
+  /// **'Hamısını oxu'**
+  String get notificationsMarkAll;
+
+  /// No description provided for @notificationsEmpty.
+  ///
+  /// In az, this message translates to:
+  /// **'Bildiriş yoxdur'**
+  String get notificationsEmpty;
+
+  /// No description provided for @notificationsEmptyHint.
+  ///
+  /// In az, this message translates to:
+  /// **'Elanlarınız və hesabınızla bağlı yeniliklər burada görünəcək.'**
+  String get notificationsEmptyHint;
+
+  /// No description provided for @notificationView.
+  ///
+  /// In az, this message translates to:
+  /// **'Bax'**
+  String get notificationView;
+
+  /// No description provided for @profileEditTitle.
+  ///
+  /// In az, this message translates to:
+  /// **'Profili redaktə et'**
+  String get profileEditTitle;
+
+  /// No description provided for @profileAddName.
+  ///
+  /// In az, this message translates to:
+  /// **'Adınızı əlavə edin'**
+  String get profileAddName;
+
+  /// No description provided for @profileName.
+  ///
+  /// In az, this message translates to:
+  /// **'Ad və soyad'**
+  String get profileName;
+
+  /// No description provided for @profileNameHint.
+  ///
+  /// In az, this message translates to:
+  /// **'Məsələn, Murad Əliyev'**
+  String get profileNameHint;
+
+  /// No description provided for @profileNameInvalid.
+  ///
+  /// In az, this message translates to:
+  /// **'Ad 2 ilə 100 simvol arasında olmalıdır'**
+  String get profileNameInvalid;
+
+  /// No description provided for @profileBio.
+  ///
+  /// In az, this message translates to:
+  /// **'Haqqınızda'**
+  String get profileBio;
+
+  /// No description provided for @profileBioHint.
+  ///
+  /// In az, this message translates to:
+  /// **'Qısa məlumat (istəyə görə)'**
+  String get profileBioHint;
+
+  /// No description provided for @profilePhone.
+  ///
+  /// In az, this message translates to:
+  /// **'Telefon nömrəsi'**
+  String get profilePhone;
+
+  /// No description provided for @profileSave.
+  ///
+  /// In az, this message translates to:
+  /// **'Yadda saxla'**
+  String get profileSave;
+
+  /// No description provided for @profileSaved.
+  ///
+  /// In az, this message translates to:
+  /// **'Profil yeniləndi'**
+  String get profileSaved;
+
+  /// No description provided for @profilePhotoAdd.
+  ///
+  /// In az, this message translates to:
+  /// **'Şəkil əlavə et'**
+  String get profilePhotoAdd;
+
+  /// No description provided for @profilePhotoChange.
+  ///
+  /// In az, this message translates to:
+  /// **'Şəkli dəyiş'**
+  String get profilePhotoChange;
+
+  /// No description provided for @profilePhotoTooLarge.
+  ///
+  /// In az, this message translates to:
+  /// **'Şəkil 5 MB-dan böyük ola bilməz'**
+  String get profilePhotoTooLarge;
+
+  /// No description provided for @languageTitle.
+  ///
+  /// In az, this message translates to:
+  /// **'Dil'**
+  String get languageTitle;
+
+  /// No description provided for @cancelAction.
+  ///
+  /// In az, this message translates to:
+  /// **'Ləğv et'**
+  String get cancelAction;
+
+  /// No description provided for @logoutAllTitle.
+  ///
+  /// In az, this message translates to:
+  /// **'Bütün cihazlardan çıx'**
+  String get logoutAllTitle;
+
+  /// No description provided for @logoutAllMessage.
+  ///
+  /// In az, this message translates to:
+  /// **'Hesabınız bütün cihazlarda sistemdən çıxarılacaq. Yenidən daxil olmaq lazım olacaq.'**
+  String get logoutAllMessage;
+
+  /// No description provided for @logoutAllConfirm.
+  ///
+  /// In az, this message translates to:
+  /// **'Çıx'**
+  String get logoutAllConfirm;
+
+  /// No description provided for @editListingTitle.
+  ///
+  /// In az, this message translates to:
+  /// **'Elanı redaktə et'**
+  String get editListingTitle;
+
+  /// No description provided for @editAction.
+  ///
+  /// In az, this message translates to:
+  /// **'Redaktə et'**
+  String get editAction;
+
+  /// No description provided for @editSave.
+  ///
+  /// In az, this message translates to:
+  /// **'Yadda saxla'**
+  String get editSave;
+
+  /// No description provided for @editSaved.
+  ///
+  /// In az, this message translates to:
+  /// **'Elan yeniləndi. İndi yoxlamaya göndərə bilərsiniz.'**
+  String get editSaved;
+
+  /// No description provided for @editNote.
+  ///
+  /// In az, this message translates to:
+  /// **'Dəyişikliklərdən sonra elan yenidən yoxlamaya göndərilməlidir.'**
+  String get editNote;
+
+  /// No description provided for @editNotAllowed.
+  ///
+  /// In az, this message translates to:
+  /// **'Bu elan hazırda redaktə oluna bilməz'**
+  String get editNotAllowed;
+
+  /// No description provided for @editNotAllowedHint.
+  ///
+  /// In az, this message translates to:
+  /// **'Yalnız qaralama və rədd edilmiş elanlar redaktə olunur.'**
+  String get editNotAllowedHint;
+
+  /// No description provided for @editPhotosTitle.
+  ///
+  /// In az, this message translates to:
+  /// **'Şəkillər'**
+  String get editPhotosTitle;
+
+  /// No description provided for @editPhotoRemoveTitle.
+  ///
+  /// In az, this message translates to:
+  /// **'Şəkil silinsin?'**
+  String get editPhotoRemoveTitle;
+
+  /// No description provided for @editPhotoNeeded.
+  ///
+  /// In az, this message translates to:
+  /// **'Yoxlamaya göndərmək üçün ən azı bir şəkil lazımdır'**
+  String get editPhotoNeeded;
+
+  /// No description provided for @deleteListingAction.
+  ///
+  /// In az, this message translates to:
+  /// **'Elanı sil'**
+  String get deleteListingAction;
+
+  /// No description provided for @deleteListingTitle.
+  ///
+  /// In az, this message translates to:
+  /// **'Elanı silək?'**
+  String get deleteListingTitle;
+
+  /// No description provided for @deleteListingMessage.
+  ///
+  /// In az, this message translates to:
+  /// **'Elan silinəcək. Bu əməliyyatı geri qaytarmaq olmur.'**
+  String get deleteListingMessage;
+
+  /// No description provided for @deleteListingConfirm.
+  ///
+  /// In az, this message translates to:
+  /// **'Sil'**
+  String get deleteListingConfirm;
+
+  /// No description provided for @listingDeleted.
+  ///
+  /// In az, this message translates to:
+  /// **'Elan silindi'**
+  String get listingDeleted;
+
+  /// No description provided for @renewAction.
+  ///
+  /// In az, this message translates to:
+  /// **'Elanı yenilə'**
+  String get renewAction;
+
+  /// No description provided for @renewHint.
+  ///
+  /// In az, this message translates to:
+  /// **'Elanın müddəti bitib. 30 gün üçün yeniləyə bilərsiniz.'**
+  String get renewHint;
+
+  /// No description provided for @payForRenewal.
+  ///
+  /// In az, this message translates to:
+  /// **'Elanın yenilənməsi (30 gün)'**
+  String get payForRenewal;
+
+  /// No description provided for @paymentSuccessRenew.
+  ///
+  /// In az, this message translates to:
+  /// **'Elan yeniləndi və yenidən aktivdir'**
+  String get paymentSuccessRenew;
+
+  /// No description provided for @bumpAction.
+  ///
+  /// In az, this message translates to:
+  /// **'Yuxarı qaldır'**
+  String get bumpAction;
+
+  /// No description provided for @payForBump.
+  ///
+  /// In az, this message translates to:
+  /// **'Elanı siyahıda yuxarı qaldırmaq'**
+  String get payForBump;
+
+  /// No description provided for @paymentSuccessBump.
+  ///
+  /// In az, this message translates to:
+  /// **'Elan yuxarı qaldırıldı'**
+  String get paymentSuccessBump;
+
   /// No description provided for @unitHour.
   ///
   /// In az, this message translates to:

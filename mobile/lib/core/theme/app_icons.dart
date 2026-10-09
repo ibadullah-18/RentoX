@@ -38,6 +38,21 @@ abstract final class AppIcons {
   static const IconData error = Symbols.error_rounded;
   static const IconData wallet = Symbols.account_balance_wallet_rounded;
   static const IconData listings = Symbols.list_alt_rounded;
+  static const IconData more = Symbols.more_vert_rounded;
+  static const IconData block = Symbols.block_rounded;
+  static const IconData report = Symbols.flag_rounded;
+  static const IconData retry = Symbols.refresh_rounded;
+  static const IconData sent = Symbols.done_rounded;
+  static const IconData read = Symbols.done_all_rounded;
+  static const IconData lock = Symbols.lock_rounded;
+  static const IconData language = Symbols.language_rounded;
+  static const IconData devices = Symbols.devices_rounded;
+  static const IconData edit = Symbols.edit_rounded;
+  static const IconData store = Symbols.storefront_rounded;
+  static const IconData support = Symbols.support_agent_rounded;
+  static const IconData info = Symbols.info_rounded;
+  static const IconData bellOff = Symbols.notifications_off_rounded;
+  static const IconData chatEmpty = Symbols.forum_rounded;
 
   // Status / trust
   static const IconData vip = Symbols.workspace_premium_rounded;

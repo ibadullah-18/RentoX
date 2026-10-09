@@ -627,6 +627,262 @@ class AppL10nRu extends AppL10n {
   String get vipActive => 'VIP-объявление активно';
 
   @override
+  String get messagesTitle => 'Сообщения';
+
+  @override
+  String get messagesAll => 'Все';
+
+  @override
+  String get messagesUnreadFilter => 'Непрочитанные';
+
+  @override
+  String get messagesEmpty => 'Сообщений пока нет';
+
+  @override
+  String get messagesEmptyHint =>
+      'Напишите владельцу объявления, и чат появится здесь.';
+
+  @override
+  String get messagesUnreadEmpty => 'Нет непрочитанных сообщений';
+
+  @override
+  String get chatUser => 'Пользователь';
+
+  @override
+  String get chatTyping => 'печатает…';
+
+  @override
+  String get chatOnline => 'В сети';
+
+  @override
+  String get chatOffline => 'Не в сети';
+
+  @override
+  String get chatInputHint => 'Напишите сообщение';
+
+  @override
+  String get chatEmpty => 'Начните разговор';
+
+  @override
+  String get chatPhoto => 'Фото';
+
+  @override
+  String get chatAttach => 'Прикрепить фото';
+
+  @override
+  String get chatToday => 'Сегодня';
+
+  @override
+  String get chatYesterday => 'Вчера';
+
+  @override
+  String get chatViewListing => 'Открыть объявление';
+
+  @override
+  String get chatSendFailed => 'Не отправлено';
+
+  @override
+  String get chatRetry => 'Отправить снова';
+
+  @override
+  String get chatDiscard => 'Удалить';
+
+  @override
+  String get chatTooLong =>
+      'Сообщение слишком длинное (максимум 2000 символов)';
+
+  @override
+  String get chatBlock => 'Заблокировать';
+
+  @override
+  String get chatUnblock => 'Разблокировать';
+
+  @override
+  String get chatBlockedByMe => 'Вы заблокировали этого пользователя';
+
+  @override
+  String get chatCannotSend => 'В этот чат нельзя писать';
+
+  @override
+  String get chatBlockedDone => 'Пользователь заблокирован';
+
+  @override
+  String get chatUnblockedDone => 'Пользователь разблокирован';
+
+  @override
+  String get chatReport => 'Пожаловаться';
+
+  @override
+  String get chatReportTitle => 'Причина жалобы';
+
+  @override
+  String get chatReportDetails => 'Подробности (необязательно)';
+
+  @override
+  String get chatReportSend => 'Отправить';
+
+  @override
+  String get chatReportSent => 'Жалоба отправлена';
+
+  @override
+  String get reportSpam => 'Спам';
+
+  @override
+  String get reportFraud => 'Мошенничество';
+
+  @override
+  String get reportHarassment => 'Оскорбления или давление';
+
+  @override
+  String get reportProhibited => 'Запрещённый контент';
+
+  @override
+  String get reportOther => 'Другое';
+
+  @override
+  String get chatReconnecting => 'Восстанавливаем соединение…';
+
+  @override
+  String get notificationsMarkAll => 'Прочитать все';
+
+  @override
+  String get notificationsEmpty => 'Уведомлений нет';
+
+  @override
+  String get notificationsEmptyHint =>
+      'Здесь появятся новости по вашим объявлениям и аккаунту.';
+
+  @override
+  String get notificationView => 'Открыть';
+
+  @override
+  String get profileEditTitle => 'Редактировать профиль';
+
+  @override
+  String get profileAddName => 'Добавьте своё имя';
+
+  @override
+  String get profileName => 'Имя и фамилия';
+
+  @override
+  String get profileNameHint => 'Например, Мурад Алиев';
+
+  @override
+  String get profileNameInvalid => 'Имя должно содержать от 2 до 100 символов';
+
+  @override
+  String get profileBio => 'О себе';
+
+  @override
+  String get profileBioHint => 'Пара слов о себе (необязательно)';
+
+  @override
+  String get profilePhone => 'Номер телефона';
+
+  @override
+  String get profileSave => 'Сохранить';
+
+  @override
+  String get profileSaved => 'Профиль обновлён';
+
+  @override
+  String get profilePhotoAdd => 'Добавить фото';
+
+  @override
+  String get profilePhotoChange => 'Изменить фото';
+
+  @override
+  String get profilePhotoTooLarge => 'Фото не должно быть больше 5 МБ';
+
+  @override
+  String get languageTitle => 'Язык';
+
+  @override
+  String get cancelAction => 'Отмена';
+
+  @override
+  String get logoutAllTitle => 'Выйти на всех устройствах';
+
+  @override
+  String get logoutAllMessage =>
+      'Вы выйдете из аккаунта на всех устройствах и должны будете войти снова.';
+
+  @override
+  String get logoutAllConfirm => 'Выйти';
+
+  @override
+  String get editListingTitle => 'Редактирование объявления';
+
+  @override
+  String get editAction => 'Редактировать';
+
+  @override
+  String get editSave => 'Сохранить';
+
+  @override
+  String get editSaved =>
+      'Объявление обновлено. Теперь его можно отправить на модерацию.';
+
+  @override
+  String get editNote =>
+      'После сохранения объявление нужно снова отправить на модерацию.';
+
+  @override
+  String get editNotAllowed => 'Это объявление сейчас нельзя редактировать';
+
+  @override
+  String get editNotAllowedHint =>
+      'Редактировать можно только черновики и отклонённые объявления.';
+
+  @override
+  String get editPhotosTitle => 'Фото';
+
+  @override
+  String get editPhotoRemoveTitle => 'Удалить это фото?';
+
+  @override
+  String get editPhotoNeeded =>
+      'Для отправки на модерацию нужно хотя бы одно фото';
+
+  @override
+  String get deleteListingAction => 'Удалить объявление';
+
+  @override
+  String get deleteListingTitle => 'Удалить объявление?';
+
+  @override
+  String get deleteListingMessage =>
+      'Объявление будет удалено. Это действие нельзя отменить.';
+
+  @override
+  String get deleteListingConfirm => 'Удалить';
+
+  @override
+  String get listingDeleted => 'Объявление удалено';
+
+  @override
+  String get renewAction => 'Продлить объявление';
+
+  @override
+  String get renewHint =>
+      'Срок объявления истёк. Его можно продлить ещё на 30 дней.';
+
+  @override
+  String get payForRenewal => 'Продление объявления (30 дней)';
+
+  @override
+  String get paymentSuccessRenew => 'Объявление продлено и снова активно';
+
+  @override
+  String get bumpAction => 'Поднять наверх';
+
+  @override
+  String get payForBump => 'Поднять объявление в списке';
+
+  @override
+  String get paymentSuccessBump => 'Объявление поднято';
+
+  @override
   String get unitHour => 'час';
 
   @override

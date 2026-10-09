@@ -155,6 +155,7 @@ class ListingImage {
 /// One dynamic attribute of a listing (brand, year, fuel type...).
 class ListingFieldValue {
   const ListingFieldValue({
+    this.fieldId = '',
     required this.label,
     required this.type,
     this.textValue,
@@ -163,8 +164,11 @@ class ListingFieldValue {
     this.calendarValue,
     this.customValue,
     this.selectionLabels = const [],
+    this.selectionIds = const [],
   });
 
+  /// The category field this value belongs to (needed to edit it).
+  final String fieldId;
   final String label;
   final FieldType type;
   final String? textValue;
@@ -173,9 +177,11 @@ class ListingFieldValue {
   final DateTime? calendarValue;
   final String? customValue;
   final List<String> selectionLabels;
+  final List<String> selectionIds;
 
   factory ListingFieldValue.fromJson(Map<String, dynamic> json) =>
       ListingFieldValue(
+        fieldId: (json['fieldId'] as String?) ?? '',
         label: (json['label'] as String?) ?? (json['key'] as String?) ?? '',
         type: FieldType.fromId((json['type'] as num?)?.toInt() ?? 1),
         textValue: json['textValue'] as String?,
@@ -188,6 +194,11 @@ class ListingFieldValue {
         selectionLabels: ((json['selections'] as List?) ?? const [])
             .cast<Map<String, dynamic>>()
             .map((s) => (s['label'] ?? s['value'] ?? '').toString())
+            .where((s) => s.isNotEmpty)
+            .toList(growable: false),
+        selectionIds: ((json['selections'] as List?) ?? const [])
+            .cast<Map<String, dynamic>>()
+            .map((s) => (s['optionId'] ?? '').toString())
             .where((s) => s.isNotEmpty)
             .toList(growable: false),
       );

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -17,6 +19,7 @@ import '../../auth/presentation/auth_controller.dart';
 import '../../catalog/data/catalog_repository.dart';
 import '../../catalog/domain/catalog_models.dart';
 import '../../favorites/presentation/favorite_button.dart';
+import '../../messages/presentation/inbox_controller.dart';
 import 'listing_formatting.dart';
 import 'listing_gallery.dart';
 import 'message_sheet.dart';
@@ -110,10 +113,14 @@ class _DetailsView extends ConsumerWidget {
       );
       return;
     }
-    final messenger = ScaffoldMessenger.of(context);
-    final sent = AppL10n.of(context).messageSent;
-    final ok = await showMessageSheet(context, listingId: details.id);
-    if (ok == true) messenger.showSnackBar(SnackBar(content: Text(sent)));
+    final conversationId = await showMessageSheet(
+      context,
+      listingId: details.id,
+    );
+    if (conversationId == null || !context.mounted) return;
+    // The first message is in; carry on in the chat.
+    unawaited(ref.read(inboxProvider.notifier).refresh());
+    unawaited(context.push(Routes.chat(conversationId)));
   }
 
   @override
@@ -272,6 +279,7 @@ class _DetailsView extends ConsumerWidget {
                 ],
               ),
               // Floating back + favourite over the photo.
+              PhotoTopScrim(height: padding.top + 84),
               Positioned(
                 top: 0,
                 left: 0,
@@ -288,6 +296,7 @@ class _DetailsView extends ConsumerWidget {
                     child: Row(
                       children: [
                         GlassIconButton(
+                          onPhoto: true,
                           icon: AppIcons.back,
                           semanticLabel: l10n.backAction,
                           onPressed: () => _goBack(context),

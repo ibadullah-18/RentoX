@@ -116,6 +116,13 @@ class AuthRepository {
     return AuthSession(userId: identity.userId, phoneNumber: identity.phone);
   }
 
+  /// Ends the session on every device. Throws when the server can't be
+  /// reached (the user should know it didn't happen).
+  Future<void> logoutAll() => guardApi(() async {
+    await _dio.post<void>('/api/auth/logout-all');
+    await _storage.clear();
+  });
+
   /// Best effort: the local session is cleared even if the call fails.
   Future<void> logout() async {
     final tokens = await _storage.readTokens();

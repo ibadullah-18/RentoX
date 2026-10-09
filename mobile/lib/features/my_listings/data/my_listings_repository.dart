@@ -67,6 +67,54 @@ class MyListingsRepository {
   Future<void> reactivate(String id) =>
       guardApi(() => _dio.post<void>('/api/listings/$id/reactivate'));
 
+  /// Renews an expired listing for another 30 days. Charges the wallet unless
+  /// the monthly free quota applies; the reply says what was charged.
+  Future<PaymentResult> renew(String id) => guardApi(() async {
+    final res = await _dio.post<Map<String, dynamic>>(
+      '/api/listings/$id/renew',
+    );
+    return PaymentResult.fromJson(res.data!);
+  });
+
+  /// Saves title, description, price and unit. Only drafts and rejected
+  /// listings accept this; the listing becomes a draft again.
+  Future<void> updateDetails(
+    String id, {
+    required String title,
+    required String description,
+    required double price,
+    required RentalPeriodUnit unit,
+    String currency = 'AZN',
+  }) => guardApi(
+    () => _dio.put<void>(
+      '/api/listings/$id',
+      data: {
+        'title': title,
+        'description': description,
+        'price': price,
+        'currency': currency,
+        'rentalPeriodUnit': unit.id,
+      },
+    ),
+  );
+
+  /// Replaces ALL category field values with [fields].
+  Future<void> updateFields(String id, List<Map<String, dynamic>> fields) =>
+      guardApi(
+        () => _dio.put<void>(
+          '/api/listings/$id/fields',
+          data: {'fields': fields},
+        ),
+      );
+
+  Future<void> deleteImage(String listingId, String imageId) => guardApi(
+    () => _dio.delete<void>('/api/listings/$listingId/images/$imageId'),
+  );
+
+  Future<void> setCover(String listingId, String imageId) => guardApi(
+    () => _dio.patch<void>('/api/listings/$listingId/images/$imageId/cover'),
+  );
+
   /// Removes a listing (used to discard an unfinished draft).
   Future<void> delete(String id) =>
       guardApi(() => _dio.delete<void>('/api/listings/$id'));

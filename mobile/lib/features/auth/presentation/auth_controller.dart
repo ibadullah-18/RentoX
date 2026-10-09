@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../notifications/data/push_registrar.dart';
 import '../data/auth_repository.dart';
 import '../domain/auth_models.dart';
 
@@ -13,7 +14,16 @@ class AuthController extends AsyncNotifier<AuthSession?> {
   void signedIn(AuthSession session) => state = AsyncData(session);
 
   Future<void> signOut() async {
+    // While the session is still valid: stop pushes for this phone.
+    await ref.read(pushRegistrarProvider).unregister();
     await ref.read(authRepositoryProvider).logout();
+    state = const AsyncData(null);
+  }
+
+  /// Signs out of every device. Throws if the server can't be reached.
+  Future<void> signOutEverywhere() async {
+    await ref.read(pushRegistrarProvider).unregister();
+    await ref.read(authRepositoryProvider).logoutAll();
     state = const AsyncData(null);
   }
 

@@ -4,29 +4,72 @@ import 'package:go_router/go_router.dart';
 
 import '../../../app/router.dart';
 import '../../../core/l10n/app_localizations.dart';
+import '../../../core/l10n/locale_controller.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_icons.dart';
 import '../../../core/theme/app_spacing.dart';
+import '../../../shared/widgets/async_states.dart';
 import '../../auth/presentation/auth_controller.dart';
+import '../../notifications/presentation/notifications_controller.dart';
 import '../../shell/tab_page.dart';
 import '../../wallet/data/wallet_repository.dart';
 import '../../wallet/presentation/payment_sheet.dart';
+import 'account_controller.dart';
+import 'language_sheet.dart';
+import 'profile_avatar.dart';
 
-/// Account hub. Wallet and "my listings" are live; settings follow.
+/// Account hub: who you are, your listings and money, settings, sign out.
 class ProfilePage extends ConsumerWidget {
   const ProfilePage({super.key});
+
+  Future<void> _signOutEverywhere(BuildContext context, WidgetRef ref) async {
+    final l10n = AppL10n.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(l10n.logoutAllTitle),
+        content: Text(l10n.logoutAllMessage),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text(l10n.cancelAction),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: Text(
+              l10n.logoutAllConfirm,
+              style: const TextStyle(color: AppColors.danger),
+            ),
+          ),
+        ],
+      ),
+    );
+    if (ok != true) return;
+    try {
+      await ref.read(authControllerProvider.notifier).signOutEverywhere();
+    } catch (e) {
+      if (!context.mounted) return;
+      messenger.showSnackBar(SnackBar(content: Text(errorMessage(context, e))));
+    }
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppL10n.of(context);
     final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
     final locale = Localizations.localeOf(context).toString();
     final session = ref.watch(authControllerProvider).value;
+    final account = ref.watch(accountProvider).value;
     final wallet = ref.watch(walletBalanceProvider);
+    final unread = ref.watch(unreadNotificationsProvider).value ?? 0;
+    final language = ref.watch(localeProvider).languageCode;
 
     return TabPage(
       onRefresh: () async {
         ref.invalidate(walletBalanceProvider);
+        ref.invalidate(accountProvider);
         await ref.read(walletBalanceProvider.future);
       },
       slivers: [
@@ -43,35 +86,46 @@ class ProfilePage extends ConsumerWidget {
               ),
               const SizedBox(height: AppSpacing.lg),
               Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(AppSpacing.lg),
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 56,
-                        height: 56,
-                        decoration: BoxDecoration(
-                          color: AppColors.primarySoft,
-                          borderRadius: BorderRadius.circular(AppRadius.lg),
-                        ),
-                        child: const Icon(
-                          AppIcons.profile,
-                          fill: 1,
-                          size: 30,
-                          color: AppColors.primary,
-                        ),
-                      ),
-                      const SizedBox(width: AppSpacing.lg),
-                      Expanded(
-                        child: Text(
-                          session?.phoneNumber ?? '',
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w700,
-                            fontSize: 17,
+                clipBehavior: Clip.antiAlias,
+                child: InkWell(
+                  onTap: () => context.push(Routes.profileEdit),
+                  child: Padding(
+                    padding: const EdgeInsets.all(AppSpacing.lg),
+                    child: Row(
+                      children: [
+                        ProfileAvatar(account: account, size: 64),
+                        const SizedBox(width: AppSpacing.lg),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                account?.hasName == true
+                                    ? account!.fullName
+                                    : l10n.profileAddName,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w800,
+                                  fontSize: 18,
+                                  color: account?.hasName == true
+                                      ? scheme.onSurface
+                                      : scheme.primary,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                session?.phoneNumber ?? '',
+                                style: TextStyle(
+                                  color: scheme.onSurfaceVariant,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                      ),
-                    ],
+                        Icon(AppIcons.edit, color: scheme.onSurfaceVariant),
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -92,6 +146,32 @@ class ProfilePage extends ConsumerWidget {
                           ? null
                           : formatMoney(locale, wallet.value!.balance),
                       onTap: () => showWalletSheet(context),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: AppSpacing.lg),
+              Card(
+                child: Column(
+                  children: [
+                    _MenuTile(
+                      icon: AppIcons.bell,
+                      title: l10n.notifications,
+                      trailingText: unread > 0 ? '$unread' : null,
+                      onTap: () => context.push(Routes.notifications),
+                    ),
+                    const Divider(indent: 56),
+                    _MenuTile(
+                      icon: AppIcons.language,
+                      title: l10n.languageTitle,
+                      trailingText: languageName(language),
+                      onTap: () => showLanguageSheet(context),
+                    ),
+                    const Divider(indent: 56),
+                    _MenuTile(
+                      icon: AppIcons.devices,
+                      title: l10n.logoutAllTitle,
+                      onTap: () => _signOutEverywhere(context, ref),
                     ),
                   ],
                 ),

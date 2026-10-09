@@ -245,7 +245,13 @@ class _OwnedCard extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 8),
-                    ListingStatusChip(status: item.status),
+                    ListingStatusChip(
+                      status: effectiveStatus(
+                        item.status,
+                        item.expiresAt,
+                        DateTime.now(),
+                      ),
+                    ),
                   ],
                 ),
               ),

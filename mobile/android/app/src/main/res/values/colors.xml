@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="ic_launcher_background">#4F42FC</color>
+    <!-- Brand indigo: tints the small notification icon. -->
+    <color name="notification_accent">#5B4BFF</color>
 </resources>

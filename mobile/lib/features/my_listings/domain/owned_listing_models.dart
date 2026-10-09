@@ -29,7 +29,27 @@ enum ListingStatus {
   bool get canDeactivate => this == active;
 
   bool get canReactivate => this == deactivated;
+
+  /// The backend only lets drafts and rejected listings be edited; saving
+  /// turns the listing back into a draft that must be sent for review again.
+  bool get canEdit => this == draft || this == rejected;
+
+  /// Any listing that isn't already deleted can be deleted.
+  bool get canDelete => this != deleted;
 }
+
+/// A listing whose 30 days are over counts as expired even if the server has
+/// not flipped its status yet.
+ListingStatus effectiveStatus(
+  ListingStatus status,
+  DateTime? expiresAt,
+  DateTime now,
+) =>
+    (status == ListingStatus.active || status == ListingStatus.deactivated) &&
+        expiresAt != null &&
+        !expiresAt.isAfter(now)
+    ? ListingStatus.expired
+    : status;
 
 class OwnedListingSummary {
   const OwnedListingSummary({
@@ -108,6 +128,10 @@ class OwnedListingDetails {
   final String? rejectionReason;
   final DateTime? publishedAt;
   final DateTime? expiresAt;
+
+  /// Its 30 days are over: it can be renewed (and nothing else promoted).
+  bool isExpiredAt(DateTime now) =>
+      effectiveStatus(status, expiresAt, now) == ListingStatus.expired;
 
   factory OwnedListingDetails.fromJson(Map<String, dynamic> json) {
     final images =

@@ -8,12 +8,12 @@ import '../../../core/theme/app_spacing.dart';
 import '../../messages/data/conversations_repository.dart';
 
 /// Bottom sheet to write the first message to a listing's owner.
-/// Returns `true` when the message was sent.
-Future<bool?> showMessageSheet(
+/// Returns the id of the conversation once the message was sent.
+Future<String?> showMessageSheet(
   BuildContext context, {
   required String listingId,
 }) {
-  return showModalBottomSheet<bool>(
+  return showModalBottomSheet<String>(
     context: context,
     isScrollControlled: true,
     useSafeArea: true,
@@ -72,10 +72,10 @@ class _MessageSheetState extends ConsumerState<_MessageSheet> {
       _failed = false;
     });
     try {
-      await ref
+      final id = await ref
           .read(conversationsRepositoryProvider)
           .startConversation(listingId: widget.listingId, body: body);
-      if (mounted) Navigator.of(context).pop(true);
+      if (mounted) Navigator.of(context).pop(id);
     } catch (_) {
       if (mounted) {
         setState(() {

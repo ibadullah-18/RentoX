@@ -14,7 +14,7 @@ String formatMoney(String locale, double amount) =>
     '${NumberFormat.decimalPattern(locale).format(amount)} ${Pricing.currency}';
 
 /// What the user is paying for.
-enum PaymentKind { activation, vip }
+enum PaymentKind { activation, vip, bump, renewal }
 
 /// Asks for confirmation and runs [pay] (which performs the actual purchase).
 /// Returns `true` when the payment went through.
@@ -54,8 +54,12 @@ class _PaymentSheetState extends ConsumerState<_PaymentSheet> {
   bool _paying = false;
   bool _failed = false;
 
-  double get _amount =>
-      widget.kind == PaymentKind.vip ? Pricing.vipPrice : Pricing.activationFee;
+  double get _amount => switch (widget.kind) {
+    PaymentKind.vip => Pricing.vipPrice,
+    PaymentKind.bump => Pricing.bumpPrice,
+    PaymentKind.renewal => Pricing.renewalFee,
+    PaymentKind.activation => Pricing.activationFee,
+  };
 
   Future<void> _pay() async {
     if (_paying) return;
@@ -88,9 +92,12 @@ class _PaymentSheetState extends ConsumerState<_PaymentSheet> {
     final balance = wallet.value?.balance;
     final enough = balance != null && balance >= _amount;
 
-    final title = widget.kind == PaymentKind.vip
-        ? l10n.payForVip(Pricing.vipDays)
-        : l10n.payForActivation;
+    final title = switch (widget.kind) {
+      PaymentKind.vip => l10n.payForVip(Pricing.vipDays),
+      PaymentKind.bump => l10n.payForBump,
+      PaymentKind.renewal => l10n.payForRenewal,
+      PaymentKind.activation => l10n.payForActivation,
+    };
 
     return SingleChildScrollView(
       padding: EdgeInsets.fromLTRB(
@@ -327,6 +334,8 @@ class _TopUpSectionState extends ConsumerState<TopUpSection> {
 Future<void> showWalletSheet(BuildContext context) {
   return showModalBottomSheet<void>(
     context: context,
+    // Opened from a tab: must sit above the floating navigation bar.
+    useRootNavigator: true,
     isScrollControlled: true,
     useSafeArea: true,
     showDragHandle: true,

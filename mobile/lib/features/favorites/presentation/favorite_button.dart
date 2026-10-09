@@ -6,12 +6,11 @@ import '../../../app/router.dart';
 import '../../../core/l10n/app_localizations.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_icons.dart';
-import '../../../core/theme/app_spacing.dart';
 import '../../../shared/widgets/glass.dart';
 import '../../auth/presentation/auth_controller.dart';
 import 'favorites_controller.dart';
 
-/// Glass heart used on every listing card. Tapping toggles the favourite
+/// Heart shown on top of listing photos (no background). Tapping toggles the favourite
 /// (optimistically); signed-out users are taken to sign in first.
 class FavoriteButton extends ConsumerWidget {
   const FavoriteButton({
@@ -64,32 +63,41 @@ class FavoriteButton extends ConsumerWidget {
       child: GestureDetector(
         onTap: () => _onTap(context, ref, active),
         behavior: HitTestBehavior.opaque,
-        // 44px touch target around a 32px glass circle.
+        // 44px touch target; the heart floats on the photo with no
+        // background, like every icon placed over a picture.
         child: SizedBox(
           width: diameter < 44 ? 44 : diameter,
           height: diameter < 44 ? 44 : diameter,
           child: Center(
-            child: GlassSurface(
-              radius: AppRadius.md,
-              blur: 14,
-              shadow: false,
-              tintOpacity: 0.55,
-              child: SizedBox(
-                width: diameter,
-                height: diameter,
-                child: AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 220),
-                  switchInCurve: Curves.easeOutBack,
-                  transitionBuilder: (child, animation) =>
-                      ScaleTransition(scale: animation, child: child),
-                  child: Icon(
-                    AppIcons.heart,
-                    key: ValueKey(active),
-                    size: diameter * 0.6,
-                    fill: AppIcons.fillOf(active),
-                    color: active ? AppColors.accent : AppColors.ink,
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 260),
+              switchInCurve: Curves.easeOutBack,
+              transitionBuilder: (child, animation) => AnimatedBuilder(
+                animation: animation,
+                child: child,
+                builder: (context, child) => Transform(
+                  alignment: Alignment.center,
+                  transform: Matrix4.identity()
+                    ..setEntry(3, 2, 0.002)
+                    ..rotateY((1 - animation.value) * 1.2)
+                    ..scaleByDouble(
+                      0.6 + 0.4 * animation.value,
+                      0.6 + 0.4 * animation.value,
+                      1,
+                      1,
+                    ),
+                  child: Opacity(
+                    opacity: animation.value.clamp(0.0, 1.0),
+                    child: child,
                   ),
                 ),
+              ),
+              child: PhotoIcon(
+                AppIcons.heart,
+                key: ValueKey(active),
+                size: diameter * 0.62,
+                fill: AppIcons.fillOf(active),
+                color: active ? AppColors.accent : Colors.white,
               ),
             ),
           ),

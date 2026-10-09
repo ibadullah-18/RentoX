@@ -116,9 +116,20 @@ class _BodyState extends ConsumerState<_Body> {
     final ok = await showPaymentSheet(
       context,
       kind: kind,
-      pay: (key) => kind == PaymentKind.vip
-          ? repo.promote(d.id, type: PromotionType.vip, idempotencyKey: key)
-          : repo.payAndActivate(d.id),
+      pay: (key) => switch (kind) {
+        PaymentKind.vip => repo.promote(
+          d.id,
+          type: PromotionType.vip,
+          idempotencyKey: key,
+        ),
+        PaymentKind.bump => repo.promote(
+          d.id,
+          type: PromotionType.bump,
+          idempotencyKey: key,
+        ),
+        PaymentKind.renewal => repo.renew(d.id),
+        PaymentKind.activation => repo.payAndActivate(d.id),
+      },
     );
     if (ok == true) {
       ref.invalidate(myListingDetailsProvider(d.id));
@@ -126,13 +137,61 @@ class _BodyState extends ConsumerState<_Body> {
       ref.invalidate(myListingsProvider);
       messenger.showSnackBar(
         SnackBar(
-          content: Text(
-            kind == PaymentKind.vip
-                ? l10n.paymentSuccessVip
-                : l10n.paymentSuccessActivation,
-          ),
+          content: Text(switch (kind) {
+            PaymentKind.vip => l10n.paymentSuccessVip,
+            PaymentKind.bump => l10n.paymentSuccessBump,
+            PaymentKind.renewal => l10n.paymentSuccessRenew,
+            PaymentKind.activation => l10n.paymentSuccessActivation,
+          }),
         ),
       );
+    }
+  }
+
+  Future<void> _edit() async {
+    await context.push(Routes.editListing(d.id));
+    if (!mounted) return;
+    ref.invalidate(myListingDetailsProvider(d.id));
+  }
+
+  Future<void> _delete() async {
+    final l10n = AppL10n.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+    final router = GoRouter.of(context);
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(l10n.deleteListingTitle),
+        content: Text(l10n.deleteListingMessage),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text(l10n.cancelAction),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: Text(
+              l10n.deleteListingConfirm,
+              style: const TextStyle(color: AppColors.danger),
+            ),
+          ),
+        ],
+      ),
+    );
+    if (ok != true || _busy) return;
+
+    setState(() => _busy = true);
+    try {
+      await ref.read(myListingsRepositoryProvider).delete(d.id);
+      ref.invalidate(myListingsProvider);
+      ref.invalidate(listingDetailsProvider(d.id));
+      messenger.showSnackBar(SnackBar(content: Text(l10n.listingDeleted)));
+      router.go(Routes.myListings);
+    } catch (_) {
+      if (mounted) {
+        messenger.showSnackBar(SnackBar(content: Text(l10n.actionFailed)));
+        setState(() => _busy = false);
+      }
     }
   }
 
@@ -146,8 +205,10 @@ class _BodyState extends ConsumerState<_Body> {
     final repo = ref.read(myListingsRepositoryProvider);
     // The owner endpoint does not say whether a listing is VIP; the public
     // one does (only meaningful once the listing is live).
+    final expired = d.isExpiredAt(DateTime.now());
     final isVip =
         d.status.canPromote &&
+        !expired &&
         (ref.watch(listingDetailsProvider(d.id)).value?.isVip ?? false);
 
     final width = MediaQuery.sizeOf(context).width
@@ -195,7 +256,13 @@ class _BodyState extends ConsumerState<_Body> {
                       children: [
                         Row(
                           children: [
-                            ListingStatusChip(status: d.status),
+                            ListingStatusChip(
+                              status: effectiveStatus(
+                                d.status,
+                                d.expiresAt,
+                                DateTime.now(),
+                              ),
+                            ),
                             if (d.expiresAt != null &&
                                 d.status == ListingStatus.active) ...[
                               const SizedBox(width: AppSpacing.md),
@@ -266,29 +333,70 @@ class _BodyState extends ConsumerState<_Body> {
                             l10n.submitForReview,
                             () => _run(() => repo.submit(d.id)),
                           ),
+                        if (d.status.canEdit)
+                          action(l10n.editAction, _edit, primary: false),
                         if (d.status.canPay)
                           action(
                             '${l10n.payActivate} · ${formatMoney(locale, Pricing.activationFee)}',
                             () => _pay(PaymentKind.activation),
                           ),
-                        if (d.status.canPromote)
-                          if (isVip)
-                            _VipActive(label: l10n.vipActive)
-                          else
-                            action(
-                              '${l10n.makeVip} · ${formatMoney(locale, Pricing.vipPrice)}',
-                              () => _pay(PaymentKind.vip),
+                        if (expired) ...[
+                          Padding(
+                            padding: const EdgeInsets.only(
+                              top: AppSpacing.sm,
+                              bottom: 2,
                             ),
-                        if (d.status.canDeactivate)
-                          action(
-                            l10n.deactivateAction,
-                            () => _run(() => repo.deactivate(d.id)),
-                            primary: false,
+                            child: Text(
+                              l10n.renewHint,
+                              style: TextStyle(
+                                color: scheme.onSurfaceVariant,
+                                fontSize: 13.5,
+                              ),
+                            ),
                           ),
-                        if (d.status.canReactivate)
                           action(
-                            l10n.reactivateAction,
-                            () => _run(() => repo.reactivate(d.id)),
+                            l10n.renewAction,
+                            () => _pay(PaymentKind.renewal),
+                          ),
+                        ] else ...[
+                          if (d.status.canPromote)
+                            if (isVip)
+                              _VipActive(label: l10n.vipActive)
+                            else
+                              action(
+                                '${l10n.makeVip} · ${formatMoney(locale, Pricing.vipPrice)}',
+                                () => _pay(PaymentKind.vip),
+                              ),
+                          if (d.status.canPromote)
+                            action(
+                              '${l10n.bumpAction} · ${formatMoney(locale, Pricing.bumpPrice)}',
+                              () => _pay(PaymentKind.bump),
+                              primary: false,
+                            ),
+                          if (d.status.canDeactivate)
+                            action(
+                              l10n.deactivateAction,
+                              () => _run(() => repo.deactivate(d.id)),
+                              primary: false,
+                            ),
+                          if (d.status.canReactivate)
+                            action(
+                              l10n.reactivateAction,
+                              () => _run(() => repo.reactivate(d.id)),
+                            ),
+                        ],
+                        if (d.status.canDelete)
+                          Padding(
+                            padding: const EdgeInsets.only(top: AppSpacing.sm),
+                            child: TextButton.icon(
+                              onPressed: _busy ? null : _delete,
+                              style: TextButton.styleFrom(
+                                foregroundColor: AppColors.danger,
+                                minimumSize: const Size.fromHeight(48),
+                              ),
+                              icon: const Icon(AppIcons.trash, size: 20),
+                              label: Text(l10n.deleteListingAction),
+                            ),
                           ),
                         if (d.description.trim().isNotEmpty) ...[
                           const SizedBox(height: AppSpacing.xl),
@@ -363,6 +471,7 @@ class _BodyState extends ConsumerState<_Body> {
                   ),
                 ],
               ),
+              PhotoTopScrim(height: MediaQuery.paddingOf(context).top + 84),
               Positioned(
                 top: 0,
                 left: 0,
@@ -379,6 +488,7 @@ class _BodyState extends ConsumerState<_Body> {
                     child: Align(
                       alignment: AlignmentDirectional.centerStart,
                       child: GlassIconButton(
+                        onPhoto: true,
                         icon: AppIcons.back,
                         semanticLabel: l10n.backAction,
                         onPressed: () => context.canPop()

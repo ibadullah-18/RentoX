@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import 'app_colors.dart';
 import 'app_spacing.dart';
+import 'page_transitions.dart';
 
 abstract final class AppTheme {
   static ThemeData get light => _build(
@@ -70,6 +71,7 @@ abstract final class AppTheme {
     const buttonText = TextStyle(fontSize: 16, fontWeight: FontWeight.w700);
 
     return base.copyWith(
+      pageTransitionsTheme: appPageTransitions,
       textTheme: text.copyWith(
         headlineMedium: text.headlineMedium?.copyWith(
           fontWeight: FontWeight.w800,

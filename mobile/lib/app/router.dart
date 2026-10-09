@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../core/l10n/app_localizations.dart';
-import '../core/theme/app_icons.dart';
 import '../features/auth/domain/auth_models.dart';
 import '../features/auth/presentation/auth_controller.dart';
 import '../features/auth/presentation/phone_page.dart';
@@ -12,12 +10,17 @@ import '../features/favorites/presentation/favorites_page.dart';
 import '../features/home/presentation/home_page.dart';
 import '../features/listing_create/presentation/create_listing_page.dart';
 import '../features/listing_details/presentation/listing_details_page.dart';
+import '../features/my_listings/presentation/edit_listing_page.dart';
 import '../features/my_listings/presentation/my_listing_details_page.dart';
 import '../features/my_listings/presentation/my_listings_page.dart';
+import '../features/messages/presentation/chat_page.dart';
+import '../features/messages/presentation/messages_page.dart';
+import '../features/notifications/presentation/notifications_page.dart';
 import '../features/search/presentation/search_page.dart';
-import '../features/placeholder/coming_soon_page.dart';
+import '../features/profile/presentation/edit_profile_page.dart';
 import '../features/profile/presentation/profile_page.dart';
 import '../features/shell/app_shell.dart';
+import '../shared/widgets/motion.dart';
 
 abstract final class Routes {
   static const home = '/';
@@ -26,11 +29,18 @@ abstract final class Routes {
   static const create = '/create';
   static const messages = '/messages';
   static const profile = '/profile';
+  static const profileEdit = '/profile/edit';
   static const notifications = '/notifications';
   static const myListings = '/my-listings';
 
+  /// Edit a draft or rejected listing: `/my-listings/<id>/edit`.
+  static String editListing(String id) => '/my-listings/$id/edit';
+
   /// The owner's view of one of their listings: `/my-listings/<id>`.
   static String myListing(String id) => '/my-listings/$id';
+
+  /// One conversation: `/messages/<id>`.
+  static String chat(String id) => '/messages/$id';
 
   /// Listing details: `/listing/<id>`.
   static String listing(String id) => '/listing/$id';
@@ -53,7 +63,10 @@ abstract final class Routes {
 
   /// Browsing is public; these need an account.
   static bool isProtected(String path) =>
-      _protected.contains(path) || path.startsWith('$myListings/');
+      _protected.contains(path) ||
+      path.startsWith('$myListings/') ||
+      path.startsWith('$messages/') ||
+      path.startsWith('$profile/');
 
   static const _protected = {
     myListings,
@@ -131,16 +144,34 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/my-listings/:id',
         builder: (_, state) =>
             MyListingDetailsPage(listingId: state.pathParameters['id']!),
+        routes: [
+          GoRoute(
+            path: 'edit',
+            builder: (_, state) =>
+                EditListingPage(listingId: state.pathParameters['id']!),
+          ),
+        ],
+      ),
+      GoRoute(
+        path: '/messages/:id',
+        builder: (_, state) =>
+            ChatPage(conversationId: state.pathParameters['id']!),
+      ),
+      GoRoute(
+        path: Routes.profileEdit,
+        builder: (_, _) => const EditProfilePage(),
       ),
       GoRoute(
         path: Routes.notifications,
-        builder: (context, _) => ComingSoonPage(
-          title: AppL10n.of(context).notifications,
-          icon: AppIcons.bell,
-        ),
+        builder: (_, _) => const NotificationsPage(),
       ),
-      StatefulShellRoute.indexedStack(
+      StatefulShellRoute(
         builder: (_, _, shell) => AppShell(navigationShell: shell),
+        navigatorContainerBuilder: (context, shell, children) =>
+            FadeBranchContainer(
+              currentIndex: shell.currentIndex,
+              children: children,
+            ),
         branches: [
           StatefulShellBranch(
             routes: [
@@ -159,10 +190,7 @@ final routerProvider = Provider<GoRouter>((ref) {
             routes: [
               GoRoute(
                 path: Routes.messages,
-                builder: (context, _) => ComingSoonPage(
-                  title: AppL10n.of(context).navMessages,
-                  icon: AppIcons.messages,
-                ),
+                builder: (_, _) => const MessagesPage(),
               ),
             ],
           ),

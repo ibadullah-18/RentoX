@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../app/router.dart';
@@ -7,18 +8,23 @@ import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_icons.dart';
 import '../../core/theme/app_spacing.dart';
 import '../../shared/widgets/glass.dart';
+import '../../shared/widgets/motion.dart';
 import '../../shared/widgets/rentox_logo.dart';
+import '../messages/presentation/inbox_controller.dart';
 
 class _NavItem {
-  const _NavItem(this.icon, this.label);
+  const _NavItem(this.icon, this.label, {this.badge = 0});
 
   final IconData icon;
   final String label;
+
+  /// Unread counter shown on the icon (0 hides it).
+  final int badge;
 }
 
 /// Adaptive navigation: floating glass bar on phones, side rail on wide
 /// (web/tablet) screens.
-class AppShell extends StatelessWidget {
+class AppShell extends ConsumerWidget {
   const AppShell({super.key, required this.navigationShell});
 
   final StatefulNavigationShell navigationShell;
@@ -46,15 +52,16 @@ class AppShell extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppL10n.of(context);
+    final unreadMessages = ref.watch(unreadMessagesProvider).value ?? 0;
     final width = MediaQuery.sizeOf(context).width;
 
     final items = [
       _NavItem(AppIcons.home, l10n.navHome),
       _NavItem(AppIcons.heart, l10n.navFavorites),
       _NavItem(AppIcons.add, l10n.navCreate),
-      _NavItem(AppIcons.messages, l10n.navMessages),
+      _NavItem(AppIcons.messages, l10n.navMessages, badge: unreadMessages),
       _NavItem(AppIcons.profile, l10n.navProfile),
     ];
 
@@ -74,8 +81,11 @@ class AppShell extends StatelessWidget {
               destinations: [
                 for (final item in items)
                   NavigationRailDestination(
-                    icon: Icon(item.icon),
-                    selectedIcon: Icon(item.icon, fill: 1),
+                    icon: _Badged(count: item.badge, child: Icon(item.icon)),
+                    selectedIcon: _Badged(
+                      count: item.badge,
+                      child: Icon(item.icon, fill: 1),
+                    ),
                     label: Text(item.label),
                   ),
               ],
@@ -170,49 +180,105 @@ class _NavButton extends StatelessWidget {
       button: true,
       selected: selected,
       label: item.label,
-      child: GestureDetector(
-        onTap: onTap,
-        behavior: HitTestBehavior.opaque,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 2),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              AnimatedContainer(
-                duration: const Duration(milliseconds: 220),
-                curve: Curves.easeOutCubic,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 5,
+      child: PressScale(
+        scale: 0.92,
+        child: GestureDetector(
+          onTap: onTap,
+          behavior: HitTestBehavior.opaque,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 2),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 220),
+                  curve: Curves.easeOutCubic,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 5,
+                  ),
+                  decoration: BoxDecoration(
+                    color: selected
+                        ? scheme.primary.withValues(alpha: 0.12)
+                        : Colors.transparent,
+                    borderRadius: BorderRadius.circular(AppRadius.md),
+                  ),
+                  child: AnimatedScale(
+                    scale: selected ? 1.1 : 1,
+                    duration: const Duration(milliseconds: 280),
+                    curve: Curves.easeOutBack,
+                    child: _Badged(
+                      count: item.badge,
+                      child: Icon(
+                        item.icon,
+                        size: 25,
+                        fill: AppIcons.fillOf(selected),
+                        color: color,
+                      ),
+                    ),
+                  ),
                 ),
-                decoration: BoxDecoration(
-                  color: selected
-                      ? scheme.primary.withValues(alpha: 0.12)
-                      : Colors.transparent,
-                  borderRadius: BorderRadius.circular(AppRadius.md),
+                const SizedBox(height: 2),
+                Text(
+                  item.label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 10.5,
+                    fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                    color: color,
+                  ),
                 ),
-                child: Icon(
-                  item.icon,
-                  size: 25,
-                  fill: AppIcons.fillOf(selected),
-                  color: color,
-                ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                item.label,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontSize: 10.5,
-                  fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-                  color: color,
-                ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
+    );
+  }
+}
+
+/// Small counter pinned to the top-right of a nav icon.
+class _Badged extends StatelessWidget {
+  const _Badged({required this.count, required this.child});
+
+  final int count;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    if (count <= 0) return child;
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        child,
+        Positioned(
+          top: -5,
+          right: -9,
+          child: Container(
+            constraints: const BoxConstraints(minWidth: 17, minHeight: 17),
+            padding: const EdgeInsets.symmetric(horizontal: 4),
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: AppColors.accent,
+              borderRadius: BorderRadius.circular(AppRadius.sm + 1),
+              border: Border.all(
+                color: Theme.of(context).colorScheme.surface,
+                width: 1.5,
+              ),
+            ),
+            child: Text(
+              count > 99 ? '99+' : '$count',
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 10,
+                fontWeight: FontWeight.w800,
+                height: 1.1,
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

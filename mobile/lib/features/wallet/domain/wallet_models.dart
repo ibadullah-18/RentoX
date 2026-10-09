@@ -6,6 +6,9 @@ import 'dart:math';
 abstract final class Pricing {
   static const activationFee = 1.0;
   static const vipPrice = 10.0;
+  static const bumpPrice = 5.0;
+  // Renewing costs the same as activating (free while the monthly free quota lasts).
+  static const renewalFee = activationFee;
   static const vipDays = 7;
   static const currency = 'AZN';
 }

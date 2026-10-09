@@ -12,6 +12,7 @@ import '../../core/theme/app_spacing.dart';
 import '../../features/catalog/domain/catalog_models.dart';
 import '../../features/favorites/presentation/favorite_button.dart';
 import 'glass.dart';
+import 'motion.dart';
 
 String rentalUnitLabel(AppL10n l10n, RentalPeriodUnit unit) => switch (unit) {
   RentalPeriodUnit.hour => l10n.unitHour,
@@ -51,84 +52,88 @@ class ListingCard extends StatelessWidget {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
 
-    return Material(
-      color: scheme.surface,
-      borderRadius: BorderRadius.circular(AppRadius.lg),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: () {
-          onOpen?.call();
-          context.push(Routes.listing(listing.id));
-        },
-        child: Padding(
-          padding: const EdgeInsets.all(8),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              AspectRatio(
-                aspectRatio: 4 / 3,
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(AppRadius.sm),
-                  child: Stack(
-                    fit: StackFit.expand,
-                    children: [
-                      _Cover(url: listing.coverImageUrl),
-                      if (listing.isVip)
+    return PressScale(
+      scale: 0.97,
+      child: Material(
+        color: scheme.surface,
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: () {
+            onOpen?.call();
+            context.push(Routes.listing(listing.id));
+          },
+          child: Padding(
+            padding: const EdgeInsets.all(8),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                AspectRatio(
+                  aspectRatio: 4 / 3,
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(AppRadius.sm),
+                    child: Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        _Cover(url: listing.coverImageUrl),
+                        const PhotoTopScrim(height: 52),
+                        if (listing.isVip)
+                          Positioned(
+                            top: 8,
+                            left: 8,
+                            child: _VipBadge(label: l10n.vip),
+                          ),
                         Positioned(
-                          top: 8,
-                          left: 8,
-                          child: _VipBadge(label: l10n.vip),
+                          top: 2,
+                          right: 2,
+                          child: FavoriteButton(
+                            listingId: listing.id,
+                            isFavorite: listing.isFavorite,
+                          ),
                         ),
-                      Positioned(
-                        top: 2,
-                        right: 2,
-                        child: FavoriteButton(
-                          listingId: listing.id,
-                          isFavorite: listing.isFavorite,
+                      ],
+                    ),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(6, 10, 6, 4),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        listing.title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
+                      const SizedBox(height: 3),
+                      Text(
+                        formatPrice(l10n, listing),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.titleSmall?.copyWith(
+                          color: scheme.primary,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      if (listing.categoryName != null) ...[
+                        const SizedBox(height: 3),
+                        Text(
+                          listing.categoryName!,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: scheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
                     ],
                   ),
                 ),
-              ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(6, 10, 6, 4),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      listing.title,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: theme.textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(height: 3),
-                    Text(
-                      formatPrice(l10n, listing),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: theme.textTheme.titleSmall?.copyWith(
-                        color: scheme.primary,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                    if (listing.categoryName != null) ...[
-                      const SizedBox(height: 3),
-                      Text(
-                        listing.categoryName!,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: scheme.onSurfaceVariant,
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

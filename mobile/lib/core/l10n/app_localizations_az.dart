@@ -592,6 +592,260 @@ class AppL10nAz extends AppL10n {
   String get vipActive => 'VIP elan aktivdir';
 
   @override
+  String get messagesTitle => 'Mesajlar';
+
+  @override
+  String get messagesAll => 'Hamısı';
+
+  @override
+  String get messagesUnreadFilter => 'Oxunmamış';
+
+  @override
+  String get messagesEmpty => 'Hələ mesajınız yoxdur';
+
+  @override
+  String get messagesEmptyHint =>
+      'Elan sahibinə yazın, söhbət burada görünəcək.';
+
+  @override
+  String get messagesUnreadEmpty => 'Oxunmamış mesaj yoxdur';
+
+  @override
+  String get chatUser => 'İstifadəçi';
+
+  @override
+  String get chatTyping => 'yazır…';
+
+  @override
+  String get chatOnline => 'Onlayn';
+
+  @override
+  String get chatOffline => 'Oflayn';
+
+  @override
+  String get chatInputHint => 'Mesaj yazın';
+
+  @override
+  String get chatEmpty => 'Söhbəti başladın';
+
+  @override
+  String get chatPhoto => 'Şəkil';
+
+  @override
+  String get chatAttach => 'Şəkil əlavə et';
+
+  @override
+  String get chatToday => 'Bu gün';
+
+  @override
+  String get chatYesterday => 'Dünən';
+
+  @override
+  String get chatViewListing => 'Elana bax';
+
+  @override
+  String get chatSendFailed => 'Göndərilmədi';
+
+  @override
+  String get chatRetry => 'Yenidən göndər';
+
+  @override
+  String get chatDiscard => 'Sil';
+
+  @override
+  String get chatTooLong => 'Mesaj çox uzundur (ən çox 2000 simvol)';
+
+  @override
+  String get chatBlock => 'İstifadəçini əngəllə';
+
+  @override
+  String get chatUnblock => 'Əngəli ləğv et';
+
+  @override
+  String get chatBlockedByMe => 'Bu istifadəçini əngəlləmisiniz';
+
+  @override
+  String get chatCannotSend => 'Bu söhbətə mesaj yazmaq mümkün deyil';
+
+  @override
+  String get chatBlockedDone => 'İstifadəçi əngəlləndi';
+
+  @override
+  String get chatUnblockedDone => 'Əngəl ləğv edildi';
+
+  @override
+  String get chatReport => 'Şikayət et';
+
+  @override
+  String get chatReportTitle => 'Şikayətin səbəbi';
+
+  @override
+  String get chatReportDetails => 'Əlavə məlumat (istəyə görə)';
+
+  @override
+  String get chatReportSend => 'Göndər';
+
+  @override
+  String get chatReportSent => 'Şikayət göndərildi';
+
+  @override
+  String get reportSpam => 'Spam';
+
+  @override
+  String get reportFraud => 'Dələduzluq';
+
+  @override
+  String get reportHarassment => 'Təhqir və ya təzyiq';
+
+  @override
+  String get reportProhibited => 'Qadağan olunmuş məzmun';
+
+  @override
+  String get reportOther => 'Digər';
+
+  @override
+  String get chatReconnecting => 'Bağlantı bərpa olunur…';
+
+  @override
+  String get notificationsMarkAll => 'Hamısını oxu';
+
+  @override
+  String get notificationsEmpty => 'Bildiriş yoxdur';
+
+  @override
+  String get notificationsEmptyHint =>
+      'Elanlarınız və hesabınızla bağlı yeniliklər burada görünəcək.';
+
+  @override
+  String get notificationView => 'Bax';
+
+  @override
+  String get profileEditTitle => 'Profili redaktə et';
+
+  @override
+  String get profileAddName => 'Adınızı əlavə edin';
+
+  @override
+  String get profileName => 'Ad və soyad';
+
+  @override
+  String get profileNameHint => 'Məsələn, Murad Əliyev';
+
+  @override
+  String get profileNameInvalid => 'Ad 2 ilə 100 simvol arasında olmalıdır';
+
+  @override
+  String get profileBio => 'Haqqınızda';
+
+  @override
+  String get profileBioHint => 'Qısa məlumat (istəyə görə)';
+
+  @override
+  String get profilePhone => 'Telefon nömrəsi';
+
+  @override
+  String get profileSave => 'Yadda saxla';
+
+  @override
+  String get profileSaved => 'Profil yeniləndi';
+
+  @override
+  String get profilePhotoAdd => 'Şəkil əlavə et';
+
+  @override
+  String get profilePhotoChange => 'Şəkli dəyiş';
+
+  @override
+  String get profilePhotoTooLarge => 'Şəkil 5 MB-dan böyük ola bilməz';
+
+  @override
+  String get languageTitle => 'Dil';
+
+  @override
+  String get cancelAction => 'Ləğv et';
+
+  @override
+  String get logoutAllTitle => 'Bütün cihazlardan çıx';
+
+  @override
+  String get logoutAllMessage =>
+      'Hesabınız bütün cihazlarda sistemdən çıxarılacaq. Yenidən daxil olmaq lazım olacaq.';
+
+  @override
+  String get logoutAllConfirm => 'Çıx';
+
+  @override
+  String get editListingTitle => 'Elanı redaktə et';
+
+  @override
+  String get editAction => 'Redaktə et';
+
+  @override
+  String get editSave => 'Yadda saxla';
+
+  @override
+  String get editSaved => 'Elan yeniləndi. İndi yoxlamaya göndərə bilərsiniz.';
+
+  @override
+  String get editNote =>
+      'Dəyişikliklərdən sonra elan yenidən yoxlamaya göndərilməlidir.';
+
+  @override
+  String get editNotAllowed => 'Bu elan hazırda redaktə oluna bilməz';
+
+  @override
+  String get editNotAllowedHint =>
+      'Yalnız qaralama və rədd edilmiş elanlar redaktə olunur.';
+
+  @override
+  String get editPhotosTitle => 'Şəkillər';
+
+  @override
+  String get editPhotoRemoveTitle => 'Şəkil silinsin?';
+
+  @override
+  String get editPhotoNeeded =>
+      'Yoxlamaya göndərmək üçün ən azı bir şəkil lazımdır';
+
+  @override
+  String get deleteListingAction => 'Elanı sil';
+
+  @override
+  String get deleteListingTitle => 'Elanı silək?';
+
+  @override
+  String get deleteListingMessage =>
+      'Elan silinəcək. Bu əməliyyatı geri qaytarmaq olmur.';
+
+  @override
+  String get deleteListingConfirm => 'Sil';
+
+  @override
+  String get listingDeleted => 'Elan silindi';
+
+  @override
+  String get renewAction => 'Elanı yenilə';
+
+  @override
+  String get renewHint =>
+      'Elanın müddəti bitib. 30 gün üçün yeniləyə bilərsiniz.';
+
+  @override
+  String get payForRenewal => 'Elanın yenilənməsi (30 gün)';
+
+  @override
+  String get paymentSuccessRenew => 'Elan yeniləndi və yenidən aktivdir';
+
+  @override
+  String get bumpAction => 'Yuxarı qaldır';
+
+  @override
+  String get payForBump => 'Elanı siyahıda yuxarı qaldırmaq';
+
+  @override
+  String get paymentSuccessBump => 'Elan yuxarı qaldırıldı';
+
+  @override
   String get unitHour => 'saat';
 
   @override

@@ -13,7 +13,7 @@ import '../../../shared/widgets/listing_card.dart';
 import '../../../shared/widgets/listing_grid.dart';
 import '../../catalog/data/catalog_repository.dart';
 import '../../catalog/domain/catalog_models.dart';
-import '../../notifications/data/notifications_repository.dart';
+import '../../notifications/presentation/notifications_controller.dart';
 import '../../shell/tab_page.dart';
 
 class HomePage extends ConsumerWidget {

@@ -7,7 +7,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
-	<string>Rentox</string>
+	<string>RentoX</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -70,5 +70,9 @@
 	<string>RentoX needs access to your photos so you can add pictures to your listings.</string>
 	<key>NSCameraUsageDescription</key>
 	<string>RentoX needs the camera so you can take pictures for your listings.</string>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>remote-notification</string>
+	</array>
 </dict>
 </plist>
