@@ -20,6 +20,8 @@ import '../../catalog/data/catalog_repository.dart';
 import '../../catalog/domain/catalog_models.dart';
 import '../../favorites/presentation/favorite_button.dart';
 import '../../messages/presentation/inbox_controller.dart';
+import '../../support/domain/support_models.dart';
+import '../../support/presentation/support_widgets.dart';
 import 'listing_formatting.dart';
 import 'listing_gallery.dart';
 import 'message_sheet.dart';
@@ -271,6 +273,24 @@ class _DetailsView extends ConsumerWidget {
                         ],
                         _SectionTitle(l10n.ownerTitle),
                         _OwnerCard(owner: details.owner),
+                        if (!isOwner) ...[
+                          const SizedBox(height: AppSpacing.md),
+                          ReportProblemRow(
+                            hint: l10n.reportListingHint,
+                            onTap: () => context.push(
+                              Routes.newTicket(
+                                category: SupportCategory.listing.id,
+                                subject: clip(
+                                  '${l10n.supportCatListing}: ${details.title}',
+                                  SupportRules.subjectMax,
+                                ),
+                                ref:
+                                    '${l10n.supportRefListing(details.title)} '
+                                    '(ID: ${details.id})',
+                              ),
+                            ),
+                          ),
+                        ],
                         // Room for the floating action bar.
                         SizedBox(height: 110 + padding.bottom),
                       ],

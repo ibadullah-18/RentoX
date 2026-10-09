@@ -26,6 +26,10 @@ final _guid = RegExp(
   r'/listings/([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})',
 );
 
+final _ticket = RegExp(
+  r'/support/tickets/([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})',
+);
+
 class AppNotification {
   const AppNotification({
     required this.id,
@@ -54,6 +58,15 @@ class AppNotification {
     if (!kind.isListing) return null;
     final fromUrl = _guid.firstMatch(actionUrl ?? '')?.group(1);
     return fromUrl ?? relatedEntityId;
+  }
+
+  /// The support request this notification is about (support kinds only).
+  String? get ticketId {
+    if (kind != NotificationKind.supportReply &&
+        kind != NotificationKind.supportStatusChanged) {
+      return null;
+    }
+    return _ticket.firstMatch(actionUrl ?? '')?.group(1) ?? relatedEntityId;
   }
 
   AppNotification asRead([DateTime? at]) => isRead

@@ -17,6 +17,14 @@ import '../features/messages/presentation/chat_page.dart';
 import '../features/messages/presentation/messages_page.dart';
 import '../features/notifications/presentation/notifications_page.dart';
 import '../features/search/presentation/search_page.dart';
+import '../features/store/presentation/followed_stores_page.dart';
+import '../features/support/domain/support_models.dart';
+import '../features/support/presentation/new_ticket_page.dart';
+import '../features/support/presentation/support_page.dart';
+import '../features/support/presentation/ticket_page.dart';
+import '../features/store/presentation/my_store_page.dart';
+import '../features/store/presentation/store_form_page.dart';
+import '../features/store/presentation/store_page.dart';
 import '../features/profile/presentation/edit_profile_page.dart';
 import '../features/profile/presentation/profile_page.dart';
 import '../features/shell/app_shell.dart';
@@ -30,6 +38,28 @@ abstract final class Routes {
   static const messages = '/messages';
   static const profile = '/profile';
   static const profileEdit = '/profile/edit';
+  static const support = '/support';
+
+  /// A support request: `/support/<id>`.
+  static String ticket(String id) => '/support/$id';
+
+  /// The "new request" form, optionally pre-filled (opened from a listing or
+  /// a store): `/support/new?category=3&subject=...&ref=...`.
+  static String newTicket({int? category, String? subject, String? ref}) => Uri(
+    path: '/support/new',
+    queryParameters: {
+      if (category != null) 'category': '$category',
+      if (subject != null && subject.isNotEmpty) 'subject': subject,
+      if (ref != null && ref.isNotEmpty) 'ref': ref,
+    },
+  ).toString();
+
+  static const myStore = '/store/mine';
+  static const myStoreEdit = '/store/mine/edit';
+  static const followedStores = '/store/following';
+
+  /// A public store page: `/store/<slug>`.
+  static String store(String slug) => '/store/$slug';
   static const notifications = '/notifications';
   static const myListings = '/my-listings';
 
@@ -66,7 +96,12 @@ abstract final class Routes {
       _protected.contains(path) ||
       path.startsWith('$myListings/') ||
       path.startsWith('$messages/') ||
-      path.startsWith('$profile/');
+      path.startsWith('$profile/') ||
+      path == followedStores ||
+      path == support ||
+      path.startsWith('$support/') ||
+      path == myStore ||
+      path.startsWith('$myStore/');
 
   static const _protected = {
     myListings,
@@ -156,6 +191,47 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/messages/:id',
         builder: (_, state) =>
             ChatPage(conversationId: state.pathParameters['id']!),
+      ),
+      GoRoute(
+        path: Routes.support,
+        builder: (_, _) => const SupportPage(),
+        routes: [
+          // `new` must come before `:id`.
+          GoRoute(
+            path: 'new',
+            builder: (_, state) {
+              final q = state.uri.queryParameters;
+              return NewTicketPage(
+                category: SupportCategory.fromId(
+                  int.tryParse(q['category'] ?? '') ?? 1,
+                ),
+                subject: q['subject'] ?? '',
+                reference: q['ref'] ?? '',
+              );
+            },
+          ),
+          GoRoute(
+            path: ':id',
+            builder: (_, state) =>
+                TicketPage(ticketId: state.pathParameters['id']!),
+          ),
+        ],
+      ),
+      // Static `/store/...` routes first, then the public `/store/:slug`.
+      GoRoute(
+        path: Routes.myStore,
+        builder: (_, _) => const MyStorePage(),
+        routes: [
+          GoRoute(path: 'edit', builder: (_, _) => const StoreFormPage()),
+        ],
+      ),
+      GoRoute(
+        path: Routes.followedStores,
+        builder: (_, _) => const FollowedStoresPage(),
+      ),
+      GoRoute(
+        path: '/store/:slug',
+        builder: (_, state) => StorePage(slug: state.pathParameters['slug']!),
       ),
       GoRoute(
         path: Routes.profileEdit,

@@ -52,7 +52,12 @@ class _NotificationsPageState extends ConsumerState<NotificationsPage> {
   void _open(AppNotification n) {
     ref.read(notificationsProvider.notifier).markRead(n.id);
     final listingId = n.listingId;
-    if (listingId != null) context.push(Routes.myListing(listingId));
+    final ticketId = n.ticketId;
+    if (listingId != null) {
+      context.push(Routes.myListing(listingId));
+    } else if (ticketId != null) {
+      context.push(Routes.ticket(ticketId));
+    }
   }
 
   @override
@@ -278,7 +283,8 @@ class _NotificationTile extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
     final look = _lookOf(notification.kind);
     final unread = !notification.isRead;
-    final tappable = notification.listingId != null;
+    final tappable =
+        notification.listingId != null || notification.ticketId != null;
 
     return Material(
       color: unread ? scheme.primary.withValues(alpha: 0.07) : scheme.surface,

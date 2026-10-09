@@ -872,6 +872,268 @@ class AppL10nEn extends AppL10n {
   String get paymentSuccessBump => 'Listing bumped';
 
   @override
+  String get storeMine => 'My store';
+
+  @override
+  String get storeFollowing => 'Stores I follow';
+
+  @override
+  String get storeNone => 'You don\'t have a store yet';
+
+  @override
+  String get storeNoneHint =>
+      'Open a store: all your listings on one page, with followers.';
+
+  @override
+  String get storeOpen => 'Open a store';
+
+  @override
+  String get storeCreateTitle => 'Open a store';
+
+  @override
+  String get storeEditTitle => 'Edit store';
+
+  @override
+  String get storeSave => 'Save';
+
+  @override
+  String get storeCreated =>
+      'Store created. Add a logo and send it for review.';
+
+  @override
+  String get storeSaved => 'Store updated';
+
+  @override
+  String get storeSubmitNeedsLogo =>
+      'A logo is required to send the store for review';
+
+  @override
+  String get storeSubmitted => 'Store sent for review';
+
+  @override
+  String get storePendingInfo =>
+      'Your store is being reviewed. It will be public once approved.';
+
+  @override
+  String get storeActiveInfo => 'Your store is live.';
+
+  @override
+  String get storeSuspendedInfo =>
+      'Your store has been suspended. Contact support for details.';
+
+  @override
+  String get storeSuspended => 'Suspended';
+
+  @override
+  String get storeView => 'View store';
+
+  @override
+  String get storeEditOnlyDraft =>
+      'Only a draft or rejected store can be edited.';
+
+  @override
+  String get storeName => 'Store name';
+
+  @override
+  String get storeDescription => 'About the store';
+
+  @override
+  String get storePhone => 'Contact phone';
+
+  @override
+  String get storeEmail => 'Email (optional)';
+
+  @override
+  String get storeAddress => 'Address (optional)';
+
+  @override
+  String get storeInstagram => 'Instagram link (optional)';
+
+  @override
+  String get storeTiktok => 'TikTok link (optional)';
+
+  @override
+  String get storeFacebook => 'Facebook link (optional)';
+
+  @override
+  String get storeWebsite => 'Website (optional)';
+
+  @override
+  String get storeErrShort => 'Too short';
+
+  @override
+  String get storeErrLong => 'Too long';
+
+  @override
+  String get storeErrEmail => 'Enter a valid email';
+
+  @override
+  String get storeErrUrl => 'Enter a valid link (https://...)';
+
+  @override
+  String get storeLogo => 'Logo';
+
+  @override
+  String get storeCover => 'Cover photo';
+
+  @override
+  String get storeImageTooLarge =>
+      'The image is too large (logo up to 5 MB, cover up to 10 MB)';
+
+  @override
+  String get storeFollow => 'Follow';
+
+  @override
+  String get storeFollowingNow => 'Following';
+
+  @override
+  String get storeListingsTitle => 'Store listings';
+
+  @override
+  String get storeNoListings => 'This store has no active listings';
+
+  @override
+  String get storeNotFound => 'Store not found';
+
+  @override
+  String get storeContactTitle => 'Contact';
+
+  @override
+  String get storeFollowingEmpty => 'You don\'t follow any stores yet';
+
+  @override
+  String get storeFollowingEmptyHint =>
+      'Follow stores you like and they\'ll show up here.';
+
+  @override
+  String storeFollowers(int count) {
+    return '$count followers';
+  }
+
+  @override
+  String storeListingsCount(int count) {
+    return '$count listings';
+  }
+
+  @override
+  String storeViews(int count) {
+    return '$count views';
+  }
+
+  @override
+  String get openLinkFailed => 'Couldn\'t open the link';
+
+  @override
+  String get supportTitle => 'Support';
+
+  @override
+  String get supportNew => 'New request';
+
+  @override
+  String get supportEmpty => 'No requests yet';
+
+  @override
+  String get supportEmptyHint =>
+      'Write to us with any question or problem. Replies arrive as notifications.';
+
+  @override
+  String get supportNewTitle => 'Contact support';
+
+  @override
+  String get supportCategory => 'Topic';
+
+  @override
+  String get supportSubject => 'Short title';
+
+  @override
+  String get supportSubjectHint => 'For example, my payment didn\'t go through';
+
+  @override
+  String get supportMessage => 'Describe the problem';
+
+  @override
+  String get supportMessageHint => 'What happened? What did you expect?';
+
+  @override
+  String get supportSend => 'Send';
+
+  @override
+  String get supportSent => 'Your request was sent';
+
+  @override
+  String get supportErrSubject => 'Enter a title (160 characters max)';
+
+  @override
+  String get supportErrBody => 'Write a message (4000 characters max)';
+
+  @override
+  String get supportReplyHint => 'Write a reply';
+
+  @override
+  String get supportTeam => 'Support team';
+
+  @override
+  String get supportClosedInfo =>
+      'This request is closed. For anything new, open a new request.';
+
+  @override
+  String get supportResolvedInfo =>
+      'Marked as resolved. Replying will reopen it.';
+
+  @override
+  String get supportCatGeneral => 'General question';
+
+  @override
+  String get supportCatAccount => 'Account';
+
+  @override
+  String get supportCatListing => 'Listing';
+
+  @override
+  String get supportCatPayment => 'Payment';
+
+  @override
+  String get supportCatStore => 'Store';
+
+  @override
+  String get supportCatTechnical => 'Technical problem';
+
+  @override
+  String get supportCatOther => 'Other';
+
+  @override
+  String get supportStOpen => 'Open';
+
+  @override
+  String get supportStInProgress => 'In progress';
+
+  @override
+  String get supportStResolved => 'Resolved';
+
+  @override
+  String get supportStClosed => 'Closed';
+
+  @override
+  String get reportProblem => 'Report a problem';
+
+  @override
+  String get reportListingHint =>
+      'Something wrong with this listing? Let us know.';
+
+  @override
+  String get reportStoreHint => 'Something wrong with this store? Let us know.';
+
+  @override
+  String supportRefListing(String title) {
+    return 'Listing: $title';
+  }
+
+  @override
+  String supportRefStore(String title) {
+    return 'Store: $title';
+  }
+
+  @override
   String get unitHour => 'hour';
 
   @override

@@ -78,6 +78,8 @@ void _open(Ref ref, Map<String, String> data) {
   );
   if (target.listingId != null) {
     router.push(Routes.myListing(target.listingId!));
+  } else if (target.ticketId != null) {
+    router.push(Routes.ticket(target.ticketId!));
   } else {
     router.push(Routes.notifications);
   }

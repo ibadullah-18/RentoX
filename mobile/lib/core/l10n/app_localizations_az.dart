@@ -846,6 +846,266 @@ class AppL10nAz extends AppL10n {
   String get paymentSuccessBump => 'Elan yuxarı qaldırıldı';
 
   @override
+  String get storeMine => 'Mağazam';
+
+  @override
+  String get storeFollowing => 'İzlədiyim mağazalar';
+
+  @override
+  String get storeNone => 'Hələ mağazanız yoxdur';
+
+  @override
+  String get storeNoneHint =>
+      'Mağaza açın: bütün elanlarınız bir səhifədə, izləyiciləriniz də olsun.';
+
+  @override
+  String get storeOpen => 'Mağaza aç';
+
+  @override
+  String get storeCreateTitle => 'Mağaza aç';
+
+  @override
+  String get storeEditTitle => 'Mağazanı redaktə et';
+
+  @override
+  String get storeSave => 'Yadda saxla';
+
+  @override
+  String get storeCreated =>
+      'Mağaza yaradıldı. İndi logo əlavə edib yoxlamaya göndərin.';
+
+  @override
+  String get storeSaved => 'Mağaza yeniləndi';
+
+  @override
+  String get storeSubmitNeedsLogo => 'Yoxlamaya göndərmək üçün logo lazımdır';
+
+  @override
+  String get storeSubmitted => 'Mağaza yoxlamaya göndərildi';
+
+  @override
+  String get storePendingInfo =>
+      'Mağazanız yoxlanılır. Təsdiqlənəndə hamıya görünəcək.';
+
+  @override
+  String get storeActiveInfo => 'Mağazanız yayımdadır.';
+
+  @override
+  String get storeSuspendedInfo =>
+      'Mağazanız dayandırılıb. Əlavə məlumat üçün dəstəyə yazın.';
+
+  @override
+  String get storeSuspended => 'Dayandırılıb';
+
+  @override
+  String get storeView => 'Mağazaya bax';
+
+  @override
+  String get storeEditOnlyDraft =>
+      'Yalnız qaralama və rədd edilmiş mağaza redaktə olunur.';
+
+  @override
+  String get storeName => 'Mağazanın adı';
+
+  @override
+  String get storeDescription => 'Haqqında';
+
+  @override
+  String get storePhone => 'Əlaqə nömrəsi';
+
+  @override
+  String get storeEmail => 'E-poçt (istəyə görə)';
+
+  @override
+  String get storeAddress => 'Ünvan (istəyə görə)';
+
+  @override
+  String get storeInstagram => 'Instagram linki (istəyə görə)';
+
+  @override
+  String get storeTiktok => 'TikTok linki (istəyə görə)';
+
+  @override
+  String get storeFacebook => 'Facebook linki (istəyə görə)';
+
+  @override
+  String get storeWebsite => 'Vebsayt (istəyə görə)';
+
+  @override
+  String get storeErrShort => 'Çox qısadır';
+
+  @override
+  String get storeErrLong => 'Çox uzundur';
+
+  @override
+  String get storeErrEmail => 'Düzgün e-poçt yazın';
+
+  @override
+  String get storeErrUrl => 'Düzgün link yazın (https://...)';
+
+  @override
+  String get storeLogo => 'Logo';
+
+  @override
+  String get storeCover => 'Qapaq şəkli';
+
+  @override
+  String get storeImageTooLarge =>
+      'Şəkil çox böyükdür (logo ≤ 5 MB, qapaq ≤ 10 MB)';
+
+  @override
+  String get storeFollow => 'İzlə';
+
+  @override
+  String get storeFollowingNow => 'İzləyirsiniz';
+
+  @override
+  String get storeListingsTitle => 'Mağazanın elanları';
+
+  @override
+  String get storeNoListings => 'Mağazanın aktiv elanı yoxdur';
+
+  @override
+  String get storeNotFound => 'Mağaza tapılmadı';
+
+  @override
+  String get storeContactTitle => 'Əlaqə';
+
+  @override
+  String get storeFollowingEmpty => 'Hələ heç bir mağazanı izləmirsiniz';
+
+  @override
+  String get storeFollowingEmptyHint =>
+      'Bəyəndiyiniz mağazaları izləyin, onlar burada görünəcək.';
+
+  @override
+  String storeFollowers(int count) {
+    return '$count izləyici';
+  }
+
+  @override
+  String storeListingsCount(int count) {
+    return '$count elan';
+  }
+
+  @override
+  String storeViews(int count) {
+    return '$count baxış';
+  }
+
+  @override
+  String get openLinkFailed => 'Link açıla bilmədi';
+
+  @override
+  String get supportTitle => 'Dəstək';
+
+  @override
+  String get supportNew => 'Yeni müraciət';
+
+  @override
+  String get supportEmpty => 'Hələ müraciətiniz yoxdur';
+
+  @override
+  String get supportEmptyHint =>
+      'Sualınız və ya probleminiz varsa bizə yazın. Cavab bildiriş kimi gələcək.';
+
+  @override
+  String get supportNewTitle => 'Dəstəyə yazın';
+
+  @override
+  String get supportCategory => 'Mövzu';
+
+  @override
+  String get supportSubject => 'Qısa başlıq';
+
+  @override
+  String get supportSubjectHint => 'Məsələn, ödənişim keçmədi';
+
+  @override
+  String get supportMessage => 'Probleminizi yazın';
+
+  @override
+  String get supportMessageHint => 'Nə baş verdi? Nə gözləyirdiniz?';
+
+  @override
+  String get supportSend => 'Göndər';
+
+  @override
+  String get supportSent => 'Müraciətiniz göndərildi';
+
+  @override
+  String get supportErrSubject => 'Başlıq yazın (ən çox 160 simvol)';
+
+  @override
+  String get supportErrBody => 'Mesaj yazın (ən çox 4000 simvol)';
+
+  @override
+  String get supportReplyHint => 'Cavab yazın';
+
+  @override
+  String get supportTeam => 'Dəstək komandası';
+
+  @override
+  String get supportClosedInfo =>
+      'Bu müraciət bağlanıb. Yeni sualınız varsa yeni müraciət yaradın.';
+
+  @override
+  String get supportResolvedInfo =>
+      'Həll olunub. Yazsanız müraciət yenidən açılacaq.';
+
+  @override
+  String get supportCatGeneral => 'Ümumi sual';
+
+  @override
+  String get supportCatAccount => 'Hesab';
+
+  @override
+  String get supportCatListing => 'Elan';
+
+  @override
+  String get supportCatPayment => 'Ödəniş';
+
+  @override
+  String get supportCatStore => 'Mağaza';
+
+  @override
+  String get supportCatTechnical => 'Texniki problem';
+
+  @override
+  String get supportCatOther => 'Digər';
+
+  @override
+  String get supportStOpen => 'Açıq';
+
+  @override
+  String get supportStInProgress => 'İşlənir';
+
+  @override
+  String get supportStResolved => 'Həll olunub';
+
+  @override
+  String get supportStClosed => 'Bağlanıb';
+
+  @override
+  String get reportProblem => 'Problem bildir';
+
+  @override
+  String get reportListingHint => 'Elanla bağlı problem var? Bizə bildirin.';
+
+  @override
+  String get reportStoreHint => 'Mağaza ilə bağlı problem var? Bizə bildirin.';
+
+  @override
+  String supportRefListing(String title) {
+    return 'Elan: $title';
+  }
+
+  @override
+  String supportRefStore(String title) {
+    return 'Mağaza: $title';
+  }
+
+  @override
   String get unitHour => 'saat';
 
   @override

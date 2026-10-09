@@ -14,6 +14,8 @@ import '../../notifications/presentation/notifications_controller.dart';
 import '../../shell/tab_page.dart';
 import '../../wallet/data/wallet_repository.dart';
 import '../../wallet/presentation/payment_sheet.dart';
+import '../../store/presentation/my_store_page.dart';
+import '../../store/presentation/store_controller.dart';
 import 'account_controller.dart';
 import 'language_sheet.dart';
 import 'profile_avatar.dart';
@@ -63,6 +65,7 @@ class ProfilePage extends ConsumerWidget {
     final session = ref.watch(authControllerProvider).value;
     final account = ref.watch(accountProvider).value;
     final wallet = ref.watch(walletBalanceProvider);
+    final myStore = ref.watch(myStoreProvider).value;
     final unread = ref.watch(unreadNotificationsProvider).value ?? 0;
     final language = ref.watch(localeProvider).languageCode;
 
@@ -70,6 +73,7 @@ class ProfilePage extends ConsumerWidget {
       onRefresh: () async {
         ref.invalidate(walletBalanceProvider);
         ref.invalidate(accountProvider);
+        ref.invalidate(myStoreProvider);
         await ref.read(walletBalanceProvider.future);
       },
       slivers: [
@@ -140,6 +144,21 @@ class ProfilePage extends ConsumerWidget {
                     ),
                     const Divider(indent: 56),
                     _MenuTile(
+                      icon: AppIcons.store,
+                      title: l10n.storeMine,
+                      trailingText: myStore == null
+                          ? null
+                          : storeStatusLabel(l10n, myStore.status),
+                      onTap: () => context.push(Routes.myStore),
+                    ),
+                    const Divider(indent: 56),
+                    _MenuTile(
+                      icon: AppIcons.follow,
+                      title: l10n.storeFollowing,
+                      onTap: () => context.push(Routes.followedStores),
+                    ),
+                    const Divider(indent: 56),
+                    _MenuTile(
                       icon: AppIcons.wallet,
                       title: l10n.walletTitle,
                       trailingText: wallet.value == null
@@ -166,6 +185,12 @@ class ProfilePage extends ConsumerWidget {
                       title: l10n.languageTitle,
                       trailingText: languageName(language),
                       onTap: () => showLanguageSheet(context),
+                    ),
+                    const Divider(indent: 56),
+                    _MenuTile(
+                      icon: AppIcons.support,
+                      title: l10n.supportTitle,
+                      onTap: () => context.push(Routes.support),
                     ),
                     const Divider(indent: 56),
                     _MenuTile(

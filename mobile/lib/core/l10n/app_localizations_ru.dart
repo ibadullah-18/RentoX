@@ -883,6 +883,266 @@ class AppL10nRu extends AppL10n {
   String get paymentSuccessBump => 'Объявление поднято';
 
   @override
+  String get storeMine => 'Мой магазин';
+
+  @override
+  String get storeFollowing => 'Магазины, на которые я подписан';
+
+  @override
+  String get storeNone => 'У вас пока нет магазина';
+
+  @override
+  String get storeNoneHint =>
+      'Откройте магазин: все ваши объявления на одной странице и подписчики.';
+
+  @override
+  String get storeOpen => 'Открыть магазин';
+
+  @override
+  String get storeCreateTitle => 'Открыть магазин';
+
+  @override
+  String get storeEditTitle => 'Редактировать магазин';
+
+  @override
+  String get storeSave => 'Сохранить';
+
+  @override
+  String get storeCreated =>
+      'Магазин создан. Добавьте логотип и отправьте на модерацию.';
+
+  @override
+  String get storeSaved => 'Магазин обновлён';
+
+  @override
+  String get storeSubmitNeedsLogo => 'Для отправки на модерацию нужен логотип';
+
+  @override
+  String get storeSubmitted => 'Магазин отправлен на модерацию';
+
+  @override
+  String get storePendingInfo =>
+      'Ваш магазин на проверке. После одобрения он станет публичным.';
+
+  @override
+  String get storeActiveInfo => 'Ваш магазин опубликован.';
+
+  @override
+  String get storeSuspendedInfo =>
+      'Ваш магазин приостановлен. Обратитесь в поддержку.';
+
+  @override
+  String get storeSuspended => 'Приостановлен';
+
+  @override
+  String get storeView => 'Открыть магазин';
+
+  @override
+  String get storeEditOnlyDraft =>
+      'Редактировать можно только черновик или отклонённый магазин.';
+
+  @override
+  String get storeName => 'Название магазина';
+
+  @override
+  String get storeDescription => 'О магазине';
+
+  @override
+  String get storePhone => 'Контактный телефон';
+
+  @override
+  String get storeEmail => 'Эл. почта (необязательно)';
+
+  @override
+  String get storeAddress => 'Адрес (необязательно)';
+
+  @override
+  String get storeInstagram => 'Ссылка на Instagram (необязательно)';
+
+  @override
+  String get storeTiktok => 'Ссылка на TikTok (необязательно)';
+
+  @override
+  String get storeFacebook => 'Ссылка на Facebook (необязательно)';
+
+  @override
+  String get storeWebsite => 'Сайт (необязательно)';
+
+  @override
+  String get storeErrShort => 'Слишком коротко';
+
+  @override
+  String get storeErrLong => 'Слишком длинно';
+
+  @override
+  String get storeErrEmail => 'Введите корректную почту';
+
+  @override
+  String get storeErrUrl => 'Введите корректную ссылку (https://...)';
+
+  @override
+  String get storeLogo => 'Логотип';
+
+  @override
+  String get storeCover => 'Обложка';
+
+  @override
+  String get storeImageTooLarge =>
+      'Файл слишком большой (логотип до 5 МБ, обложка до 10 МБ)';
+
+  @override
+  String get storeFollow => 'Подписаться';
+
+  @override
+  String get storeFollowingNow => 'Вы подписаны';
+
+  @override
+  String get storeListingsTitle => 'Объявления магазина';
+
+  @override
+  String get storeNoListings => 'У магазина нет активных объявлений';
+
+  @override
+  String get storeNotFound => 'Магазин не найден';
+
+  @override
+  String get storeContactTitle => 'Контакты';
+
+  @override
+  String get storeFollowingEmpty => 'Вы пока ни на кого не подписаны';
+
+  @override
+  String get storeFollowingEmptyHint =>
+      'Подписывайтесь на понравившиеся магазины, и они появятся здесь.';
+
+  @override
+  String storeFollowers(int count) {
+    return 'Подписчиков: $count';
+  }
+
+  @override
+  String storeListingsCount(int count) {
+    return 'Объявлений: $count';
+  }
+
+  @override
+  String storeViews(int count) {
+    return 'Просмотров: $count';
+  }
+
+  @override
+  String get openLinkFailed => 'Не удалось открыть ссылку';
+
+  @override
+  String get supportTitle => 'Поддержка';
+
+  @override
+  String get supportNew => 'Новое обращение';
+
+  @override
+  String get supportEmpty => 'Обращений пока нет';
+
+  @override
+  String get supportEmptyHint =>
+      'Напишите нам, если есть вопрос или проблема. Ответ придёт уведомлением.';
+
+  @override
+  String get supportNewTitle => 'Написать в поддержку';
+
+  @override
+  String get supportCategory => 'Тема';
+
+  @override
+  String get supportSubject => 'Краткий заголовок';
+
+  @override
+  String get supportSubjectHint => 'Например, платёж не прошёл';
+
+  @override
+  String get supportMessage => 'Опишите проблему';
+
+  @override
+  String get supportMessageHint => 'Что произошло? Что вы ожидали?';
+
+  @override
+  String get supportSend => 'Отправить';
+
+  @override
+  String get supportSent => 'Обращение отправлено';
+
+  @override
+  String get supportErrSubject => 'Введите заголовок (до 160 символов)';
+
+  @override
+  String get supportErrBody => 'Напишите сообщение (до 4000 символов)';
+
+  @override
+  String get supportReplyHint => 'Напишите ответ';
+
+  @override
+  String get supportTeam => 'Команда поддержки';
+
+  @override
+  String get supportClosedInfo =>
+      'Обращение закрыто. По новому вопросу создайте новое обращение.';
+
+  @override
+  String get supportResolvedInfo =>
+      'Отмечено как решённое. Ответ откроет его снова.';
+
+  @override
+  String get supportCatGeneral => 'Общий вопрос';
+
+  @override
+  String get supportCatAccount => 'Аккаунт';
+
+  @override
+  String get supportCatListing => 'Объявление';
+
+  @override
+  String get supportCatPayment => 'Платёж';
+
+  @override
+  String get supportCatStore => 'Магазин';
+
+  @override
+  String get supportCatTechnical => 'Техническая проблема';
+
+  @override
+  String get supportCatOther => 'Другое';
+
+  @override
+  String get supportStOpen => 'Открыто';
+
+  @override
+  String get supportStInProgress => 'В работе';
+
+  @override
+  String get supportStResolved => 'Решено';
+
+  @override
+  String get supportStClosed => 'Закрыто';
+
+  @override
+  String get reportProblem => 'Сообщить о проблеме';
+
+  @override
+  String get reportListingHint => 'Проблема с этим объявлением? Сообщите нам.';
+
+  @override
+  String get reportStoreHint => 'Проблема с этим магазином? Сообщите нам.';
+
+  @override
+  String supportRefListing(String title) {
+    return 'Объявление: $title';
+  }
+
+  @override
+  String supportRefStore(String title) {
+    return 'Магазин: $title';
+  }
+
+  @override
   String get unitHour => 'час';
 
   @override

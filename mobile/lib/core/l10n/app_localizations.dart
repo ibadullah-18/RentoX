@@ -1671,6 +1671,486 @@ abstract class AppL10n {
   /// **'Elan yuxarı qaldırıldı'**
   String get paymentSuccessBump;
 
+  /// No description provided for @storeMine.
+  ///
+  /// In az, this message translates to:
+  /// **'Mağazam'**
+  String get storeMine;
+
+  /// No description provided for @storeFollowing.
+  ///
+  /// In az, this message translates to:
+  /// **'İzlədiyim mağazalar'**
+  String get storeFollowing;
+
+  /// No description provided for @storeNone.
+  ///
+  /// In az, this message translates to:
+  /// **'Hələ mağazanız yoxdur'**
+  String get storeNone;
+
+  /// No description provided for @storeNoneHint.
+  ///
+  /// In az, this message translates to:
+  /// **'Mağaza açın: bütün elanlarınız bir səhifədə, izləyiciləriniz də olsun.'**
+  String get storeNoneHint;
+
+  /// No description provided for @storeOpen.
+  ///
+  /// In az, this message translates to:
+  /// **'Mağaza aç'**
+  String get storeOpen;
+
+  /// No description provided for @storeCreateTitle.
+  ///
+  /// In az, this message translates to:
+  /// **'Mağaza aç'**
+  String get storeCreateTitle;
+
+  /// No description provided for @storeEditTitle.
+  ///
+  /// In az, this message translates to:
+  /// **'Mağazanı redaktə et'**
+  String get storeEditTitle;
+
+  /// No description provided for @storeSave.
+  ///
+  /// In az, this message translates to:
+  /// **'Yadda saxla'**
+  String get storeSave;
+
+  /// No description provided for @storeCreated.
+  ///
+  /// In az, this message translates to:
+  /// **'Mağaza yaradıldı. İndi logo əlavə edib yoxlamaya göndərin.'**
+  String get storeCreated;
+
+  /// No description provided for @storeSaved.
+  ///
+  /// In az, this message translates to:
+  /// **'Mağaza yeniləndi'**
+  String get storeSaved;
+
+  /// No description provided for @storeSubmitNeedsLogo.
+  ///
+  /// In az, this message translates to:
+  /// **'Yoxlamaya göndərmək üçün logo lazımdır'**
+  String get storeSubmitNeedsLogo;
+
+  /// No description provided for @storeSubmitted.
+  ///
+  /// In az, this message translates to:
+  /// **'Mağaza yoxlamaya göndərildi'**
+  String get storeSubmitted;
+
+  /// No description provided for @storePendingInfo.
+  ///
+  /// In az, this message translates to:
+  /// **'Mağazanız yoxlanılır. Təsdiqlənəndə hamıya görünəcək.'**
+  String get storePendingInfo;
+
+  /// No description provided for @storeActiveInfo.
+  ///
+  /// In az, this message translates to:
+  /// **'Mağazanız yayımdadır.'**
+  String get storeActiveInfo;
+
+  /// No description provided for @storeSuspendedInfo.
+  ///
+  /// In az, this message translates to:
+  /// **'Mağazanız dayandırılıb. Əlavə məlumat üçün dəstəyə yazın.'**
+  String get storeSuspendedInfo;
+
+  /// No description provided for @storeSuspended.
+  ///
+  /// In az, this message translates to:
+  /// **'Dayandırılıb'**
+  String get storeSuspended;
+
+  /// No description provided for @storeView.
+  ///
+  /// In az, this message translates to:
+  /// **'Mağazaya bax'**
+  String get storeView;
+
+  /// No description provided for @storeEditOnlyDraft.
+  ///
+  /// In az, this message translates to:
+  /// **'Yalnız qaralama və rədd edilmiş mağaza redaktə olunur.'**
+  String get storeEditOnlyDraft;
+
+  /// No description provided for @storeName.
+  ///
+  /// In az, this message translates to:
+  /// **'Mağazanın adı'**
+  String get storeName;
+
+  /// No description provided for @storeDescription.
+  ///
+  /// In az, this message translates to:
+  /// **'Haqqında'**
+  String get storeDescription;
+
+  /// No description provided for @storePhone.
+  ///
+  /// In az, this message translates to:
+  /// **'Əlaqə nömrəsi'**
+  String get storePhone;
+
+  /// No description provided for @storeEmail.
+  ///
+  /// In az, this message translates to:
+  /// **'E-poçt (istəyə görə)'**
+  String get storeEmail;
+
+  /// No description provided for @storeAddress.
+  ///
+  /// In az, this message translates to:
+  /// **'Ünvan (istəyə görə)'**
+  String get storeAddress;
+
+  /// No description provided for @storeInstagram.
+  ///
+  /// In az, this message translates to:
+  /// **'Instagram linki (istəyə görə)'**
+  String get storeInstagram;
+
+  /// No description provided for @storeTiktok.
+  ///
+  /// In az, this message translates to:
+  /// **'TikTok linki (istəyə görə)'**
+  String get storeTiktok;
+
+  /// No description provided for @storeFacebook.
+  ///
+  /// In az, this message translates to:
+  /// **'Facebook linki (istəyə görə)'**
+  String get storeFacebook;
+
+  /// No description provided for @storeWebsite.
+  ///
+  /// In az, this message translates to:
+  /// **'Vebsayt (istəyə görə)'**
+  String get storeWebsite;
+
+  /// No description provided for @storeErrShort.
+  ///
+  /// In az, this message translates to:
+  /// **'Çox qısadır'**
+  String get storeErrShort;
+
+  /// No description provided for @storeErrLong.
+  ///
+  /// In az, this message translates to:
+  /// **'Çox uzundur'**
+  String get storeErrLong;
+
+  /// No description provided for @storeErrEmail.
+  ///
+  /// In az, this message translates to:
+  /// **'Düzgün e-poçt yazın'**
+  String get storeErrEmail;
+
+  /// No description provided for @storeErrUrl.
+  ///
+  /// In az, this message translates to:
+  /// **'Düzgün link yazın (https://...)'**
+  String get storeErrUrl;
+
+  /// No description provided for @storeLogo.
+  ///
+  /// In az, this message translates to:
+  /// **'Logo'**
+  String get storeLogo;
+
+  /// No description provided for @storeCover.
+  ///
+  /// In az, this message translates to:
+  /// **'Qapaq şəkli'**
+  String get storeCover;
+
+  /// No description provided for @storeImageTooLarge.
+  ///
+  /// In az, this message translates to:
+  /// **'Şəkil çox böyükdür (logo ≤ 5 MB, qapaq ≤ 10 MB)'**
+  String get storeImageTooLarge;
+
+  /// No description provided for @storeFollow.
+  ///
+  /// In az, this message translates to:
+  /// **'İzlə'**
+  String get storeFollow;
+
+  /// No description provided for @storeFollowingNow.
+  ///
+  /// In az, this message translates to:
+  /// **'İzləyirsiniz'**
+  String get storeFollowingNow;
+
+  /// No description provided for @storeListingsTitle.
+  ///
+  /// In az, this message translates to:
+  /// **'Mağazanın elanları'**
+  String get storeListingsTitle;
+
+  /// No description provided for @storeNoListings.
+  ///
+  /// In az, this message translates to:
+  /// **'Mağazanın aktiv elanı yoxdur'**
+  String get storeNoListings;
+
+  /// No description provided for @storeNotFound.
+  ///
+  /// In az, this message translates to:
+  /// **'Mağaza tapılmadı'**
+  String get storeNotFound;
+
+  /// No description provided for @storeContactTitle.
+  ///
+  /// In az, this message translates to:
+  /// **'Əlaqə'**
+  String get storeContactTitle;
+
+  /// No description provided for @storeFollowingEmpty.
+  ///
+  /// In az, this message translates to:
+  /// **'Hələ heç bir mağazanı izləmirsiniz'**
+  String get storeFollowingEmpty;
+
+  /// No description provided for @storeFollowingEmptyHint.
+  ///
+  /// In az, this message translates to:
+  /// **'Bəyəndiyiniz mağazaları izləyin, onlar burada görünəcək.'**
+  String get storeFollowingEmptyHint;
+
+  /// No description provided for @storeFollowers.
+  ///
+  /// In az, this message translates to:
+  /// **'{count} izləyici'**
+  String storeFollowers(int count);
+
+  /// No description provided for @storeListingsCount.
+  ///
+  /// In az, this message translates to:
+  /// **'{count} elan'**
+  String storeListingsCount(int count);
+
+  /// No description provided for @storeViews.
+  ///
+  /// In az, this message translates to:
+  /// **'{count} baxış'**
+  String storeViews(int count);
+
+  /// No description provided for @openLinkFailed.
+  ///
+  /// In az, this message translates to:
+  /// **'Link açıla bilmədi'**
+  String get openLinkFailed;
+
+  /// No description provided for @supportTitle.
+  ///
+  /// In az, this message translates to:
+  /// **'Dəstək'**
+  String get supportTitle;
+
+  /// No description provided for @supportNew.
+  ///
+  /// In az, this message translates to:
+  /// **'Yeni müraciət'**
+  String get supportNew;
+
+  /// No description provided for @supportEmpty.
+  ///
+  /// In az, this message translates to:
+  /// **'Hələ müraciətiniz yoxdur'**
+  String get supportEmpty;
+
+  /// No description provided for @supportEmptyHint.
+  ///
+  /// In az, this message translates to:
+  /// **'Sualınız və ya probleminiz varsa bizə yazın. Cavab bildiriş kimi gələcək.'**
+  String get supportEmptyHint;
+
+  /// No description provided for @supportNewTitle.
+  ///
+  /// In az, this message translates to:
+  /// **'Dəstəyə yazın'**
+  String get supportNewTitle;
+
+  /// No description provided for @supportCategory.
+  ///
+  /// In az, this message translates to:
+  /// **'Mövzu'**
+  String get supportCategory;
+
+  /// No description provided for @supportSubject.
+  ///
+  /// In az, this message translates to:
+  /// **'Qısa başlıq'**
+  String get supportSubject;
+
+  /// No description provided for @supportSubjectHint.
+  ///
+  /// In az, this message translates to:
+  /// **'Məsələn, ödənişim keçmədi'**
+  String get supportSubjectHint;
+
+  /// No description provided for @supportMessage.
+  ///
+  /// In az, this message translates to:
+  /// **'Probleminizi yazın'**
+  String get supportMessage;
+
+  /// No description provided for @supportMessageHint.
+  ///
+  /// In az, this message translates to:
+  /// **'Nə baş verdi? Nə gözləyirdiniz?'**
+  String get supportMessageHint;
+
+  /// No description provided for @supportSend.
+  ///
+  /// In az, this message translates to:
+  /// **'Göndər'**
+  String get supportSend;
+
+  /// No description provided for @supportSent.
+  ///
+  /// In az, this message translates to:
+  /// **'Müraciətiniz göndərildi'**
+  String get supportSent;
+
+  /// No description provided for @supportErrSubject.
+  ///
+  /// In az, this message translates to:
+  /// **'Başlıq yazın (ən çox 160 simvol)'**
+  String get supportErrSubject;
+
+  /// No description provided for @supportErrBody.
+  ///
+  /// In az, this message translates to:
+  /// **'Mesaj yazın (ən çox 4000 simvol)'**
+  String get supportErrBody;
+
+  /// No description provided for @supportReplyHint.
+  ///
+  /// In az, this message translates to:
+  /// **'Cavab yazın'**
+  String get supportReplyHint;
+
+  /// No description provided for @supportTeam.
+  ///
+  /// In az, this message translates to:
+  /// **'Dəstək komandası'**
+  String get supportTeam;
+
+  /// No description provided for @supportClosedInfo.
+  ///
+  /// In az, this message translates to:
+  /// **'Bu müraciət bağlanıb. Yeni sualınız varsa yeni müraciət yaradın.'**
+  String get supportClosedInfo;
+
+  /// No description provided for @supportResolvedInfo.
+  ///
+  /// In az, this message translates to:
+  /// **'Həll olunub. Yazsanız müraciət yenidən açılacaq.'**
+  String get supportResolvedInfo;
+
+  /// No description provided for @supportCatGeneral.
+  ///
+  /// In az, this message translates to:
+  /// **'Ümumi sual'**
+  String get supportCatGeneral;
+
+  /// No description provided for @supportCatAccount.
+  ///
+  /// In az, this message translates to:
+  /// **'Hesab'**
+  String get supportCatAccount;
+
+  /// No description provided for @supportCatListing.
+  ///
+  /// In az, this message translates to:
+  /// **'Elan'**
+  String get supportCatListing;
+
+  /// No description provided for @supportCatPayment.
+  ///
+  /// In az, this message translates to:
+  /// **'Ödəniş'**
+  String get supportCatPayment;
+
+  /// No description provided for @supportCatStore.
+  ///
+  /// In az, this message translates to:
+  /// **'Mağaza'**
+  String get supportCatStore;
+
+  /// No description provided for @supportCatTechnical.
+  ///
+  /// In az, this message translates to:
+  /// **'Texniki problem'**
+  String get supportCatTechnical;
+
+  /// No description provided for @supportCatOther.
+  ///
+  /// In az, this message translates to:
+  /// **'Digər'**
+  String get supportCatOther;
+
+  /// No description provided for @supportStOpen.
+  ///
+  /// In az, this message translates to:
+  /// **'Açıq'**
+  String get supportStOpen;
+
+  /// No description provided for @supportStInProgress.
+  ///
+  /// In az, this message translates to:
+  /// **'İşlənir'**
+  String get supportStInProgress;
+
+  /// No description provided for @supportStResolved.
+  ///
+  /// In az, this message translates to:
+  /// **'Həll olunub'**
+  String get supportStResolved;
+
+  /// No description provided for @supportStClosed.
+  ///
+  /// In az, this message translates to:
+  /// **'Bağlanıb'**
+  String get supportStClosed;
+
+  /// No description provided for @reportProblem.
+  ///
+  /// In az, this message translates to:
+  /// **'Problem bildir'**
+  String get reportProblem;
+
+  /// No description provided for @reportListingHint.
+  ///
+  /// In az, this message translates to:
+  /// **'Elanla bağlı problem var? Bizə bildirin.'**
+  String get reportListingHint;
+
+  /// No description provided for @reportStoreHint.
+  ///
+  /// In az, this message translates to:
+  /// **'Mağaza ilə bağlı problem var? Bizə bildirin.'**
+  String get reportStoreHint;
+
+  /// No description provided for @supportRefListing.
+  ///
+  /// In az, this message translates to:
+  /// **'Elan: {title}'**
+  String supportRefListing(String title);
+
+  /// No description provided for @supportRefStore.
+  ///
+  /// In az, this message translates to:
+  /// **'Mağaza: {title}'**
+  String supportRefStore(String title);
+
   /// No description provided for @unitHour.
   ///
   /// In az, this message translates to:

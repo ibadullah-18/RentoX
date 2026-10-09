@@ -49,6 +49,11 @@ abstract final class AppIcons {
   static const IconData devices = Symbols.devices_rounded;
   static const IconData edit = Symbols.edit_rounded;
   static const IconData store = Symbols.storefront_rounded;
+  static const IconData mail = Symbols.mail_rounded;
+  static const IconData place = Symbols.location_on_rounded;
+  static const IconData link = Symbols.link_rounded;
+  static const IconData follow = Symbols.person_add_rounded;
+  static const IconData following = Symbols.how_to_reg_rounded;
   static const IconData support = Symbols.support_agent_rounded;
   static const IconData info = Symbols.info_rounded;
   static const IconData bellOff = Symbols.notifications_off_rounded;
