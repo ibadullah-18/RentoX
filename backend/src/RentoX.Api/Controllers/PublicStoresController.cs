@@ -17,6 +17,57 @@ public sealed class PublicStoresController(
     ICurrentUserContext currentUserContext)
     : ControllerBase
 {
+    [HttpGet]
+    [ProducesResponseType<
+        PagedResponse<PublicStoreSummaryResponse>>(
+        StatusCodes.Status200OK)]
+    [ProducesResponseType(
+        StatusCodes.Status400BadRequest)]
+    public async Task<ActionResult<
+        PagedResponse<PublicStoreSummaryResponse>>>
+        SearchAsync(
+            [FromQuery] string? search,
+            [FromQuery] int page = 1,
+            [FromQuery] int pageSize = 20,
+            CancellationToken cancellationToken = default)
+    {
+        if (page < 1 || pageSize is < 1 or > 50)
+        {
+            return BadRequest(new ProblemDetails
+            {
+                Title = "Invalid paging.",
+                Detail = "Page must be 1 or more and page size 1 to 50.",
+                Status = StatusCodes.Status400BadRequest
+            });
+        }
+
+        PagedResult<PublicStoreSummaryResult> result =
+            await queryService.SearchAsync(
+                new PublicStoreSearchQuery(search, page, pageSize),
+                cancellationToken);
+
+        PublicStoreSummaryResponse[] items =
+            result.Items
+                .Select(item => new PublicStoreSummaryResponse(
+                    item.StoreId,
+                    item.Name,
+                    item.Slug,
+                    item.Description,
+                    item.HasLogoImage
+                        ? $"/api/stores/{item.StoreId}/logo?v={item.ImageVersion}"
+                        : null,
+                    item.ActiveListingCount,
+                    item.FollowerCount))
+                .ToArray();
+
+        return Ok(new PagedResponse<PublicStoreSummaryResponse>(
+            items,
+            result.Page,
+            result.PageSize,
+            result.TotalCount,
+            result.TotalPages));
+    }
+
     [HttpGet("{slug}")]
     [ProducesResponseType<PublicStoreDetailsResponse>(
         StatusCodes.Status200OK)]

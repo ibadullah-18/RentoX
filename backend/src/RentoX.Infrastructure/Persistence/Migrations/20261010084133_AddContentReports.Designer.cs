@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using RentoX.Infrastructure.Persistence;
@@ -11,9 +12,11 @@ using RentoX.Infrastructure.Persistence;
 namespace RentoX.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(RentoXDbContext))]
-    partial class RentoXDbContextModelSnapshot : ModelSnapshot
+    [Migration("20261010084133_AddContentReports")]
+    partial class AddContentReports
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -170,9 +173,9 @@ namespace RentoX.Infrastructure.Persistence.Migrations
                         {
                             t.HasCheckConstraint("CK_audit_entries_Action", "\"Action\" BETWEEN 1 AND 5");
 
-                            t.HasCheckConstraint("CK_audit_entries_Payload", "(\n    \"Action\" BETWEEN 1 AND 4\n    AND \"PreviousValue\" IS NOT NULL\n    AND \"CurrentValue\" IS NOT NULL\n    AND \"PreviousValue\" <> \"CurrentValue\"\n    AND \"RelatedEntityId\" IS NULL\n    AND (\n        (\"Action\" = 1\n            AND \"PreviousValue\" BETWEEN 1 AND 8\n            AND \"CurrentValue\" BETWEEN 1 AND 8)\n        OR (\"Action\" = 2\n            AND \"PreviousValue\" BETWEEN 1 AND 6\n            AND \"CurrentValue\" BETWEEN 1 AND 6)\n        OR (\"Action\" IN (3, 4)\n            AND \"PreviousValue\" BETWEEN 1 AND 4\n            AND \"CurrentValue\" BETWEEN 1 AND 4)\n    )\n)\nOR\n(\n    \"Action\" = 5\n    AND \"PreviousValue\" IS NULL\n    AND \"CurrentValue\" IS NULL\n    AND \"RelatedEntityId\" IS NOT NULL\n    AND \"RelatedEntityId\" <>\n        '00000000-0000-0000-0000-000000000000'::uuid\n)");
+                            t.HasCheckConstraint("CK_audit_entries_Payload", "(\r\n    \"Action\" BETWEEN 1 AND 4\r\n    AND \"PreviousValue\" IS NOT NULL\r\n    AND \"CurrentValue\" IS NOT NULL\r\n    AND \"PreviousValue\" <> \"CurrentValue\"\r\n    AND \"RelatedEntityId\" IS NULL\r\n    AND (\r\n        (\"Action\" = 1\r\n            AND \"PreviousValue\" BETWEEN 1 AND 8\r\n            AND \"CurrentValue\" BETWEEN 1 AND 8)\r\n        OR (\"Action\" = 2\r\n            AND \"PreviousValue\" BETWEEN 1 AND 6\r\n            AND \"CurrentValue\" BETWEEN 1 AND 6)\r\n        OR (\"Action\" IN (3, 4)\r\n            AND \"PreviousValue\" BETWEEN 1 AND 4\r\n            AND \"CurrentValue\" BETWEEN 1 AND 4)\r\n    )\r\n)\r\nOR\r\n(\r\n    \"Action\" = 5\r\n    AND \"PreviousValue\" IS NULL\r\n    AND \"CurrentValue\" IS NULL\r\n    AND \"RelatedEntityId\" IS NOT NULL\r\n    AND \"RelatedEntityId\" <>\r\n        '00000000-0000-0000-0000-000000000000'::uuid\r\n)");
 
-                            t.HasCheckConstraint("CK_audit_entries_RequiredIds", "\"OperationId\" <> '00000000-0000-0000-0000-000000000000'::uuid\nAND \"ActorUserId\" <> '00000000-0000-0000-0000-000000000000'::uuid\nAND \"TargetId\" <> '00000000-0000-0000-0000-000000000000'::uuid");
+                            t.HasCheckConstraint("CK_audit_entries_RequiredIds", "\"OperationId\" <> '00000000-0000-0000-0000-000000000000'::uuid\r\nAND \"ActorUserId\" <> '00000000-0000-0000-0000-000000000000'::uuid\r\nAND \"TargetId\" <> '00000000-0000-0000-0000-000000000000'::uuid");
                         });
                 });
 

@@ -10,6 +10,10 @@ public interface IPublicStoreQueryService
         string slug,
         CancellationToken cancellationToken = default);
 
+    Task<PagedResult<PublicStoreSummaryResult>> SearchAsync(
+        PublicStoreSearchQuery query,
+        CancellationToken cancellationToken = default);
+
     Task<PagedResult<PublicListingSummaryResult>?>
         GetListingsAsync(
             string slug,

@@ -245,6 +245,13 @@ public sealed class StoreProfile : AuditableEntity
         RejectionReason = normalized;
     }
 
+    /// <summary>Takes the store out of view for good (owner left).</summary>
+    public void MarkDeleted(DateTimeOffset deletedAtUtc)
+    {
+        Status = StoreStatus.Deleted;
+        MarkAsDeleted(deletedAtUtc);
+    }
+
     private void EnsureEditable()
     {
         if (Status is not

@@ -9,7 +9,11 @@ using RentoX.Domain.Listings;
 using RentoX.Domain.Listings.Enums;
 using RentoX.Domain.Listings.Promotions.Enums;
 using RentoX.Domain.Users;
+using RentoX.Domain.Stores;
+using RentoX.Domain.Stores.Enums;
 using RentoX.Domain.Users.Enums;
+using RentoX.Application.Listings.Search;
+using RentoX.Infrastructure.Listings.Search;
 using RentoX.Infrastructure.Persistence;
 
 namespace RentoX.Infrastructure.Listings;
@@ -22,6 +26,206 @@ public sealed class PublicListingQueryService(
 {
     private const int MaximumPageSize = 50;
     private const int MaximumSearchLength = 100;
+
+    public async Task<IReadOnlyList<PublicListingSummaryResult>>
+        GetSimilarAsync(
+            Guid listingId,
+            PreferredLanguage language,
+            Guid? viewerUserId,
+            int limit,
+            CancellationToken cancellationToken = default)
+    {
+        ArgumentOutOfRangeException.ThrowIfLessThan(limit, 1);
+        ArgumentOutOfRangeException.ThrowIfGreaterThan(
+            limit,
+            MaximumSimilarLimit);
+
+        DateTimeOffset now = clock.UtcNow;
+
+        var source =
+            await dbContext.Listings
+                .AsNoTracking()
+                .Where(listing =>
+                    listing.Id == listingId &&
+                    listing.Status == ListingStatus.Active &&
+                    listing.ExpiresAtUtc.HasValue &&
+                    listing.ExpiresAtUtc > now)
+                .Select(listing => new
+                {
+                    listing.CategoryId,
+                    Values = listing.FieldValues
+                        .Select(value => new
+                        {
+                            value.CategoryFieldId,
+                            value.CustomValue,
+                            OptionIds = value.Selections
+                                .Select(selection =>
+                                    selection.CategoryFieldOptionId)
+                                .ToList()
+                        })
+                        .ToList()
+                })
+                .SingleOrDefaultAsync(cancellationToken);
+
+        if (source is null)
+        {
+            return [];
+        }
+
+        Guid? parentId =
+            await dbContext.Categories
+                .AsNoTracking()
+                .Where(category => category.Id == source.CategoryId)
+                .Select(category => category.ParentId)
+                .SingleOrDefaultAsync(cancellationToken);
+
+        // "Same brand": the first filterable pick-from-a-list field this
+        // listing has a value for (brand, make...).
+        Guid[] valueFieldIds =
+            source.Values
+                .Select(value => value.CategoryFieldId)
+                .ToArray();
+
+        Guid? sameFieldId =
+            await dbContext.CategoryFields
+                .AsNoTracking()
+                .Where(field =>
+                    valueFieldIds.Contains(field.Id) &&
+                    field.IsActive &&
+                    field.IsFilterable &&
+                    (field.Type == CategoryFieldType.SingleSelect ||
+                     field.Type == CategoryFieldType.MultiSelect))
+                .OrderBy(field => field.DisplayOrder)
+                .Select(field => (Guid?)field.Id)
+                .FirstOrDefaultAsync(cancellationToken);
+
+        List<PublicListingSummaryResult> sameBrand = [];
+
+        if (sameFieldId.HasValue)
+        {
+            var value = source.Values.First(item =>
+                item.CategoryFieldId == sameFieldId.Value);
+
+            sameBrand = await SimilarPoolAsync(
+                source.CategoryId,
+                new PublicListingFieldFilter(
+                    sameFieldId.Value,
+                    OptionIds: value.OptionIds.Count > 0
+                        ? [.. value.OptionIds]
+                        : null,
+                    CustomValue: value.CustomValue),
+                language,
+                viewerUserId,
+                cancellationToken);
+        }
+
+        List<PublicListingSummaryResult> sameCategory =
+            await SimilarPoolAsync(
+                source.CategoryId,
+                null,
+                language,
+                viewerUserId,
+                cancellationToken);
+
+        List<PublicListingSummaryResult> nearby =
+            parentId.HasValue
+                ? await SimilarPoolAsync(
+                    parentId.Value,
+                    null,
+                    language,
+                    viewerUserId,
+                    cancellationToken)
+                : [];
+
+        return MixSimilar(
+            listingId,
+            limit,
+            sameBrand,
+            sameCategory,
+            nearby);
+    }
+
+    private async Task<List<PublicListingSummaryResult>> SimilarPoolAsync(
+        Guid categoryId,
+        PublicListingFieldFilter? filter,
+        PreferredLanguage language,
+        Guid? viewerUserId,
+        CancellationToken cancellationToken)
+    {
+        PagedResult<PublicListingSummaryResult> page =
+            await SearchAsync(
+                new PublicListingSearchQuery(
+                    categoryId,
+                    null,
+                    1,
+                    SimilarPoolSize,
+                    FieldFilters: filter is null ? null : [filter]),
+                language,
+                viewerUserId,
+                cancellationToken);
+
+        return [.. page.Items];
+    }
+
+    /// <summary>
+    /// Takes about half from the same brand, fills up from the same
+    /// category and then from the neighbouring categories, and keeps any one
+    /// seller from taking over (at most two each) unless there are too few
+    /// listings otherwise.
+    /// </summary>
+    internal static IReadOnlyList<PublicListingSummaryResult> MixSimilar(
+        Guid sourceListingId,
+        int limit,
+        IReadOnlyList<PublicListingSummaryResult> sameBrand,
+        IReadOnlyList<PublicListingSummaryResult> sameCategory,
+        IReadOnlyList<PublicListingSummaryResult> nearby)
+    {
+        List<PublicListingSummaryResult> result = [];
+        HashSet<Guid> seen = [sourceListingId];
+        Dictionary<Guid, int> perOwner = [];
+
+        void Add(
+            IReadOnlyList<PublicListingSummaryResult> pool,
+            int ownerCap,
+            int until)
+        {
+            foreach (PublicListingSummaryResult item in pool)
+            {
+                if (result.Count >= until)
+                {
+                    return;
+                }
+
+                if (seen.Contains(item.Id) ||
+                    perOwner.GetValueOrDefault(item.OwnerId) >= ownerCap)
+                {
+                    continue;
+                }
+
+                seen.Add(item.Id);
+                perOwner[item.OwnerId] =
+                    perOwner.GetValueOrDefault(item.OwnerId) + 1;
+                result.Add(item);
+            }
+        }
+
+        int brandShare = (limit + 1) / 2;
+
+        Add(sameBrand, SimilarOwnerCap, brandShare);
+        Add(sameCategory, SimilarOwnerCap, limit);
+        Add(nearby, SimilarOwnerCap, limit);
+
+        // Too few listings overall: relax the per-seller cap.
+        Add(sameBrand, int.MaxValue, limit);
+        Add(sameCategory, int.MaxValue, limit);
+        Add(nearby, int.MaxValue, limit);
+
+        return result;
+    }
+
+    private const int MaximumSimilarLimit = 24;
+    private const int SimilarPoolSize = 40;
+    private const int SimilarOwnerCap = 2;
 
     public async Task<
         PagedResult<PublicListingSummaryResult>>
@@ -98,49 +302,36 @@ public sealed class PublicListingQueryService(
                         listing.CategoryId));
         }
 
+        // Smart search: words are matched with typo tolerance, synonyms and
+        // category names, and scored in the database. `null` means the
+        // database has not been upgraded for it yet (plain text fallback).
+        IReadOnlyList<ListingSearchScore>? searchScores = null;
+
         if (search is not null)
         {
-            string searchPattern = $"%{search}%";
+            searchScores =
+                await ListingSearchScorer.ScoreAsync(
+                    dbContext,
+                    ListingSearchTerms.Parse(search),
+                    now,
+                    cancellationToken);
 
-            listingQuery =
-                listingQuery.Where(listing =>
-                    EF.Functions.ILike(
-                        listing.Title,
-                        searchPattern) ||
-                    EF.Functions.ILike(
-                        listing.Description,
-                        searchPattern) ||
-                    listing.FieldValues.Any(value =>
-                        dbContext.CategoryFields.Any(field =>
-                            field.Id == value.CategoryFieldId &&
-                            field.IsActive &&
-                            field.IsSearchable) &&
-                        (
-                            (value.TextValue != null &&
-                             EF.Functions.ILike(
-                                 value.TextValue!,
-                                 searchPattern)) ||
-                            (value.CustomValue != null &&
-                             EF.Functions.ILike(
-                                 value.CustomValue!,
-                                 searchPattern)) ||
-                            value.Selections.Any(selection =>
-                                dbContext.CategoryFieldOptions.Any(
-                                    option =>
-                                        option.Id ==
-                                            selection.CategoryFieldOptionId &&
-                                        option.IsActive &&
-                                        (
-                                            EF.Functions.ILike(
-                                                option.Value,
-                                                searchPattern) ||
-                                            option.Translations.Any(
-                                                translation =>
-                                                    EF.Functions.ILike(
-                                                        translation.Label,
-                                                        searchPattern))
-                                        )))
-                        )));
+            if (searchScores is null)
+            {
+                listingQuery =
+                    ApplyPlainTextSearch(listingQuery, search);
+            }
+            else
+            {
+                Guid[] candidateIds =
+                    searchScores
+                        .Select(score => score.Id)
+                        .ToArray();
+
+                listingQuery =
+                    listingQuery.Where(listing =>
+                        candidateIds.Contains(listing.Id));
+            }
         }
 
         if (query.MinPrice is decimal minPrice)
@@ -372,51 +563,218 @@ public sealed class PublicListingQueryService(
                          value.CalendarValue <= dateTo)));
         }
 
-        int totalCount =
-            await listingQuery.CountAsync(
-                cancellationToken);
+        if (query.SellerType != PublicListingSellerType.Any)
+        {
+            bool wantStore =
+                query.SellerType == PublicListingSellerType.Store;
 
-        List<ListingProjection> projections =
-            await listingQuery
-                .OrderByDescending(listing =>
+            listingQuery =
+                listingQuery.Where(listing =>
+                    dbContext.Set<StoreProfile>().Any(store =>
+                        store.OwnerId == listing.OwnerId &&
+                        store.Status == StoreStatus.Active) == wantStore);
+        }
+
+        if (query.FieldFilters is { Count: > 0 } fieldFilters)
+        {
+            listingQuery = await ApplyFieldFiltersAsync(
+                listingQuery,
+                fieldFilters,
+                cancellationToken);
+        }
+
+        int totalCount;
+        List<ListingProjection> projections;
+
+        bool sortByPrice = query.Sort != PublicListingSort.Default;
+
+        if (searchScores is { Count: > 0 } && !sortByPrice)
+        {
+            // Relevance first; a live VIP promotion adds a small boost and
+            // newer listings win ties.
+            Dictionary<Guid, double> scoreById =
+                searchScores.ToDictionary(
+                    score => score.Id,
+                    score => score.Score);
+
+            var candidates =
+                await listingQuery
+                    .Select(listing => new
+                    {
+                        listing.Id,
+                        IsVip =
+                            dbContext.ListingPromotions.Any(promotion =>
+                                promotion.ListingId == listing.Id &&
+                                promotion.Type == ListingPromotionType.Vip &&
+                                promotion.StartsAtUtc <= now &&
+                                promotion.EndsAtUtc > now),
+                        Recency =
+                            dbContext.ListingPromotions
+                                .Where(promotion =>
+                                    promotion.ListingId == listing.Id &&
+                                    promotion.Type == ListingPromotionType.Bump &&
+                                    promotion.StartsAtUtc >= listing.PublishedAtUtc)
+                                .Max(promotion =>
+                                    (DateTimeOffset?)promotion.StartsAtUtc)
+                            ?? listing.PublishedAtUtc
+                    })
+                    .ToListAsync(cancellationToken);
+
+            totalCount = candidates.Count;
+
+            Guid[] pageIds =
+                candidates
+                    .OrderByDescending(candidate =>
+                        scoreById[candidate.Id] +
+                        (candidate.IsVip ? VipSearchBoost : 0))
+                    .ThenByDescending(candidate =>
+                        candidate.Recency)
+                    .ThenByDescending(candidate =>
+                        candidate.Id)
+                    .Skip(
+                        (query.Page - 1) *
+                        query.PageSize)
+                    .Take(query.PageSize)
+                    .Select(candidate => candidate.Id)
+                    .ToArray();
+
+            List<ListingProjection> unordered =
+                await listingQuery
+                    .Where(listing =>
+                        pageIds.Contains(listing.Id))
+                    .Select(ProjectListing)
+                    .ToListAsync(cancellationToken);
+
+            Dictionary<Guid, ListingProjection> byId =
+                unordered.ToDictionary(item => item.Id);
+
+            projections =
+                pageIds
+                    .Where(byId.ContainsKey)
+                    .Select(id => byId[id])
+                    .ToList();
+        }
+        else if (sortByPrice)
+        {
+            // An explicit price order replaces relevance and VIP ranking.
+            totalCount =
+                await listingQuery.CountAsync(
+                    cancellationToken);
+
+            IOrderedQueryable<Listing> ordered =
+                query.Sort == PublicListingSort.PriceAscending
+                    ? listingQuery.OrderBy(listing => listing.Price)
+                    : listingQuery.OrderByDescending(
+                        listing => listing.Price);
+
+            projections =
+                await ordered
+                    .ThenByDescending(listing =>
+                        listing.PublishedAtUtc)
+                    .ThenByDescending(listing =>
+                        listing.Id)
+                    .Skip(
+                        (query.Page - 1) *
+                        query.PageSize)
+                    .Take(query.PageSize)
+                    .Select(ProjectListing)
+                    .ToListAsync(cancellationToken);
+        }
+        else
+        {
+            // Plain browsing: VIP, bumped and plain listings take turns, so
+            // a lot of paid listings cannot hide the free ones.
+            IQueryable<Listing> vipQuery =
+                listingQuery.Where(listing =>
                     dbContext.ListingPromotions.Any(promotion =>
                         promotion.ListingId == listing.Id &&
                         promotion.Type == ListingPromotionType.Vip &&
                         promotion.StartsAtUtc <= now &&
-                        promotion.EndsAtUtc > now))
-                .ThenByDescending(listing =>
-                    dbContext.ListingPromotions
-                        .Where(promotion =>
-                            promotion.ListingId == listing.Id &&
-                            promotion.Type == ListingPromotionType.Bump &&
-                            promotion.StartsAtUtc >= listing.PublishedAtUtc)
-                        .Max(promotion =>
-                            (DateTimeOffset?)promotion.StartsAtUtc)
-                    ?? listing.PublishedAtUtc)
-                .ThenByDescending(listing =>
-                    listing.Id)
-                .Skip(
-                    (query.Page - 1) *
-                    query.PageSize)
-                .Take(query.PageSize)
-                .Select(listing =>
-                new ListingProjection(
-                    listing.Id,
-                    listing.OwnerId,
-                    listing.CategoryId,
-                    listing.Title,
-                    listing.Price,
-                    listing.Currency,
-                    (int)listing.RentalPeriodUnit,
-                    listing.Images
-                        .Where(image => image.IsCover)
-                        .Select(image =>
-                            (Guid?)image.Id)
-                        .FirstOrDefault(),
-                    listing.ViewCount,
-                    listing.PublishedAtUtc!.Value,
-                    listing.ExpiresAtUtc!.Value))
-                .ToListAsync(cancellationToken);
+                        promotion.EndsAtUtc > now));
+
+            DateTimeOffset bumpSince = now - BumpBoostWindow;
+
+            IQueryable<Listing> bumpedQuery =
+                listingQuery.Where(listing =>
+                    !dbContext.ListingPromotions.Any(promotion =>
+                        promotion.ListingId == listing.Id &&
+                        promotion.Type == ListingPromotionType.Vip &&
+                        promotion.StartsAtUtc <= now &&
+                        promotion.EndsAtUtc > now) &&
+                    dbContext.ListingPromotions.Any(promotion =>
+                        promotion.ListingId == listing.Id &&
+                        promotion.Type == ListingPromotionType.Bump &&
+                        promotion.StartsAtUtc >= listing.PublishedAtUtc &&
+                        promotion.StartsAtUtc >= bumpSince));
+
+            IQueryable<Listing> plainQuery =
+                listingQuery.Where(listing =>
+                    !dbContext.ListingPromotions.Any(promotion =>
+                        promotion.ListingId == listing.Id &&
+                        promotion.Type == ListingPromotionType.Vip &&
+                        promotion.StartsAtUtc <= now &&
+                        promotion.EndsAtUtc > now) &&
+                    !dbContext.ListingPromotions.Any(promotion =>
+                        promotion.ListingId == listing.Id &&
+                        promotion.Type == ListingPromotionType.Bump &&
+                        promotion.StartsAtUtc >= listing.PublishedAtUtc &&
+                        promotion.StartsAtUtc >= bumpSince));
+
+            int vipCount = await vipQuery.CountAsync(cancellationToken);
+            int bumpedCount = await bumpedQuery.CountAsync(cancellationToken);
+            int plainCount = await plainQuery.CountAsync(cancellationToken);
+
+            totalCount = vipCount + bumpedCount + plainCount;
+
+            ListingFeedInterleaver.Plan plan =
+                ListingFeedInterleaver.Build(
+                    vipCount,
+                    bumpedCount,
+                    plainCount,
+                    (query.Page - 1) * query.PageSize,
+                    query.PageSize);
+
+            IQueryable<Listing>[] kinds =
+                [vipQuery, bumpedQuery, plainQuery];
+
+            List<ListingProjection>[] fetched =
+                new List<ListingProjection>[3];
+
+            for (int kind = 0; kind < 3; kind++)
+            {
+                fetched[kind] =
+                    plan.TakePerKind[kind] == 0
+                        ? []
+                        : await kinds[kind]
+                            .OrderByDescending(listing =>
+                                dbContext.ListingPromotions
+                                    .Where(promotion =>
+                                        promotion.ListingId == listing.Id &&
+                                        promotion.Type ==
+                                            ListingPromotionType.Bump &&
+                                        promotion.StartsAtUtc >=
+                                            listing.PublishedAtUtc)
+                                    .Max(promotion =>
+                                        (DateTimeOffset?)promotion.StartsAtUtc)
+                                ?? listing.PublishedAtUtc)
+                            .ThenByDescending(listing => listing.Id)
+                            .Skip(plan.SkipPerKind[kind])
+                            .Take(plan.TakePerKind[kind])
+                            .Select(ProjectListing)
+                            .ToListAsync(cancellationToken);
+            }
+
+            int[] next = [0, 0, 0];
+            projections = [];
+
+            foreach (int kind in plan.Page)
+            {
+                if (next[kind] < fetched[kind].Count)
+                {
+                    projections.Add(fetched[kind][next[kind]++]);
+                }
+            }
+        }
 
         Guid[] projectedListingIds =
     projections
@@ -538,6 +896,273 @@ public sealed class PublicListingQueryService(
                 query.PageSize,
                 totalCount,
                 totalPages);
+    }
+
+    private const int MaximumFieldFilters = 15;
+
+    /// <summary>
+    /// Several dynamic-field conditions at once: options of one field are
+    /// alternatives (OR), different fields all have to match (AND).
+    /// </summary>
+    private async Task<IQueryable<Listing>> ApplyFieldFiltersAsync(
+        IQueryable<Listing> listingQuery,
+        IReadOnlyList<PublicListingFieldFilter> filters,
+        CancellationToken cancellationToken)
+    {
+        if (filters.Count > MaximumFieldFilters)
+        {
+            throw new DomainException(
+                "Too many field filters.");
+        }
+
+        Guid[] fieldIds =
+            filters.Select(filter => filter.FieldId).ToArray();
+
+        if (fieldIds.Distinct().Count() != fieldIds.Length)
+        {
+            throw new DomainException(
+                "Each field can be filtered only once.");
+        }
+
+        Dictionary<Guid, CategoryFieldType> types =
+            await dbContext.CategoryFields
+                .AsNoTracking()
+                .Where(field =>
+                    fieldIds.Contains(field.Id) &&
+                    field.IsActive &&
+                    field.IsFilterable)
+                .ToDictionaryAsync(
+                    field => field.Id,
+                    field => field.Type,
+                    cancellationToken);
+
+        foreach (PublicListingFieldFilter filter in filters)
+        {
+            if (!types.TryGetValue(filter.FieldId, out CategoryFieldType type))
+            {
+                throw new DomainException(
+                    "A filter field was not found or is not filterable.");
+            }
+
+            Guid fieldId = filter.FieldId;
+
+            switch (type)
+            {
+                case CategoryFieldType.SingleSelect:
+                case CategoryFieldType.MultiSelect:
+                {
+                    Guid[] optionIds =
+                        filter.OptionIds?.Distinct().ToArray() ?? [];
+
+                    // Exact, case-insensitive match (ILIKE without wildcards).
+                    string? customValue =
+                        string.IsNullOrWhiteSpace(filter.CustomValue)
+                            ? null
+                            : filter.CustomValue.Trim()
+                                .Replace("\\", "\\\\", StringComparison.Ordinal)
+                                .Replace("%", "\\%", StringComparison.Ordinal)
+                                .Replace("_", "\\_", StringComparison.Ordinal);
+
+                    if (optionIds.Length == 0 && customValue is null)
+                    {
+                        throw new DomainException(
+                            "Select filters need at least one option.");
+                    }
+
+                    int valid =
+                        await dbContext.CategoryFieldOptions
+                            .AsNoTracking()
+                            .CountAsync(
+                                option =>
+                                    optionIds.Contains(option.Id) &&
+                                    option.CategoryFieldId == fieldId &&
+                                    option.IsActive,
+                                cancellationToken);
+
+                    if (valid != optionIds.Length)
+                    {
+                        throw new DomainException(
+                            "A filter option was not found for its field.");
+                    }
+
+                    bool hasOptions = optionIds.Length > 0;
+
+                    listingQuery =
+                        listingQuery.Where(listing =>
+                            listing.FieldValues.Any(value =>
+                                value.CategoryFieldId == fieldId &&
+                                ((hasOptions &&
+                                  value.Selections.Any(selection =>
+                                      optionIds.Contains(
+                                          selection.CategoryFieldOptionId))) ||
+                                 (customValue != null &&
+                                  value.CustomValue != null &&
+                                  EF.Functions.ILike(
+                                      value.CustomValue,
+                                      customValue)))));
+                    break;
+                }
+
+                case CategoryFieldType.WholeNumber:
+                case CategoryFieldType.FractionalNumber:
+                {
+                    decimal? minimum = filter.Min;
+                    decimal? maximum = filter.Max;
+
+                    if (!minimum.HasValue && !maximum.HasValue)
+                    {
+                        throw new DomainException(
+                            "Number filters need a minimum or a maximum.");
+                    }
+
+                    if (minimum > maximum)
+                    {
+                        throw new DomainException(
+                            "Numeric minimum cannot exceed maximum.");
+                    }
+
+                    listingQuery =
+                        listingQuery.Where(listing =>
+                            listing.FieldValues.Any(value =>
+                                value.CategoryFieldId == fieldId &&
+                                value.NumericValue.HasValue &&
+                                (!minimum.HasValue ||
+                                 value.NumericValue >= minimum) &&
+                                (!maximum.HasValue ||
+                                 value.NumericValue <= maximum)));
+                    break;
+                }
+
+                case CategoryFieldType.Boolean:
+                {
+                    if (!filter.Flag.HasValue)
+                    {
+                        throw new DomainException(
+                            "Yes/no filters need a value.");
+                    }
+
+                    bool flag = filter.Flag.Value;
+
+                    listingQuery =
+                        listingQuery.Where(listing =>
+                            listing.FieldValues.Any(value =>
+                                value.CategoryFieldId == fieldId &&
+                                value.FlagValue == flag));
+                    break;
+                }
+
+                case CategoryFieldType.Date:
+                {
+                    DateOnly? from = filter.From;
+                    DateOnly? to = filter.To;
+
+                    if (!from.HasValue && !to.HasValue)
+                    {
+                        throw new DomainException(
+                            "Date filters need a start or an end date.");
+                    }
+
+                    if (from > to)
+                    {
+                        throw new DomainException(
+                            "Start date cannot exceed end date.");
+                    }
+
+                    listingQuery =
+                        listingQuery.Where(listing =>
+                            listing.FieldValues.Any(value =>
+                                value.CategoryFieldId == fieldId &&
+                                value.CalendarValue.HasValue &&
+                                (!from.HasValue ||
+                                 value.CalendarValue >= from) &&
+                                (!to.HasValue ||
+                                 value.CalendarValue <= to)));
+                    break;
+                }
+
+                default:
+                    throw new DomainException(
+                        "This field type cannot be filtered.");
+            }
+        }
+
+        return listingQuery;
+    }
+
+    /// <summary>How much a live VIP promotion adds to a search score.</summary>
+    private const double VipSearchBoost = 2.0;
+
+    /// <summary>How long a bump keeps a listing in the "bumped" group.</summary>
+    private static readonly TimeSpan BumpBoostWindow = TimeSpan.FromDays(7);
+
+    private static readonly System.Linq.Expressions.Expression<
+        Func<Listing, ListingProjection>> ProjectListing =
+        listing =>
+            new ListingProjection(
+                    listing.Id,
+                    listing.OwnerId,
+                    listing.CategoryId,
+                    listing.Title,
+                    listing.Price,
+                    listing.Currency,
+                    (int)listing.RentalPeriodUnit,
+                    listing.Images
+                        .Where(image => image.IsCover)
+                        .Select(image =>
+                            (Guid?)image.Id)
+                        .FirstOrDefault(),
+                    listing.ViewCount,
+                    listing.PublishedAtUtc!.Value,
+                    listing.ExpiresAtUtc!.Value);
+
+    /// <summary>The previous search: plain "contains" matching.</summary>
+    private IQueryable<Listing> ApplyPlainTextSearch(
+        IQueryable<Listing> listingQuery,
+        string search)
+    {
+        string searchPattern = $"%{search}%";
+
+        listingQuery =
+            listingQuery.Where(listing =>
+                EF.Functions.ILike(
+                    listing.Title,
+                    searchPattern) ||
+                EF.Functions.ILike(
+                    listing.Description,
+                    searchPattern) ||
+                listing.FieldValues.Any(value =>
+                    dbContext.CategoryFields.Any(field =>
+                        field.Id == value.CategoryFieldId &&
+                        field.IsActive &&
+                        field.IsSearchable) &&
+                    (
+                        (value.TextValue != null &&
+                         EF.Functions.ILike(
+                             value.TextValue!,
+                             searchPattern)) ||
+                        (value.CustomValue != null &&
+                         EF.Functions.ILike(
+                             value.CustomValue!,
+                             searchPattern)) ||
+                        value.Selections.Any(selection =>
+                            dbContext.CategoryFieldOptions.Any(
+                                option =>
+                                    option.Id ==
+                                        selection.CategoryFieldOptionId &&
+                                    option.IsActive &&
+                                    (
+                                        EF.Functions.ILike(
+                                            option.Value,
+                                            searchPattern) ||
+                                        option.Translations.Any(
+                                            translation =>
+                                                EF.Functions.ILike(
+                                                    translation.Label,
+                                                    searchPattern))
+                                    )))
+                    )));
+
+        return listingQuery;
     }
 
     private static Guid[] GetAllowedCategoryIds(
@@ -812,6 +1437,23 @@ public sealed class PublicListingQueryService(
                         promotion.EndsAtUtc > now,
                     cancellationToken);
 
+        var ownerStore =
+            await dbContext.Set<StoreProfile>()
+                .AsNoTracking()
+                .Where(store =>
+                    store.OwnerId == listing.OwnerId &&
+                    store.Status == StoreStatus.Active)
+                .Select(store => new
+                {
+                    store.Id,
+                    store.Name,
+                    store.Slug,
+                    store.LogoImageKey,
+                    store.CreatedAtUtc,
+                    store.UpdatedAtUtc
+                })
+                .FirstOrDefaultAsync(cancellationToken);
+
         return new PublicListingDetailsResult(
             listing.Id,
             listing.CategoryId,
@@ -829,7 +1471,20 @@ public sealed class PublicListingQueryService(
             new PublicListingOwnerResult(
                 listing.OwnerId,
                 owner?.FullName ?? "RentoX user",
-                phoneNumber ?? string.Empty),
+                phoneNumber ?? string.Empty)
+            {
+                Store = ownerStore is null
+                    ? null
+                    : new PublicListingOwnerStoreResult(
+                        ownerStore.Id,
+                        ownerStore.Name,
+                        ownerStore.Slug,
+                        !string.IsNullOrWhiteSpace(
+                            ownerStore.LogoImageKey),
+                        (ownerStore.UpdatedAtUtc ??
+                            ownerStore.CreatedAtUtc)
+                            .ToUnixTimeMilliseconds())
+            },
             images,
             fields)
         {

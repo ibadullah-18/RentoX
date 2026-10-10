@@ -26,6 +26,7 @@ using RentoX.Infrastructure.Favorites;
 using RentoX.Infrastructure.Files;
 using RentoX.Infrastructure.Identity;
 using RentoX.Infrastructure.Listings;
+using RentoX.Infrastructure.Listings.Search;
 using RentoX.Infrastructure.Listings.Billing;
 using RentoX.Infrastructure.Listings.Promotions;
 using RentoX.Infrastructure.Notifications;
@@ -229,6 +230,10 @@ public static class DependencyInjection
             PublicListingQueryService>();
 
         services.AddScoped<
+            IListingSuggestionService,
+            ListingSuggestionService>();
+
+        services.AddScoped<
             IListingViewRecorder,
             ListingViewRecorder>();
 
@@ -309,6 +314,14 @@ public static class DependencyInjection
             IConversationService,
             ConversationService>();
         services.AddScoped<RentoX.Application.Messaging.IConversationBlockService, RentoX.Infrastructure.Messaging.ConversationBlockService>();
+        services.AddScoped<
+            RentoX.Application.Accounts.IAccountDeletionService,
+            RentoX.Infrastructure.Accounts.AccountDeletionService>();
+
+        services.AddScoped<
+            RentoX.Application.Moderation.IContentReportService,
+            RentoX.Infrastructure.Moderation.ContentReportService>();
+
         services.AddScoped<RentoX.Application.Messaging.IConversationReportService, RentoX.Infrastructure.Messaging.ConversationReportService>();
         services.AddScoped<RentoX.Application.Messaging.IMessageImageService, RentoX.Infrastructure.Messaging.MessageImageService>();
 

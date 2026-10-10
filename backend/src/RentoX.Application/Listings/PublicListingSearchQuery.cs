@@ -17,4 +17,7 @@ public sealed record PublicListingSearchQuery(
     bool? BooleanValue = null,
     Guid? DateFieldId = null,
     DateOnly? DateFrom = null,
-    DateOnly? DateTo = null);
+    DateOnly? DateTo = null,
+    IReadOnlyList<PublicListingFieldFilter>? FieldFilters = null,
+    PublicListingSellerType SellerType = PublicListingSellerType.Any,
+    PublicListingSort Sort = PublicListingSort.Default);

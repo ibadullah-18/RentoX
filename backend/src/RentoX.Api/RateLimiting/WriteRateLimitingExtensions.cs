@@ -69,6 +69,12 @@ public static class WriteRateLimitingExtensions
 
             AddUserPolicy(
                 options,
+                "content-report",
+                20,
+                TimeSpan.FromHours(1));
+
+            AddUserPolicy(
+                options,
                 "support-create",
                 5,
                 TimeSpan.FromHours(1));

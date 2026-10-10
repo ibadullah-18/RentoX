@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Microsoft.AspNetCore.Mvc;
 using RentoX.Application.Abstractions.Authentication;
 using RentoX.Application.Common;
@@ -12,6 +13,7 @@ namespace RentoX.Api.Controllers;
 [Route("api/listings")]
 public sealed class PublicListingsController(
     IPublicListingQueryService queryService,
+    IListingSuggestionService suggestionService,
     ICurrentUserContext currentUserContext)
     : ControllerBase
 {
@@ -41,6 +43,9 @@ public sealed class PublicListingsController(
             [FromQuery] Guid? dateFieldId = null,
             [FromQuery] DateOnly? dateFrom = null,
             [FromQuery] DateOnly? dateTo = null,
+            [FromQuery] string? filters = null,
+            [FromQuery] string? sellerType = null,
+            [FromQuery] string? sort = null,
             CancellationToken cancellationToken = default)
     {
         PreferredLanguage? preferredLanguage =
@@ -71,6 +76,69 @@ public sealed class PublicListingsController(
             return BadRequest(
                 "Minimum price cannot exceed maximum price.");
         }
+        PublicListingSellerType seller;
+        PublicListingSort order;
+
+        switch (sellerType?.Trim().ToLowerInvariant())
+        {
+            case null or "" or "all":
+                seller = PublicListingSellerType.Any;
+                break;
+            case "store":
+                seller = PublicListingSellerType.Store;
+                break;
+            case "individual":
+                seller = PublicListingSellerType.Individual;
+                break;
+            default:
+                return BadRequest(
+                    "Seller type must be all, store or individual.");
+        }
+
+        switch (sort?.Trim().ToLowerInvariant())
+        {
+            case null or "" or "date":
+                order = PublicListingSort.Default;
+                break;
+            case "price_asc":
+                order = PublicListingSort.PriceAscending;
+                break;
+            case "price_desc":
+                order = PublicListingSort.PriceDescending;
+                break;
+            default:
+                return BadRequest(
+                    "Sort must be date, price_asc or price_desc.");
+        }
+
+        IReadOnlyList<PublicListingFieldFilter>? fieldFilters = null;
+
+        if (!string.IsNullOrWhiteSpace(filters))
+        {
+            try
+            {
+                fieldFilters =
+                    JsonSerializer.Deserialize<
+                        List<ListingFieldFilterRequest>>(
+                        filters,
+                        FilterJson)?
+                    .Select(item => new PublicListingFieldFilter(
+                        item.FieldId,
+                        item.OptionIds,
+                        item.Min,
+                        item.Max,
+                        item.Flag,
+                        item.From,
+                        item.To))
+                    .ToList();
+            }
+            catch (JsonException)
+            {
+                return BadRequest(
+                    "Filters must be a JSON array of field conditions.");
+            }
+        }
+
         PublicListingSearchQuery query = new(
             categoryId,
             search,
@@ -90,7 +158,10 @@ public sealed class PublicListingsController(
             BooleanValue = booleanValue,
             DateFieldId = dateFieldId,
             DateFrom = dateFrom,
-            DateTo = dateTo
+            DateTo = dateTo,
+            FieldFilters = fieldFilters,
+            SellerType = seller,
+            Sort = order
         };
 
         PagedResult<PublicListingSummaryResult> result =
@@ -101,29 +172,7 @@ public sealed class PublicListingsController(
             cancellationToken);
 
         PublicListingSummaryResponse[] items =
-            result.Items
-                .Select(item =>
-                    new PublicListingSummaryResponse(
-                        item.Id,
-                        item.OwnerId,
-                        item.CategoryId,
-                        item.CategoryName,
-                        item.Title,
-                        item.Price,
-                        item.Currency,
-                        item.RentalPeriodUnit,
-                        item.CoverImageId.HasValue
-                            ? $"/api/listing-images/{item.CoverImageId}"
-                            : null,
-                        item.ViewCount,
-                        item.FavoriteCount,
-                        item.IsFavorite,
-                        item.PublishedAtUtc,
-                        item.ExpiresAtUtc)
-                    {
-                        IsVip = item.IsVip
-                    })
-                .ToArray();
+            result.Items.Select(ToSummary).ToArray();
 
         return Ok(
             new PagedResponse<
@@ -134,6 +183,108 @@ public sealed class PublicListingsController(
                     result.TotalCount,
                     result.TotalPages));
     }
+
+    [HttpGet("suggestions")]
+    [ProducesResponseType<IReadOnlyList<ListingSuggestionResponse>>(
+        StatusCodes.Status200OK)]
+    [ProducesResponseType(
+        StatusCodes.Status400BadRequest)]
+    public async Task<ActionResult<
+        IReadOnlyList<ListingSuggestionResponse>>>
+        SuggestAsync(
+            [FromQuery] string? q = null,
+            [FromQuery] string language = "az",
+            CancellationToken cancellationToken = default)
+    {
+        PreferredLanguage? preferredLanguage = ParseLanguage(language);
+
+        if (!preferredLanguage.HasValue)
+        {
+            return BadRequest(new ProblemDetails
+            {
+                Title = "Invalid language.",
+                Status = StatusCodes.Status400BadRequest
+            });
+        }
+
+        IReadOnlyList<ListingSuggestionResult> suggestions =
+            await suggestionService.SuggestAsync(
+                q,
+                preferredLanguage.Value,
+                cancellationToken);
+
+        return Ok(suggestions
+            .Select(item => new ListingSuggestionResponse(
+                item.Kind,
+                item.Text,
+                item.CategoryId,
+                item.CategoryPath))
+            .ToList());
+    }
+
+    [HttpGet("{listingId:guid}/similar")]
+    [ProducesResponseType<IReadOnlyList<PublicListingSummaryResponse>>(
+        StatusCodes.Status200OK)]
+    [ProducesResponseType(
+        StatusCodes.Status400BadRequest)]
+    public async Task<ActionResult<
+        IReadOnlyList<PublicListingSummaryResponse>>>
+        SimilarAsync(
+            Guid listingId,
+            [FromQuery] string language = "az",
+            [FromQuery] int limit = 12,
+            CancellationToken cancellationToken = default)
+    {
+        PreferredLanguage? preferredLanguage = ParseLanguage(language);
+
+        if (!preferredLanguage.HasValue)
+        {
+            return BadRequest("Language must be az, ru or en.");
+        }
+
+        if (limit is < 1 or > 24)
+        {
+            return BadRequest("Limit must be between 1 and 24.");
+        }
+
+        Guid? viewerUserId =
+            currentUserContext.IsAuthenticated
+                ? currentUserContext.UserId
+                : null;
+
+        IReadOnlyList<PublicListingSummaryResult> similar =
+            await queryService.GetSimilarAsync(
+                listingId,
+                preferredLanguage.Value,
+                viewerUserId,
+                limit,
+                cancellationToken);
+
+        return Ok(similar.Select(ToSummary).ToList());
+    }
+
+    private static PublicListingSummaryResponse ToSummary(
+        PublicListingSummaryResult item) =>
+        new(
+            item.Id,
+            item.OwnerId,
+            item.CategoryId,
+            item.CategoryName,
+            item.Title,
+            item.Price,
+            item.Currency,
+            item.RentalPeriodUnit,
+            item.CoverImageId.HasValue
+                ? $"/api/listing-images/{item.CoverImageId}"
+                : null,
+            item.ViewCount,
+            item.FavoriteCount,
+            item.IsFavorite,
+            item.PublishedAtUtc,
+            item.ExpiresAtUtc)
+        {
+            IsVip = item.IsVip
+        };
 
     [HttpGet("{listingId:guid}")]
     [ProducesResponseType(
@@ -225,7 +376,18 @@ public sealed class PublicListingsController(
             new PublicListingOwnerResponse(
                 result.Owner.Id,
                 result.Owner.FullName,
-                result.Owner.PhoneNumber),
+                result.Owner.PhoneNumber)
+            {
+                Store = result.Owner.Store is { } ownerStore
+                    ? new PublicListingOwnerStoreResponse(
+                        ownerStore.Id,
+                        ownerStore.Name,
+                        ownerStore.Slug,
+                        ownerStore.HasLogoImage
+                            ? $"/api/stores/{ownerStore.Id}/logo?v={ownerStore.ImageVersion}"
+                            : null)
+                    : null
+            },
             images,
             fields)
         {
@@ -234,6 +396,9 @@ public sealed class PublicListingsController(
 
         return Ok(response);
     }
+
+    private static readonly JsonSerializerOptions FilterJson =
+        new(JsonSerializerDefaults.Web);
 
     private static PreferredLanguage? ParseLanguage(
         string language)

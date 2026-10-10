@@ -137,11 +137,16 @@ public sealed class StoreFollowService(
                 .Where(follower =>
                     follower.UserId == userId);
 
+        // Only followed stores that are still live are listed and counted.
         int totalCount =
             await query.CountAsync(
+                follower =>
+                    dbContext.Set<StoreProfile>().Any(store =>
+                        store.Id == follower.StoreId &&
+                        store.Status == StoreStatus.Active),
                 cancellationToken);
 
-        List<FollowedStoreProjection> stores =
+        var rows =
             await query
                 .Join(
                     dbContext.Set<StoreProfile>()
@@ -151,24 +156,45 @@ public sealed class StoreFollowService(
                             StoreStatus.Active),
                     follower => follower.StoreId,
                     store => store.Id,
-                    (follower, store) =>
-                        new FollowedStoreProjection(
-                            store.Id,
-                            store.Name,
-                            store.Slug,
-                            store.LogoImageKey,
-                            store.CreatedAtUtc,
-                            store.UpdatedAtUtc,
-                            follower.CreatedAtUtc))
-                .OrderByDescending(store =>
-                    store.FollowedAtUtc)
+                    (follower, store) => new
+                    {
+                        StoreId = store.Id,
+                        store.OwnerId,
+                        store.Name,
+                        store.Slug,
+                        store.LogoImageKey,
+                        StoreCreatedAtUtc = store.CreatedAtUtc,
+                        StoreUpdatedAtUtc = store.UpdatedAtUtc,
+                        FollowedAtUtc = follower.CreatedAtUtc
+                    })
+                .OrderByDescending(row => row.FollowedAtUtc)
+                .ThenBy(row => row.StoreId)
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
                 .ToListAsync(cancellationToken);
 
+        List<FollowedStoreProjection> stores =
+            rows
+                .Select(row => new FollowedStoreProjection(
+                    row.StoreId,
+                    row.OwnerId,
+                    row.Name,
+                    row.Slug,
+                    row.LogoImageKey,
+                    row.StoreCreatedAtUtc,
+                    row.StoreUpdatedAtUtc,
+                    row.FollowedAtUtc))
+                .ToList();
+
         Guid[] storeIds =
             stores
                 .Select(store => store.StoreId)
+                .ToArray();
+
+        // Listings belong to the store's owner, not to the store itself.
+        Guid[] ownerIds =
+            stores
+                .Select(store => store.OwnerId)
                 .ToArray();
 
         Dictionary<Guid, int> listingCounts = [];
@@ -182,7 +208,7 @@ public sealed class StoreFollowService(
                 await dbContext.Listings
                     .AsNoTracking()
                     .Where(listing =>
-                        storeIds.Contains(
+                        ownerIds.Contains(
                             listing.OwnerId) &&
                         listing.Status ==
                             ListingStatus.Active &&
@@ -236,7 +262,7 @@ public sealed class StoreFollowService(
                         imageVersion
                             .ToUnixTimeMilliseconds(),
                         listingCounts.GetValueOrDefault(
-                            store.StoreId),
+                            store.OwnerId),
                         followerCounts.GetValueOrDefault(
                             store.StoreId),
                         store.FollowedAtUtc);
@@ -280,6 +306,7 @@ public sealed class StoreFollowService(
 
     private sealed record FollowedStoreProjection(
         Guid StoreId,
+        Guid OwnerId,
         string Name,
         string Slug,
         string? LogoImageKey,

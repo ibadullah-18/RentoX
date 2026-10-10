@@ -85,6 +85,20 @@ public sealed class UserProfile : AuditableEntity
             new UserProfileUpdatedDomainEvent(Id));
     }
 
+    /// <summary>
+    /// Erases the personal details when the account is deleted. The row
+    /// stays (conversations still refer to it) but shows a neutral name.
+    /// </summary>
+    public void Anonymize()
+    {
+        FullName = DeletedUserName;
+        Bio = null;
+        ProfileImageKey = null;
+        Status = UserStatus.Deleted;
+    }
+
+    public const string DeletedUserName = "Deleted user";
+
     public void SetProfileImage(string? profileImageKey)
     {
         ProfileImageKey =

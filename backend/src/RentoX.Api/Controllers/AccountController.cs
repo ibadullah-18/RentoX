@@ -9,7 +9,8 @@ namespace RentoX.Api.Controllers;
 [Route("api/account")]
 [Authorize]
 public sealed class AccountController(
-    IAccountProfileService accountProfileService)
+    IAccountProfileService accountProfileService,
+    IAccountDeletionService accountDeletionService)
     : ControllerBase
 {
     [HttpGet("me")]
@@ -39,6 +40,33 @@ public sealed class AccountController(
         }
 
         return Ok(CreateResponse(result));
+    }
+
+    [HttpDelete("me")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> DeleteAsync(
+        DeleteAccountRequest request,
+        CancellationToken cancellationToken)
+    {
+        if (!TryGetUserId(out Guid userId))
+        {
+            return Unauthorized();
+        }
+
+        if (!request.Confirm)
+        {
+            return BadRequest("Deleting the account must be confirmed.");
+        }
+
+        bool deleted =
+            await accountDeletionService.DeleteAsync(
+                userId,
+                cancellationToken);
+
+        return deleted ? NoContent() : NotFound();
     }
 
     [HttpPut("me")]
