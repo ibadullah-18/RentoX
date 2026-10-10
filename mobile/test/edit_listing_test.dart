@@ -126,6 +126,12 @@ class _Listings extends MyListingsRepository {
   Future<void> delete(String id) async => calls.add('delete');
 
   @override
+  Future<void> reopenForEditing(String id) async {
+    calls.add('reopen');
+    status = ListingStatus.draft;
+  }
+
+  @override
   Future<PaymentResult> renew(String id) async {
     calls.add('renew');
     status = ListingStatus.active;
@@ -163,6 +169,10 @@ Widget _app(Widget home, _Listings listings) => ProviderScope(
         GoRoute(
           path: '/my-listings',
           builder: (_, _) => const Scaffold(body: Text('LIST PAGE')),
+        ),
+        GoRoute(
+          path: '/my-listings/:id/edit',
+          builder: (_, _) => const Scaffold(body: Text('EDIT PAGE')),
         ),
       ],
     ),
@@ -320,7 +330,7 @@ void main() {
     expect(find.text(az.deleteListingAction), findsOneWidget);
     expect(find.text(az.renewAction), findsNothing);
 
-    // Active: promotions, no edit.
+    // Active: promotions, and editing (after a warning).
     await tester.pumpWidget(
       _app(
         const MyListingDetailsPage(listingId: 'l2'),
@@ -331,7 +341,7 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
-    expect(find.text(az.editAction), findsNothing);
+    expect(find.text(az.editAction), findsOneWidget);
     expect(find.textContaining(az.bumpAction), findsOneWidget);
     expect(find.text(az.renewAction), findsNothing);
 
@@ -349,6 +359,72 @@ void main() {
     expect(find.text(az.renewAction), findsOneWidget);
     expect(find.textContaining(az.bumpAction), findsNothing);
     expect(find.text(az.deactivateAction), findsNothing);
+  });
+
+  testWidgets(
+    'editing a live listing warns, reopens it, then opens the editor',
+    (tester) async {
+      tall(tester);
+      final listings = _Listings(
+        status: ListingStatus.active,
+        expiresAt: DateTime.now().add(const Duration(days: 10)),
+      );
+      await tester.pumpWidget(
+        _app(const MyListingDetailsPage(listingId: 'l1'), listings),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text(az.editAction));
+      await tester.pumpAndSettle();
+      expect(find.text(az.editLiveTitle), findsOneWidget);
+
+      // Cancel: still live, nothing sent.
+      await tester.tap(find.text(az.cancelAction));
+      await tester.pumpAndSettle();
+      expect(listings.calls, isNot(contains('reopen')));
+      expect(find.text('EDIT PAGE'), findsNothing);
+
+      // Confirm: taken back to a draft, then the editor opens.
+      await tester.tap(find.text(az.editAction));
+      await tester.pumpAndSettle();
+      await tester.tap(
+        find.descendant(
+          of: find.byType(AlertDialog),
+          matching: find.text(az.editLiveConfirm),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(listings.calls, contains('reopen'));
+      expect(listings.status, ListingStatus.draft);
+      expect(find.text('EDIT PAGE'), findsOneWidget);
+    },
+  );
+
+  testWidgets('editing a draft opens the editor without any warning', (
+    tester,
+  ) async {
+    tall(tester);
+    final listings = _Listings();
+    await tester.pumpWidget(
+      _app(const MyListingDetailsPage(listingId: 'l1'), listings),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text(az.editAction));
+    await tester.pumpAndSettle();
+
+    expect(find.text(az.editLiveTitle), findsNothing);
+    expect(listings.calls, isNot(contains('reopen')));
+    expect(find.text('EDIT PAGE'), findsOneWidget);
+  });
+
+  test('which statuses can start an edit', () {
+    expect(ListingStatus.draft.editNeedsReopen, isFalse);
+    expect(ListingStatus.active.editNeedsReopen, isTrue);
+    expect(ListingStatus.deactivated.editNeedsReopen, isTrue);
+    expect(ListingStatus.pendingReview.canStartEdit, isFalse);
+    expect(ListingStatus.expired.canStartEdit, isFalse);
+    expect(ListingStatus.rejected.canStartEdit, isTrue);
   });
 
   testWidgets('deleting asks first and then deletes', (tester) async {

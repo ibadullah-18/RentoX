@@ -64,6 +64,11 @@ class MyListingsRepository {
   Future<void> deactivate(String id) =>
       guardApi(() => _dio.post<void>('/api/listings/$id/deactivate'));
 
+  /// Live or paused listing -> draft, so it can be edited and then sent for
+  /// review again.
+  Future<void> reopenForEditing(String id) =>
+      guardApi(() => _dio.post<void>('/api/listings/$id/reopen'));
+
   Future<void> reactivate(String id) =>
       guardApi(() => _dio.post<void>('/api/listings/$id/reactivate'));
 

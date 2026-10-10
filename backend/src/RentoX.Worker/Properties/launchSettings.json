@@ -5,7 +5,8 @@
       "commandName": "Project",
       "dotnetRunMessages": true,
       "environmentVariables": {
-        "DOTNET_ENVIRONMENT": "Development"
+        "DOTNET_ENVIRONMENT": "Development",
+        "GOOGLE_APPLICATION_CREDENTIALS": "C:\\secrets\\rentox-firebase.json"
       }
     }
   }

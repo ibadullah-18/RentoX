@@ -34,6 +34,13 @@ enum ListingStatus {
   /// turns the listing back into a draft that must be sent for review again.
   bool get canEdit => this == draft || this == rejected;
 
+  /// A live or paused listing can be edited too, but only after it is taken
+  /// back to a draft (it leaves the public lists and must be reviewed again).
+  bool get editNeedsReopen => this == active || this == deactivated;
+
+  /// Whether the "edit" button is offered.
+  bool get canStartEdit => canEdit || editNeedsReopen;
+
   /// Any listing that isn't already deleted can be deleted.
   bool get canDelete => this != deleted;
 }

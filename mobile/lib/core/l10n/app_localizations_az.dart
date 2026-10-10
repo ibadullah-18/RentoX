@@ -1260,4 +1260,14 @@ class AppL10nAz extends AppL10n {
 
   @override
   String get deleteAccountFailed => 'Hesab silinmədi. Yenidən cəhd edin.';
+
+  @override
+  String get editLiveTitle => 'Elanı redaktə edək?';
+
+  @override
+  String get editLiveMessage =>
+      'Redaktə etmək üçün elan müvəqqəti yayımdan çıxarılacaq. Dəyişiklikləri saxlayıb yenidən təsdiqə göndərməlisiniz; təsdiqdən sonra yenidən yayımlanacaq. Əgər aktiv elanlarınız limiti aşırsa, yenidən aktivləşdirmə haqqı tutula bilər.';
+
+  @override
+  String get editLiveConfirm => 'Redaktə et';
 }

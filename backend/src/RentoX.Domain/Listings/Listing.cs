@@ -483,6 +483,27 @@ public sealed class Listing : AuditableEntity
         Status = ListingStatus.Active;
     }
 
+    /// <summary>
+    /// Takes a live (or paused) listing back to a draft so its owner can
+    /// edit it. It leaves the public lists at once and has to be sent for
+    /// review again, like a rejected listing.
+    /// </summary>
+    public void ReopenForEditing()
+    {
+        if (Status is not
+            (ListingStatus.Active or
+             ListingStatus.Deactivated))
+        {
+            throw new DomainException(
+                "Only live or paused listings need to be reopened for editing.");
+        }
+
+        Status = ListingStatus.Draft;
+        RejectionReason = null;
+        PublishedAtUtc = null;
+        ExpiresAtUtc = null;
+    }
+
     public void MarkDeleted(
         DateTimeOffset deletedAtUtc)
     {

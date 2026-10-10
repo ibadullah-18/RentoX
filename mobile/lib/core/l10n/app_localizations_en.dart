@@ -1290,4 +1290,14 @@ class AppL10nEn extends AppL10n {
   @override
   String get deleteAccountFailed =>
       'The account was not deleted. Please try again.';
+
+  @override
+  String get editLiveTitle => 'Edit this listing?';
+
+  @override
+  String get editLiveMessage =>
+      'To edit it, the listing is taken offline for now. Save your changes and send it for review again; it goes live once approved. If you have more active listings than the free limit, an activation fee may apply again.';
+
+  @override
+  String get editLiveConfirm => 'Edit';
 }

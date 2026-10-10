@@ -57,6 +57,27 @@ public sealed class ListingLifecycleService(
     }
 
     public async Task<ListingLifecycleResult>
+        ReopenForEditingAsync(
+            Guid ownerId,
+            Guid listingId,
+            CancellationToken cancellationToken = default)
+    {
+        Listing listing =
+            await GetOwnedListingAsync(
+                ownerId,
+                listingId,
+                includeDeleted: false,
+                cancellationToken);
+
+        listing.ReopenForEditing();
+
+        await dbContext.SaveChangesAsync(
+            cancellationToken);
+
+        return MapResult(listing);
+    }
+
+    public async Task<ListingLifecycleResult>
         DeleteAsync(
             Guid ownerId,
             Guid listingId,

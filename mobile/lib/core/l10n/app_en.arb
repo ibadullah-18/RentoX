@@ -412,5 +412,8 @@
   "@deleteAccountType": { "placeholders": { "word": { "type": "String" } } },
   "deleteAccountWord": "DELETE",
   "deleteAccountConfirm": "Delete forever",
-  "deleteAccountFailed": "The account was not deleted. Please try again."
+  "deleteAccountFailed": "The account was not deleted. Please try again.",
+  "editLiveTitle": "Edit this listing?",
+  "editLiveMessage": "To edit it, the listing is taken offline for now. Save your changes and send it for review again; it goes live once approved. If you have more active listings than the free limit, an activation fee may apply again.",
+  "editLiveConfirm": "Edit"
 }

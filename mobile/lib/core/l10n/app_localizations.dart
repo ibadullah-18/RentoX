@@ -2450,6 +2450,24 @@ abstract class AppL10n {
   /// In az, this message translates to:
   /// **'Hesab silinmədi. Yenidən cəhd edin.'**
   String get deleteAccountFailed;
+
+  /// No description provided for @editLiveTitle.
+  ///
+  /// In az, this message translates to:
+  /// **'Elanı redaktə edək?'**
+  String get editLiveTitle;
+
+  /// No description provided for @editLiveMessage.
+  ///
+  /// In az, this message translates to:
+  /// **'Redaktə etmək üçün elan müvəqqəti yayımdan çıxarılacaq. Dəyişiklikləri saxlayıb yenidən təsdiqə göndərməlisiniz; təsdiqdən sonra yenidən yayımlanacaq. Əgər aktiv elanlarınız limiti aşırsa, yenidən aktivləşdirmə haqqı tutula bilər.'**
+  String get editLiveMessage;
+
+  /// No description provided for @editLiveConfirm.
+  ///
+  /// In az, this message translates to:
+  /// **'Redaktə et'**
+  String get editLiveConfirm;
 }
 
 class _AppL10nDelegate extends LocalizationsDelegate<AppL10n> {

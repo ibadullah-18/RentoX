@@ -1298,4 +1298,14 @@ class AppL10nRu extends AppL10n {
 
   @override
   String get deleteAccountFailed => 'Аккаунт не удалён. Попробуйте снова.';
+
+  @override
+  String get editLiveTitle => 'Редактировать объявление?';
+
+  @override
+  String get editLiveMessage =>
+      'Для редактирования объявление временно снимается с публикации. Сохраните изменения и отправьте его на проверку снова; после одобрения оно опубликуется. Если активных объявлений больше бесплатного лимита, повторная активация может быть платной.';
+
+  @override
+  String get editLiveConfirm => 'Редактировать';
 }

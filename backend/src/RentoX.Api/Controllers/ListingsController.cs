@@ -527,6 +527,37 @@ public sealed class ListingsController(
         return Ok(MapLifecycleResponse(result));
     }
 
+    /// <summary>
+    /// Start editing a live or paused listing: it goes back to a draft (off
+    /// the public lists) and has to be submitted for review again.
+    /// </summary>
+    [Authorize]
+    [HttpPost("{listingId:guid}/reopen")]
+    [ProducesResponseType<ListingLifecycleResponse>(
+        StatusCodes.Status200OK)]
+    [ProducesResponseType(
+        StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(
+        StatusCodes.Status401Unauthorized)]
+    public async Task<ActionResult<ListingLifecycleResponse>>
+        ReopenForEditingAsync(
+            Guid listingId,
+            CancellationToken cancellationToken)
+    {
+        if (!TryGetOwnerId(out Guid ownerId))
+        {
+            return Unauthorized();
+        }
+
+        ListingLifecycleResult result =
+            await listingLifecycleService.ReopenForEditingAsync(
+                ownerId,
+                listingId,
+                cancellationToken);
+
+        return Ok(MapLifecycleResponse(result));
+    }
+
     [Authorize]
     [HttpPost("{listingId:guid}/reactivate")]
     [ProducesResponseType<ListingLifecycleResponse>(

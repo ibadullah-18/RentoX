@@ -434,5 +434,8 @@
   "@deleteAccountType": { "placeholders": { "word": { "type": "String" } } },
   "deleteAccountWord": "SİL",
   "deleteAccountConfirm": "Həmişəlik sil",
-  "deleteAccountFailed": "Hesab silinmədi. Yenidən cəhd edin."
+  "deleteAccountFailed": "Hesab silinmədi. Yenidən cəhd edin.",
+  "editLiveTitle": "Elanı redaktə edək?",
+  "editLiveMessage": "Redaktə etmək üçün elan müvəqqəti yayımdan çıxarılacaq. Dəyişiklikləri saxlayıb yenidən təsdiqə göndərməlisiniz; təsdiqdən sonra yenidən yayımlanacaq. Əgər aktiv elanlarınız limiti aşırsa, yenidən aktivləşdirmə haqqı tutula bilər.",
+  "editLiveConfirm": "Redaktə et"
 }

@@ -149,6 +149,46 @@ class _BodyState extends ConsumerState<_Body> {
   }
 
   Future<void> _edit() async {
+    if (d.status.editNeedsReopen) {
+      // Editing a live listing takes it offline until it is approved again:
+      // make sure that is what the owner wants.
+      final l10n = AppL10n.of(context);
+      final messenger = ScaffoldMessenger.of(context);
+      final ok = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text(l10n.editLiveTitle),
+          content: Text(l10n.editLiveMessage),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: Text(l10n.cancelAction),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: Text(l10n.editLiveConfirm),
+            ),
+          ],
+        ),
+      );
+      if (ok != true || _busy || !mounted) return;
+
+      setState(() => _busy = true);
+      try {
+        await ref.read(myListingsRepositoryProvider).reopenForEditing(d.id);
+        ref.invalidate(myListingDetailsProvider(d.id));
+        ref.invalidate(listingDetailsProvider(d.id));
+        ref.invalidate(myListingsProvider);
+      } catch (_) {
+        if (mounted) {
+          messenger.showSnackBar(SnackBar(content: Text(l10n.actionFailed)));
+          setState(() => _busy = false);
+        }
+        return;
+      }
+      if (!mounted) return;
+      setState(() => _busy = false);
+    }
     await context.push(Routes.editListing(d.id));
     if (!mounted) return;
     ref.invalidate(myListingDetailsProvider(d.id));
@@ -333,7 +373,7 @@ class _BodyState extends ConsumerState<_Body> {
                             l10n.submitForReview,
                             () => _run(() => repo.submit(d.id)),
                           ),
-                        if (d.status.canEdit)
+                        if (d.status.canStartEdit)
                           action(l10n.editAction, _edit, primary: false),
                         if (d.status.canPay)
                           action(
