@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'package:cached_network_image/cached_network_image.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -20,11 +22,13 @@ import '../../catalog/data/catalog_repository.dart';
 import '../../catalog/domain/catalog_models.dart';
 import '../../favorites/presentation/favorite_button.dart';
 import '../../messages/presentation/inbox_controller.dart';
-import '../../support/domain/support_models.dart';
 import '../../support/presentation/support_widgets.dart';
+import '../../report/domain/report_models.dart';
+import '../../report/presentation/report_sheet.dart';
 import 'listing_formatting.dart';
 import 'listing_gallery.dart';
 import 'message_sheet.dart';
+import 'similar_listings.dart';
 
 class ListingDetailsPage extends ConsumerWidget {
   const ListingDetailsPage({super.key, required this.listingId});
@@ -273,28 +277,32 @@ class _DetailsView extends ConsumerWidget {
                         ],
                         _SectionTitle(l10n.ownerTitle),
                         _OwnerCard(owner: details.owner),
+                        if (details.owner.store case final store?) ...[
+                          const SizedBox(height: AppSpacing.sm),
+                          _StoreCard(store: store),
+                        ],
                         if (!isOwner) ...[
                           const SizedBox(height: AppSpacing.md),
                           ReportProblemRow(
                             hint: l10n.reportListingHint,
-                            onTap: () => context.push(
-                              Routes.newTicket(
-                                category: SupportCategory.listing.id,
-                                subject: clip(
-                                  '${l10n.supportCatListing}: ${details.title}',
-                                  SupportRules.subjectMax,
-                                ),
-                                ref:
-                                    '${l10n.supportRefListing(details.title)} '
-                                    '(ID: ${details.id})',
-                              ),
+                            onTap: () => startReport(
+                              context,
+                              ref,
+                              target: ReportTarget.listing,
+                              targetId: details.id,
                             ),
                           ),
                         ],
-                        // Room for the floating action bar.
-                        SizedBox(height: 110 + padding.bottom),
                       ],
                     ),
+                  ),
+                  SimilarListingsSliver(
+                    listingId: details.id,
+                    categoryId: details.categoryId,
+                  ),
+                  // Room for the floating action bar.
+                  SliverToBoxAdapter(
+                    child: SizedBox(height: 110 + padding.bottom),
                   ),
                 ],
               ),
@@ -533,6 +541,78 @@ class _OwnerCard extends StatelessWidget {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+/// The seller's store: tap to open it.
+class _StoreCard extends StatelessWidget {
+  const _StoreCard({required this.store});
+
+  final ListingOwnerStore store;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppL10n.of(context);
+    final scheme = Theme.of(context).colorScheme;
+    final placeholder = ColoredBox(
+      color: scheme.primary.withValues(alpha: 0.12),
+      child: Icon(AppIcons.store, color: scheme.primary),
+    );
+
+    return Card(
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: () => context.push(Routes.store(store.slug)),
+        child: Padding(
+          padding: const EdgeInsets.all(AppSpacing.lg),
+          child: Row(
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(AppRadius.lg),
+                child: SizedBox(
+                  width: 48,
+                  height: 48,
+                  child: store.logoUrl == null
+                      ? placeholder
+                      : CachedNetworkImage(
+                          imageUrl: store.logoUrl!,
+                          fit: BoxFit.cover,
+                          placeholder: (_, _) => placeholder,
+                          errorWidget: (_, _, _) => placeholder,
+                        ),
+                ),
+              ),
+              const SizedBox(width: AppSpacing.md),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      store.name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 16,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      l10n.ownerStoreLabel,
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: scheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(AppIcons.forward, color: scheme.onSurfaceVariant),
+            ],
+          ),
         ),
       ),
     );

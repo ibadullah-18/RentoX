@@ -123,6 +123,10 @@ class AuthRepository {
     await _storage.clear();
   });
 
+  /// Forgets the session on this phone without calling the server (used
+  /// after the account was deleted: the server already closed everything).
+  Future<void> clearLocal() => _storage.clear();
+
   /// Best effort: the local session is cleared even if the call fails.
   Future<void> logout() async {
     final tokens = await _storage.readTokens();

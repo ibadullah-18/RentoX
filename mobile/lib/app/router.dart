@@ -80,12 +80,14 @@ abstract final class Routes {
     String? query,
     String? categoryId,
     bool focus = false,
+    bool stores = false,
   }) => Uri(
     path: search,
     queryParameters: {
       if (query != null && query.isNotEmpty) 'q': query,
       'categoryId': ?categoryId,
       if (focus) 'focus': '1',
+      if (stores) 'stores': '1',
     },
   ).toString();
   static const phone = '/auth/phone';
@@ -159,6 +161,7 @@ final routerProvider = Provider<GoRouter>((ref) {
           initialQuery: state.uri.queryParameters['q'] ?? '',
           initialCategoryId: state.uri.queryParameters['categoryId'],
           autofocus: state.uri.queryParameters['focus'] == '1',
+          initialStores: state.uri.queryParameters['stores'] == '1',
         ),
       ),
       GoRoute(

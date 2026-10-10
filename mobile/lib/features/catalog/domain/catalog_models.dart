@@ -204,21 +204,51 @@ class ListingFieldValue {
       );
 }
 
+/// The seller's live store, shown on the listing so buyers can open it.
+class ListingOwnerStore {
+  const ListingOwnerStore({
+    required this.id,
+    required this.name,
+    required this.slug,
+    this.logoUrl,
+  });
+
+  final String id;
+  final String name;
+  final String slug;
+  final String? logoUrl;
+
+  static ListingOwnerStore? tryParse(Object? json) {
+    if (json is! Map<String, dynamic>) return null;
+    final slug = (json['slug'] as String?) ?? '';
+    if (slug.isEmpty) return null;
+    return ListingOwnerStore(
+      id: (json['id'] as String?) ?? '',
+      name: (json['name'] as String?) ?? '',
+      slug: slug,
+      logoUrl: AppConfig.resolveUrl(json['logoImageUrl'] as String?),
+    );
+  }
+}
+
 class ListingOwner {
   const ListingOwner({
     required this.id,
     required this.fullName,
     this.phoneNumber,
+    this.store,
   });
 
   final String id;
   final String fullName;
   final String? phoneNumber;
+  final ListingOwnerStore? store;
 
   factory ListingOwner.fromJson(Map<String, dynamic> json) => ListingOwner(
     id: json['id'] as String,
     fullName: (json['fullName'] as String?) ?? '',
     phoneNumber: json['phoneNumber'] as String?,
+    store: ListingOwnerStore.tryParse(json['store']),
   );
 }
 
@@ -239,6 +269,7 @@ class ListingDetails {
     required this.images,
     required this.fields,
     this.categoryName,
+    this.categoryId,
   });
 
   final String id;
@@ -256,6 +287,7 @@ class ListingDetails {
   final List<ListingImage> images;
   final List<ListingFieldValue> fields;
   final String? categoryName;
+  final String? categoryId;
 
   factory ListingDetails.fromJson(Map<String, dynamic> json) {
     final images =
@@ -280,6 +312,7 @@ class ListingDetails {
           DateTime.tryParse((json['publishedAtUtc'] as String?) ?? '') ??
           DateTime.now(),
       categoryName: json['categoryName'] as String?,
+      categoryId: json['categoryId'] as String?,
       owner: ListingOwner.fromJson(json['owner'] as Map<String, dynamic>),
       images: images,
       fields: ((json['fields'] as List?) ?? const [])
@@ -288,4 +321,30 @@ class ListingDetails {
           .toList(growable: false),
     );
   }
+}
+
+/// One line of the search drop-down: a word from listing titles (or a
+/// category) with the category chain it was found in.
+class SearchSuggestion {
+  const SearchSuggestion({
+    required this.isCategory,
+    required this.text,
+    required this.categoryId,
+    required this.path,
+  });
+
+  final bool isCategory;
+  final String text;
+  final String? categoryId;
+
+  /// Category names from the top one down; for a category suggestion this
+  /// is the chain *above* it.
+  final List<String> path;
+
+  factory SearchSuggestion.fromJson(Map<String, dynamic> j) => SearchSuggestion(
+    isCategory: j['kind'] == 'category',
+    text: (j['text'] as String?) ?? '',
+    categoryId: j['categoryId'] as String?,
+    path: ((j['categoryPath'] as List?) ?? const []).cast<String>(),
+  );
 }

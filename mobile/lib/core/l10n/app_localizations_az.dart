@@ -1125,4 +1125,139 @@ class AppL10nAz extends AppL10n {
 
   @override
   String get signOut => 'Çıxış';
+
+  @override
+  String get searchTabListings => 'Elanlar';
+
+  @override
+  String get searchTabStores => 'Mağazalar';
+
+  @override
+  String storesFound(int count) {
+    return '$count mağaza tapıldı';
+  }
+
+  @override
+  String get noStoresFound => 'Mağaza tapılmadı';
+
+  @override
+  String get noStoresHint => 'Başqa söz yoxlayın.';
+
+  @override
+  String get ownerStoreLabel => 'Mağaza';
+
+  @override
+  String get searchSuggestionCategory => 'Kateqoriya';
+
+  @override
+  String get filtersPickCategory =>
+      'Daha çox filtr üçün əvvəl kateqoriya seçin.';
+
+  @override
+  String get filterDateFrom => 'Başlanğıc';
+
+  @override
+  String get filterDateTo => 'Son';
+
+  @override
+  String get storesTitle => 'Mağazalar';
+
+  @override
+  String get sellerType => 'Satıcı növü';
+
+  @override
+  String get sellerAll => 'Hamısı';
+
+  @override
+  String get sellerStore => 'Mağaza';
+
+  @override
+  String get sellerIndividual => 'Fərdi';
+
+  @override
+  String get sortTitle => 'Sıralama';
+
+  @override
+  String get sortDate => 'Tarix üzrə';
+
+  @override
+  String get sortPriceAsc => 'Əvvəl ucuz';
+
+  @override
+  String get sortPriceDesc => 'Əvvəl baha';
+
+  @override
+  String get similarListings => 'Oxşar elanlar';
+
+  @override
+  String get similarMore => 'Daha çox';
+
+  @override
+  String get reportListingTitle => 'Elanı şikayət et';
+
+  @override
+  String get reportStoreTitle => 'Mağazanı şikayət et';
+
+  @override
+  String get reportWhy => 'Səbəbi seçin';
+
+  @override
+  String get reportReasonSpam => 'Spam və ya təkrar elan';
+
+  @override
+  String get reportReasonFraud => 'Fırıldaq şübhəsi';
+
+  @override
+  String get reportReasonProhibited => 'Qadağan olunmuş məzmun';
+
+  @override
+  String get reportReasonMisleading => 'Yanıldıcı məlumat və ya şəkil';
+
+  @override
+  String get reportReasonWrongCategory => 'Yanlış kateqoriya';
+
+  @override
+  String get reportReasonOther => 'Digər';
+
+  @override
+  String get reportDetailsHint => 'İstəsəniz, nə baş verdiyini yazın';
+
+  @override
+  String get reportDetailsRequired => 'Zəhmət olmasa nə baş verdiyini yazın';
+
+  @override
+  String get reportSend => 'Göndər';
+
+  @override
+  String get reportSent => 'Şikayətiniz göndərildi. Təşəkkür edirik.';
+
+  @override
+  String get reportAlready => 'Bunu artıq bildirmisiniz, baxırıq.';
+
+  @override
+  String get reportFailed => 'Göndərilmədi. Yenidən cəhd edin.';
+
+  @override
+  String get deleteAccount => 'Hesabı sil';
+
+  @override
+  String get deleteAccountTitle => 'Hesabı silmək istəyirsiniz?';
+
+  @override
+  String get deleteAccountMessage =>
+      'Bütün elanlarınız və mağazanız silinəcək, favorilər və izləmələr itəcək, balansdakı vəsait geri qaytarılmayacaq. Mesajlaşmalar qarşı tərəfdə qalır, amma adınız görünmür. Bu əməliyyatı geri qaytarmaq olmaz.';
+
+  @override
+  String deleteAccountType(String word) {
+    return 'Təsdiq üçün \"$word\" yazın';
+  }
+
+  @override
+  String get deleteAccountWord => 'SİL';
+
+  @override
+  String get deleteAccountConfirm => 'Həmişəlik sil';
+
+  @override
+  String get deleteAccountFailed => 'Hesab silinmədi. Yenidən cəhd edin.';
 }

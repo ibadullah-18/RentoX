@@ -2192,6 +2192,264 @@ abstract class AppL10n {
   /// In az, this message translates to:
   /// **'Çıxış'**
   String get signOut;
+
+  /// No description provided for @searchTabListings.
+  ///
+  /// In az, this message translates to:
+  /// **'Elanlar'**
+  String get searchTabListings;
+
+  /// No description provided for @searchTabStores.
+  ///
+  /// In az, this message translates to:
+  /// **'Mağazalar'**
+  String get searchTabStores;
+
+  /// No description provided for @storesFound.
+  ///
+  /// In az, this message translates to:
+  /// **'{count} mağaza tapıldı'**
+  String storesFound(int count);
+
+  /// No description provided for @noStoresFound.
+  ///
+  /// In az, this message translates to:
+  /// **'Mağaza tapılmadı'**
+  String get noStoresFound;
+
+  /// No description provided for @noStoresHint.
+  ///
+  /// In az, this message translates to:
+  /// **'Başqa söz yoxlayın.'**
+  String get noStoresHint;
+
+  /// No description provided for @ownerStoreLabel.
+  ///
+  /// In az, this message translates to:
+  /// **'Mağaza'**
+  String get ownerStoreLabel;
+
+  /// No description provided for @searchSuggestionCategory.
+  ///
+  /// In az, this message translates to:
+  /// **'Kateqoriya'**
+  String get searchSuggestionCategory;
+
+  /// No description provided for @filtersPickCategory.
+  ///
+  /// In az, this message translates to:
+  /// **'Daha çox filtr üçün əvvəl kateqoriya seçin.'**
+  String get filtersPickCategory;
+
+  /// No description provided for @filterDateFrom.
+  ///
+  /// In az, this message translates to:
+  /// **'Başlanğıc'**
+  String get filterDateFrom;
+
+  /// No description provided for @filterDateTo.
+  ///
+  /// In az, this message translates to:
+  /// **'Son'**
+  String get filterDateTo;
+
+  /// No description provided for @storesTitle.
+  ///
+  /// In az, this message translates to:
+  /// **'Mağazalar'**
+  String get storesTitle;
+
+  /// No description provided for @sellerType.
+  ///
+  /// In az, this message translates to:
+  /// **'Satıcı növü'**
+  String get sellerType;
+
+  /// No description provided for @sellerAll.
+  ///
+  /// In az, this message translates to:
+  /// **'Hamısı'**
+  String get sellerAll;
+
+  /// No description provided for @sellerStore.
+  ///
+  /// In az, this message translates to:
+  /// **'Mağaza'**
+  String get sellerStore;
+
+  /// No description provided for @sellerIndividual.
+  ///
+  /// In az, this message translates to:
+  /// **'Fərdi'**
+  String get sellerIndividual;
+
+  /// No description provided for @sortTitle.
+  ///
+  /// In az, this message translates to:
+  /// **'Sıralama'**
+  String get sortTitle;
+
+  /// No description provided for @sortDate.
+  ///
+  /// In az, this message translates to:
+  /// **'Tarix üzrə'**
+  String get sortDate;
+
+  /// No description provided for @sortPriceAsc.
+  ///
+  /// In az, this message translates to:
+  /// **'Əvvəl ucuz'**
+  String get sortPriceAsc;
+
+  /// No description provided for @sortPriceDesc.
+  ///
+  /// In az, this message translates to:
+  /// **'Əvvəl baha'**
+  String get sortPriceDesc;
+
+  /// No description provided for @similarListings.
+  ///
+  /// In az, this message translates to:
+  /// **'Oxşar elanlar'**
+  String get similarListings;
+
+  /// No description provided for @similarMore.
+  ///
+  /// In az, this message translates to:
+  /// **'Daha çox'**
+  String get similarMore;
+
+  /// No description provided for @reportListingTitle.
+  ///
+  /// In az, this message translates to:
+  /// **'Elanı şikayət et'**
+  String get reportListingTitle;
+
+  /// No description provided for @reportStoreTitle.
+  ///
+  /// In az, this message translates to:
+  /// **'Mağazanı şikayət et'**
+  String get reportStoreTitle;
+
+  /// No description provided for @reportWhy.
+  ///
+  /// In az, this message translates to:
+  /// **'Səbəbi seçin'**
+  String get reportWhy;
+
+  /// No description provided for @reportReasonSpam.
+  ///
+  /// In az, this message translates to:
+  /// **'Spam və ya təkrar elan'**
+  String get reportReasonSpam;
+
+  /// No description provided for @reportReasonFraud.
+  ///
+  /// In az, this message translates to:
+  /// **'Fırıldaq şübhəsi'**
+  String get reportReasonFraud;
+
+  /// No description provided for @reportReasonProhibited.
+  ///
+  /// In az, this message translates to:
+  /// **'Qadağan olunmuş məzmun'**
+  String get reportReasonProhibited;
+
+  /// No description provided for @reportReasonMisleading.
+  ///
+  /// In az, this message translates to:
+  /// **'Yanıldıcı məlumat və ya şəkil'**
+  String get reportReasonMisleading;
+
+  /// No description provided for @reportReasonWrongCategory.
+  ///
+  /// In az, this message translates to:
+  /// **'Yanlış kateqoriya'**
+  String get reportReasonWrongCategory;
+
+  /// No description provided for @reportReasonOther.
+  ///
+  /// In az, this message translates to:
+  /// **'Digər'**
+  String get reportReasonOther;
+
+  /// No description provided for @reportDetailsHint.
+  ///
+  /// In az, this message translates to:
+  /// **'İstəsəniz, nə baş verdiyini yazın'**
+  String get reportDetailsHint;
+
+  /// No description provided for @reportDetailsRequired.
+  ///
+  /// In az, this message translates to:
+  /// **'Zəhmət olmasa nə baş verdiyini yazın'**
+  String get reportDetailsRequired;
+
+  /// No description provided for @reportSend.
+  ///
+  /// In az, this message translates to:
+  /// **'Göndər'**
+  String get reportSend;
+
+  /// No description provided for @reportSent.
+  ///
+  /// In az, this message translates to:
+  /// **'Şikayətiniz göndərildi. Təşəkkür edirik.'**
+  String get reportSent;
+
+  /// No description provided for @reportAlready.
+  ///
+  /// In az, this message translates to:
+  /// **'Bunu artıq bildirmisiniz, baxırıq.'**
+  String get reportAlready;
+
+  /// No description provided for @reportFailed.
+  ///
+  /// In az, this message translates to:
+  /// **'Göndərilmədi. Yenidən cəhd edin.'**
+  String get reportFailed;
+
+  /// No description provided for @deleteAccount.
+  ///
+  /// In az, this message translates to:
+  /// **'Hesabı sil'**
+  String get deleteAccount;
+
+  /// No description provided for @deleteAccountTitle.
+  ///
+  /// In az, this message translates to:
+  /// **'Hesabı silmək istəyirsiniz?'**
+  String get deleteAccountTitle;
+
+  /// No description provided for @deleteAccountMessage.
+  ///
+  /// In az, this message translates to:
+  /// **'Bütün elanlarınız və mağazanız silinəcək, favorilər və izləmələr itəcək, balansdakı vəsait geri qaytarılmayacaq. Mesajlaşmalar qarşı tərəfdə qalır, amma adınız görünmür. Bu əməliyyatı geri qaytarmaq olmaz.'**
+  String get deleteAccountMessage;
+
+  /// No description provided for @deleteAccountType.
+  ///
+  /// In az, this message translates to:
+  /// **'Təsdiq üçün \"{word}\" yazın'**
+  String deleteAccountType(String word);
+
+  /// No description provided for @deleteAccountWord.
+  ///
+  /// In az, this message translates to:
+  /// **'SİL'**
+  String get deleteAccountWord;
+
+  /// No description provided for @deleteAccountConfirm.
+  ///
+  /// In az, this message translates to:
+  /// **'Həmişəlik sil'**
+  String get deleteAccountConfirm;
+
+  /// No description provided for @deleteAccountFailed.
+  ///
+  /// In az, this message translates to:
+  /// **'Hesab silinmədi. Yenidən cəhd edin.'**
+  String get deleteAccountFailed;
 }
 
 class _AppL10nDelegate extends LocalizationsDelegate<AppL10n> {

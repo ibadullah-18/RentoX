@@ -1,8 +1,11 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/l10n/locale_controller.dart';
 import '../../catalog/data/catalog_repository.dart';
 import '../../catalog/domain/paged_listings.dart';
+import '../domain/field_filter.dart';
+import '../domain/search_options.dart';
 
 /// What the user is looking for. Immutable; every change creates a new value,
 /// which makes the results provider reload.
@@ -12,6 +15,9 @@ class SearchFilters {
     this.categoryId,
     this.minPrice,
     this.maxPrice,
+    this.fields = const {},
+    this.seller = SellerType.all,
+    this.sort = SearchSort.date,
   });
 
   final String query;
@@ -19,10 +25,22 @@ class SearchFilters {
   final double? minPrice;
   final double? maxPrice;
 
+  /// Conditions on the category's own fields (brand, year...), by field id.
+  final Map<String, FieldFilterValue> fields;
+  final SellerType seller;
+  final SearchSort sort;
+
   bool get hasPrice => minPrice != null || maxPrice != null;
 
-  /// Category or price chosen (the text query is not counted).
-  bool get hasActiveFilters => categoryId != null || hasPrice;
+  /// Price or category-field conditions (what the filter sheet edits).
+  bool get hasSheetFilters =>
+      hasPrice ||
+      fields.isNotEmpty ||
+      seller != SellerType.all ||
+      sort != SearchSort.date;
+
+  /// Category, price or fields chosen (the text query is not counted).
+  bool get hasActiveFilters => categoryId != null || hasSheetFilters;
 
   bool get isEmpty => query.isEmpty && !hasActiveFilters;
 
@@ -38,6 +56,13 @@ class SearchFilters {
     categoryId: clearCategory ? null : (categoryId ?? this.categoryId),
     minPrice: clearPrice ? null : (minPrice ?? this.minPrice),
     maxPrice: clearPrice ? null : (maxPrice ?? this.maxPrice),
+    // Fields belong to one category: changing the category drops them.
+    fields:
+        clearCategory || (categoryId != null && categoryId != this.categoryId)
+        ? const {}
+        : fields,
+    seller: seller,
+    sort: sort,
   );
 
   @override
@@ -46,10 +71,23 @@ class SearchFilters {
       other.query == query &&
       other.categoryId == categoryId &&
       other.minPrice == minPrice &&
-      other.maxPrice == maxPrice;
+      other.maxPrice == maxPrice &&
+      other.seller == seller &&
+      other.sort == sort &&
+      mapEquals(other.fields, fields);
 
   @override
-  int get hashCode => Object.hash(query, categoryId, minPrice, maxPrice);
+  int get hashCode => Object.hash(
+    query,
+    categoryId,
+    minPrice,
+    maxPrice,
+    seller,
+    sort,
+    Object.hashAllUnordered(
+      fields.entries.map((e) => Object.hash(e.key, e.value)),
+    ),
+  );
 }
 
 /// What a search page is opened with. It is the family argument of the search
@@ -86,17 +124,37 @@ class SearchFiltersNotifier extends Notifier<SearchFilters> {
       ? state.copyWith(clearCategory: true)
       : state.copyWith(categoryId: id);
 
-  void setPrice({double? min, double? max}) =>
-      state = (min == null && max == null)
-      ? state.copyWith(clearPrice: true)
-      : SearchFilters(
-          query: state.query,
-          categoryId: state.categoryId,
-          minPrice: min,
-          maxPrice: max,
-        );
+  void setPrice({double? min, double? max}) => state = SearchFilters(
+    query: state.query,
+    categoryId: state.categoryId,
+    minPrice: min,
+    maxPrice: max,
+    fields: state.fields,
+    seller: state.seller,
+    sort: state.sort,
+  );
 
-  /// Drops category and price but keeps what was typed.
+  /// What the filter sheet returned: price and category-field conditions.
+  void setSheetFilters({
+    double? min,
+    double? max,
+    Map<String, FieldFilterValue> fields = const {},
+    SellerType seller = SellerType.all,
+    SearchSort sort = SearchSort.date,
+  }) => state = SearchFilters(
+    query: state.query,
+    categoryId: state.categoryId,
+    minPrice: min,
+    maxPrice: max,
+    fields: {
+      for (final e in fields.entries)
+        if (!e.value.isEmpty) e.key: e.value,
+    },
+    seller: seller,
+    sort: sort,
+  );
+
+  /// Drops category, price and fields but keeps what was typed.
   void clearFilters() =>
       state = state.copyWith(clearCategory: true, clearPrice: true);
 }
@@ -123,6 +181,9 @@ class SearchResultsController extends AsyncNotifier<PagedListings> {
           search: f.query,
           minPrice: f.minPrice,
           maxPrice: f.maxPrice,
+          fieldFilters: encodeFieldFilters(f.fields),
+          seller: f.seller,
+          sort: f.sort,
           page: page,
           pageSize: _pageSize,
         );
@@ -151,6 +212,9 @@ class SearchResultsController extends AsyncNotifier<PagedListings> {
             search: filters.query,
             minPrice: filters.minPrice,
             maxPrice: filters.maxPrice,
+            fieldFilters: encodeFieldFilters(filters.fields),
+            seller: filters.seller,
+            sort: filters.sort,
             page: current.page + 1,
             pageSize: _pageSize,
           );

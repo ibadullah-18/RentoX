@@ -28,6 +28,7 @@ class FieldDefinition {
     required this.isRequired,
     required this.allowCustomValue,
     required this.displayOrder,
+    this.isFilterable = false,
     this.options = const [],
   });
 
@@ -37,6 +38,9 @@ class FieldDefinition {
   final bool isRequired;
   final bool allowCustomValue;
   final int displayOrder;
+
+  /// Whether the search filters may use this field.
+  final bool isFilterable;
   final List<FieldOption> options;
 
   factory FieldDefinition.fromJson(Map<String, dynamic> json) {
@@ -54,6 +58,7 @@ class FieldDefinition {
       isRequired: (json['isRequired'] as bool?) ?? false,
       allowCustomValue: (json['allowCustomValue'] as bool?) ?? false,
       displayOrder: (json['displayOrder'] as num?)?.toInt() ?? 0,
+      isFilterable: (json['isFilterable'] as bool?) ?? false,
       options: options,
     );
   }

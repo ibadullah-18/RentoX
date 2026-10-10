@@ -1153,4 +1153,141 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get signOut => 'Sign out';
+
+  @override
+  String get searchTabListings => 'Listings';
+
+  @override
+  String get searchTabStores => 'Stores';
+
+  @override
+  String storesFound(int count) {
+    return '$count stores found';
+  }
+
+  @override
+  String get noStoresFound => 'No stores found';
+
+  @override
+  String get noStoresHint => 'Try another word.';
+
+  @override
+  String get ownerStoreLabel => 'Store';
+
+  @override
+  String get searchSuggestionCategory => 'Category';
+
+  @override
+  String get filtersPickCategory =>
+      'Pick a category first to see more filters.';
+
+  @override
+  String get filterDateFrom => 'From';
+
+  @override
+  String get filterDateTo => 'To';
+
+  @override
+  String get storesTitle => 'Stores';
+
+  @override
+  String get sellerType => 'Seller type';
+
+  @override
+  String get sellerAll => 'All';
+
+  @override
+  String get sellerStore => 'Store';
+
+  @override
+  String get sellerIndividual => 'Individual';
+
+  @override
+  String get sortTitle => 'Sort by';
+
+  @override
+  String get sortDate => 'Newest';
+
+  @override
+  String get sortPriceAsc => 'Cheapest first';
+
+  @override
+  String get sortPriceDesc => 'Most expensive first';
+
+  @override
+  String get similarListings => 'Similar listings';
+
+  @override
+  String get similarMore => 'See more';
+
+  @override
+  String get reportListingTitle => 'Report this listing';
+
+  @override
+  String get reportStoreTitle => 'Report this store';
+
+  @override
+  String get reportWhy => 'Choose a reason';
+
+  @override
+  String get reportReasonSpam => 'Spam or duplicate';
+
+  @override
+  String get reportReasonFraud => 'Suspected fraud';
+
+  @override
+  String get reportReasonProhibited => 'Prohibited content';
+
+  @override
+  String get reportReasonMisleading => 'Misleading information or photos';
+
+  @override
+  String get reportReasonWrongCategory => 'Wrong category';
+
+  @override
+  String get reportReasonOther => 'Other';
+
+  @override
+  String get reportDetailsHint => 'Tell us what happened (optional)';
+
+  @override
+  String get reportDetailsRequired => 'Please tell us what happened';
+
+  @override
+  String get reportSend => 'Send';
+
+  @override
+  String get reportSent => 'Your report was sent. Thank you.';
+
+  @override
+  String get reportAlready =>
+      'You already reported this. We are looking into it.';
+
+  @override
+  String get reportFailed => 'Could not send. Please try again.';
+
+  @override
+  String get deleteAccount => 'Delete account';
+
+  @override
+  String get deleteAccountTitle => 'Delete your account?';
+
+  @override
+  String get deleteAccountMessage =>
+      'All your listings and your store will be removed, favourites and follows are lost, and any wallet balance is not refunded. Conversations stay for the other person but your name is hidden. This cannot be undone.';
+
+  @override
+  String deleteAccountType(String word) {
+    return 'Type \"$word\" to confirm';
+  }
+
+  @override
+  String get deleteAccountWord => 'DELETE';
+
+  @override
+  String get deleteAccountConfirm => 'Delete forever';
+
+  @override
+  String get deleteAccountFailed =>
+      'The account was not deleted. Please try again.';
 }

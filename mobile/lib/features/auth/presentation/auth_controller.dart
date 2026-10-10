@@ -27,6 +27,12 @@ class AuthController extends AsyncNotifier<AuthSession?> {
     state = const AsyncData(null);
   }
 
+  /// The account was deleted on the server: just drop the local session.
+  Future<void> accountDeleted() async {
+    await ref.read(authRepositoryProvider).clearLocal();
+    state = const AsyncData(null);
+  }
+
   /// Called by the network layer when the refresh token is rejected.
   void sessionExpired() => state = const AsyncData(null);
 }

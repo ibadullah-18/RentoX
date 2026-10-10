@@ -17,6 +17,7 @@ import '../../wallet/presentation/payment_sheet.dart';
 import '../../store/presentation/my_store_page.dart';
 import '../../store/presentation/store_controller.dart';
 import 'account_controller.dart';
+import 'delete_account_dialog.dart';
 import 'language_sheet.dart';
 import 'profile_avatar.dart';
 
@@ -207,6 +208,14 @@ class ProfilePage extends ConsumerWidget {
                     ref.read(authControllerProvider.notifier).signOut(),
                 icon: const Icon(AppIcons.signOut),
                 label: Text(l10n.signOut),
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              TextButton(
+                onPressed: () => confirmAndDeleteAccount(context),
+                child: Text(
+                  l10n.deleteAccount,
+                  style: const TextStyle(color: AppColors.danger),
+                ),
               ),
             ],
           ),

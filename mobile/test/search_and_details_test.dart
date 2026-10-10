@@ -11,6 +11,7 @@ import 'package:rentox/features/listing_create/presentation/field_editors.dart';
 import 'package:rentox/features/listing_details/presentation/listing_formatting.dart';
 import 'package:rentox/shared/widgets/listing_card.dart';
 import 'package:rentox/features/search/presentation/price_filter_sheet.dart';
+import 'package:rentox/features/search/domain/search_options.dart';
 import 'package:rentox/features/search/presentation/search_page.dart';
 import 'package:rentox/features/search/presentation/search_controller.dart';
 
@@ -44,12 +45,34 @@ class FakeCatalog extends CatalogRepository {
   Future<List<Category>> categories(String language) async => const [];
 
   @override
+  Future<List<SearchSuggestion>> suggestions(
+    String text,
+    String language,
+  ) async => [
+    SearchSuggestion(
+      isCategory: false,
+      text: '${text}ry',
+      categoryId: 'cat-1',
+      path: const ['Nəqliyyat', 'Avtomobil'],
+    ),
+    const SearchSuggestion(
+      isCategory: true,
+      text: 'Avtomobil',
+      categoryId: 'cat-1',
+      path: ['Nəqliyyat'],
+    ),
+  ];
+
+  @override
   Future<Paged<ListingSummary>> listings({
     required String language,
     String? categoryId,
     String? search,
     double? minPrice,
     double? maxPrice,
+    List<Map<String, dynamic>>? fieldFilters,
+    SellerType seller = SellerType.all,
+    SearchSort sort = SearchSort.date,
     int page = 1,
     int pageSize = 20,
   }) async {
@@ -291,11 +314,24 @@ void main() {
       expect(find.text('Listing a'), findsOneWidget);
       expect(find.text(az.resultsFound(4)), findsOneWidget);
 
-      await tester.enterText(find.byType(TextField), 'camry');
-      await tester.pump(const Duration(milliseconds: 500)); // debounce
+      final before = repo.calls.length;
+      await tester.enterText(find.byType(TextField), 'camr');
+      await tester.pump(const Duration(milliseconds: 300)); // debounce
       await tester.pump();
 
-      expect(repo.calls.last.search, 'camry');
+      // Typing shows words with their category chain, not listings.
+      expect(find.text('camrry'), findsOneWidget);
+      expect(find.text('Nəqliyyat › Avtomobil'), findsOneWidget);
+      expect(repo.calls.length, before);
+
+      await tester.tap(find.text('camrry'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 50));
+
+      // Tapping searches that word inside its category.
+      expect(repo.calls.last.search, 'camrry');
+      expect(repo.calls.last.categoryId, 'cat-1');
+      expect(find.text('Nəqliyyat › Avtomobil'), findsNothing);
       expect(tester.takeException(), isNull);
     });
   });

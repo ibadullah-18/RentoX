@@ -1162,4 +1162,140 @@ class AppL10nRu extends AppL10n {
 
   @override
   String get signOut => 'Выйти';
+
+  @override
+  String get searchTabListings => 'Объявления';
+
+  @override
+  String get searchTabStores => 'Магазины';
+
+  @override
+  String storesFound(int count) {
+    return 'Найдено магазинов: $count';
+  }
+
+  @override
+  String get noStoresFound => 'Магазины не найдены';
+
+  @override
+  String get noStoresHint => 'Попробуйте другое слово.';
+
+  @override
+  String get ownerStoreLabel => 'Магазин';
+
+  @override
+  String get searchSuggestionCategory => 'Категория';
+
+  @override
+  String get filtersPickCategory =>
+      'Выберите категорию, чтобы увидеть больше фильтров.';
+
+  @override
+  String get filterDateFrom => 'С';
+
+  @override
+  String get filterDateTo => 'По';
+
+  @override
+  String get storesTitle => 'Магазины';
+
+  @override
+  String get sellerType => 'Тип продавца';
+
+  @override
+  String get sellerAll => 'Все';
+
+  @override
+  String get sellerStore => 'Магазин';
+
+  @override
+  String get sellerIndividual => 'Частное лицо';
+
+  @override
+  String get sortTitle => 'Сортировка';
+
+  @override
+  String get sortDate => 'По дате';
+
+  @override
+  String get sortPriceAsc => 'Сначала дешёвые';
+
+  @override
+  String get sortPriceDesc => 'Сначала дорогие';
+
+  @override
+  String get similarListings => 'Похожие объявления';
+
+  @override
+  String get similarMore => 'Ещё';
+
+  @override
+  String get reportListingTitle => 'Пожаловаться на объявление';
+
+  @override
+  String get reportStoreTitle => 'Пожаловаться на магазин';
+
+  @override
+  String get reportWhy => 'Выберите причину';
+
+  @override
+  String get reportReasonSpam => 'Спам или дубликат';
+
+  @override
+  String get reportReasonFraud => 'Подозрение на мошенничество';
+
+  @override
+  String get reportReasonProhibited => 'Запрещённый контент';
+
+  @override
+  String get reportReasonMisleading =>
+      'Вводящая в заблуждение информация или фото';
+
+  @override
+  String get reportReasonWrongCategory => 'Неверная категория';
+
+  @override
+  String get reportReasonOther => 'Другое';
+
+  @override
+  String get reportDetailsHint => 'Расскажите, что случилось (по желанию)';
+
+  @override
+  String get reportDetailsRequired => 'Пожалуйста, опишите, что случилось';
+
+  @override
+  String get reportSend => 'Отправить';
+
+  @override
+  String get reportSent => 'Жалоба отправлена. Спасибо.';
+
+  @override
+  String get reportAlready => 'Вы уже сообщали об этом. Мы разбираемся.';
+
+  @override
+  String get reportFailed => 'Не удалось отправить. Попробуйте снова.';
+
+  @override
+  String get deleteAccount => 'Удалить аккаунт';
+
+  @override
+  String get deleteAccountTitle => 'Удалить аккаунт?';
+
+  @override
+  String get deleteAccountMessage =>
+      'Все ваши объявления и магазин будут удалены, избранное и подписки пропадут, остаток на балансе не возвращается. Переписки останутся у собеседника, но ваше имя скрыто. Это действие нельзя отменить.';
+
+  @override
+  String deleteAccountType(String word) {
+    return 'Для подтверждения введите «$word»';
+  }
+
+  @override
+  String get deleteAccountWord => 'УДАЛИТЬ';
+
+  @override
+  String get deleteAccountConfirm => 'Удалить навсегда';
+
+  @override
+  String get deleteAccountFailed => 'Аккаунт не удалён. Попробуйте снова.';
 }

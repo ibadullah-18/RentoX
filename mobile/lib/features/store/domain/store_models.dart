@@ -338,6 +338,7 @@ class FollowedStore {
     required this.id,
     required this.name,
     required this.slug,
+    this.description = '',
     this.logoUrl,
     this.activeListingCount = 0,
     this.followerCount = 0,
@@ -346,6 +347,9 @@ class FollowedStore {
   final String id;
   final String name;
   final String slug;
+
+  /// Only filled in by the store search (not by the followed list).
+  final String description;
   final String? logoUrl;
   final int activeListingCount;
   final int followerCount;
@@ -354,6 +358,7 @@ class FollowedStore {
     id: j['storeId'] as String,
     name: (j['name'] as String?) ?? '',
     slug: (j['slug'] as String?) ?? '',
+    description: (j['description'] as String?) ?? '',
     logoUrl: AppConfig.resolveUrl(j['logoImageUrl'] as String?),
     activeListingCount: (j['activeListingCount'] as num?)?.toInt() ?? 0,
     followerCount: (j['followerCount'] as num?)?.toInt() ?? 0,

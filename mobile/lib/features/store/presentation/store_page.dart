@@ -13,7 +13,8 @@ import '../../../shared/widgets/async_states.dart';
 import '../../../shared/widgets/glass.dart';
 import '../../../shared/widgets/listing_grid.dart';
 import '../../auth/presentation/auth_controller.dart';
-import '../../support/domain/support_models.dart';
+import '../../report/domain/report_models.dart';
+import '../../report/presentation/report_sheet.dart';
 import '../../support/presentation/support_widgets.dart';
 import '../domain/store_models.dart';
 import 'store_controller.dart';
@@ -221,15 +222,11 @@ class _StoreBodyState extends ConsumerState<_StoreBody> {
                   const SizedBox(height: AppSpacing.sm),
                   ReportProblemRow(
                     hint: l10n.reportStoreHint,
-                    onTap: () => context.push(
-                      Routes.newTicket(
-                        category: SupportCategory.store.id,
-                        subject: clip(
-                          '${l10n.supportCatStore}: ${s.name}',
-                          SupportRules.subjectMax,
-                        ),
-                        ref: '${l10n.supportRefStore(s.name)} (ID: ${s.id})',
-                      ),
+                    onTap: () => startReport(
+                      context,
+                      ref,
+                      target: ReportTarget.store,
+                      targetId: s.id,
                     ),
                   ),
                 ],

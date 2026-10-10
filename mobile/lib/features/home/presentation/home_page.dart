@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -13,7 +14,9 @@ import '../../../shared/widgets/listing_card.dart';
 import '../../../shared/widgets/listing_grid.dart';
 import '../../catalog/data/catalog_repository.dart';
 import '../../catalog/domain/catalog_models.dart';
+import '../../store/domain/store_models.dart';
 import '../../notifications/presentation/notifications_controller.dart';
+import '../../store/presentation/store_controller.dart';
 import '../../shell/tab_page.dart';
 
 class HomePage extends ConsumerWidget {
@@ -28,6 +31,7 @@ class HomePage extends ConsumerWidget {
       onRefresh: () async {
         ref.invalidate(categoriesProvider);
         ref.invalidate(homeListingsProvider);
+        ref.invalidate(homeStoresProvider);
         ref.invalidate(unreadNotificationsProvider);
         await ref.read(homeListingsProvider.future);
       },
@@ -35,6 +39,7 @@ class HomePage extends ConsumerWidget {
         const SliverToBoxAdapter(child: _SearchRow()),
         SliverToBoxAdapter(child: _SectionHeader(title: l10n.categories)),
         const SliverToBoxAdapter(child: _CategoryStrip()),
+        const SliverToBoxAdapter(child: _StoreStrip()),
         ...listings.when(
           loading: () => const [
             SliverFillRemaining(
@@ -310,6 +315,92 @@ class _CategoryStrip extends ConsumerWidget {
           },
         ),
       ),
+    );
+  }
+}
+
+/// Stores to browse. Nothing is shown while loading, on error, or when there
+/// are no stores yet: it is an extra, never a blocker for the page.
+class _StoreStrip extends ConsumerWidget {
+  const _StoreStrip();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final stores = ref.watch(homeStoresProvider).value;
+    if (stores == null || stores.isEmpty) return const SizedBox.shrink();
+
+    final l10n = AppL10n.of(context);
+    final scheme = Theme.of(context).colorScheme;
+
+    Widget logo(FollowedStore store) {
+      final placeholder = ColoredBox(
+        color: scheme.primary.withValues(alpha: 0.12),
+        child: Icon(AppIcons.store, color: scheme.primary),
+      );
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        child: SizedBox(
+          width: 62,
+          height: 62,
+          child: store.logoUrl == null
+              ? placeholder
+              : CachedNetworkImage(
+                  imageUrl: store.logoUrl!,
+                  fit: BoxFit.cover,
+                  placeholder: (_, _) => placeholder,
+                  errorWidget: (_, _, _) => placeholder,
+                ),
+        ),
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _SectionHeader(
+          title: l10n.storesTitle,
+          onSeeAll: () => context.push(Routes.searchWith(stores: true)),
+        ),
+        SizedBox(
+          height: 100,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            padding: AppSpacing.screenPadding,
+            itemCount: stores.length,
+            separatorBuilder: (_, _) => const SizedBox(width: 14),
+            itemBuilder: (context, i) {
+              final store = stores[i];
+              return Semantics(
+                button: true,
+                label: store.name,
+                child: GestureDetector(
+                  onTap: () => context.push(Routes.store(store.slug)),
+                  behavior: HitTestBehavior.opaque,
+                  child: SizedBox(
+                    width: 76,
+                    child: Column(
+                      children: [
+                        logo(store),
+                        const SizedBox(height: 8),
+                        Text(
+                          store.name,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+      ],
     );
   }
 }

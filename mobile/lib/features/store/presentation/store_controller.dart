@@ -157,3 +157,11 @@ final followedStoresProvider = FutureProvider.autoDispose<List<FollowedStore>>((
   final page = await ref.watch(storeRepositoryProvider).following(pageSize: 50);
   return page.items;
 });
+
+/// A few stores for the home page strip (most active first).
+final homeStoresProvider = FutureProvider.autoDispose<List<FollowedStore>>((
+  ref,
+) async {
+  final page = await ref.watch(storeRepositoryProvider).search(pageSize: 10);
+  return page.items;
+});

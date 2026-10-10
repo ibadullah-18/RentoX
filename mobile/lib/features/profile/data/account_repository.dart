@@ -17,6 +17,11 @@ class AccountRepository {
     return Account.fromJson(res.data!);
   });
 
+  /// Deletes the account for good (the server ends every session).
+  Future<void> deleteAccount() => guardApi(
+    () => _dio.delete<void>('/api/account/me', data: {'confirm': true}),
+  );
+
   Future<Account> update({
     required String fullName,
     required String bio,

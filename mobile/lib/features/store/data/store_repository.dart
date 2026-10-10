@@ -82,6 +82,23 @@ class StoreRepository {
     return Paged.fromJson(res.data!, ListingSummary.fromJson);
   });
 
+  /// Public stores; the most active first, or best match when [search] is set.
+  Future<Paged<FollowedStore>> search({
+    String search = '',
+    int page = 1,
+    int pageSize = 20,
+  }) => guardApi(() async {
+    final res = await _dio.get<Map<String, dynamic>>(
+      '/api/stores',
+      queryParameters: {
+        if (search.trim().isNotEmpty) 'search': search.trim(),
+        'page': page,
+        'pageSize': pageSize,
+      },
+    );
+    return Paged.fromJson(res.data!, FollowedStore.fromJson);
+  });
+
   // ---- following ------------------------------------------------------
 
   Future<FollowStatus> followStatus(String storeId) => guardApi(() async {
