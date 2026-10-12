@@ -38,6 +38,11 @@ public static class ListingSearchScorer
     private const double FieldsWeight = 5;
     private const double DescriptionWeight = 2;
 
+    // Typos in the typed word are forgiven in the title, category and field
+    // values, but not in the description: the description must contain the
+    // word as typed (or as part of a longer word).
+    private const bool DescriptionIsTypoTolerant = false;
+
     /// <summary>
     /// Returns the matching listing ids with their scores (best first), or
     /// <c>null</c> when the database has not been upgraded for smart search
@@ -82,22 +87,32 @@ public static class ListingSearchScorer
         StringBuilder scored = new();
         StringBuilder sum = new();
         StringBuilder require = new();
+        StringBuilder candidates = new();
+        StringBuilder candidateNames = new();
 
         for (int t = 0; t < tokens.Count; t++)
         {
             List<string> names =
                 SearchSql.AddTokenParameters(parameters, t, tokens[t]);
 
+            candidates.Append(",\n");
+            candidates.Append(Candidates(t, names));
+
             if (t > 0)
             {
                 scored.Append(",\n");
                 sum.Append(" + ");
                 require.Append(" AND ");
+                candidateNames.Append(" INTERSECT ");
             }
+
+            candidateNames.Append(string.Create(
+                CultureInfo.InvariantCulture,
+                $"SELECT id FROM cand{t}"));
 
             scored.Append(string.Create(
                 CultureInfo.InvariantCulture,
-                $"({SearchSql.Field("d.title", names, TitleWeight)} + {SearchSql.Field("d.cat", names, CategoryWeight)} + {SearchSql.Field("d.fields", names, FieldsWeight)} + {SearchSql.Field("d.descr", names, DescriptionWeight)}) AS s{t}"));
+                $"({SearchSql.Field("d.title", names, TitleWeight)} + {SearchSql.Field("d.cat", names, CategoryWeight)} + {SearchSql.Field("d.fields", names, FieldsWeight)} + {SearchSql.Field("d.descr", names, DescriptionWeight, DescriptionIsTypoTolerant)}) AS s{t}"));
             sum.Append(string.Create(CultureInfo.InvariantCulture, $"s{t}"));
             require.Append(string.Create(CultureInfo.InvariantCulture, $"s{t} > 0"));
         }
@@ -112,28 +127,34 @@ public static class ListingSearchScorer
               SELECT chain.leaf, p."Id", p."ParentId"
               FROM chain JOIN catalog.categories p ON p."Id" = chain.parent
             ),
-            cat_text AS (
+            cat_text AS MATERIALIZED (
               SELECT chain.leaf AS category_id,
                      string_agg(public.rentox_norm(t."Name"), ' ') AS txt
               FROM chain
               JOIN catalog.category_translations t ON t."CategoryId" = chain.node
               GROUP BY chain.leaf
+            ){candidates},
+            cand AS MATERIALIZED (
+              {candidateNames}
             ),
             field_pieces AS (
               SELECT fv."ListingId" AS listing_id, fv."TextValue" AS piece
               FROM listings.listing_field_values fv
+              JOIN cand ON cand.id = fv."ListingId"
               JOIN catalog.category_fields cf
                 ON cf."Id" = fv."CategoryFieldId" AND cf."IsActive" AND cf."IsSearchable"
               WHERE fv."TextValue" IS NOT NULL
               UNION ALL
               SELECT fv."ListingId", fv."CustomValue"
               FROM listings.listing_field_values fv
+              JOIN cand ON cand.id = fv."ListingId"
               JOIN catalog.category_fields cf
                 ON cf."Id" = fv."CategoryFieldId" AND cf."IsActive" AND cf."IsSearchable"
               WHERE fv."CustomValue" IS NOT NULL
               UNION ALL
               SELECT fv."ListingId", o."Value"
               FROM listings.listing_field_values fv
+              JOIN cand ON cand.id = fv."ListingId"
               JOIN catalog.category_fields cf
                 ON cf."Id" = fv."CategoryFieldId" AND cf."IsActive" AND cf."IsSearchable"
               JOIN listings.listing_field_selections s ON s."ListingFieldValueId" = fv."Id"
@@ -142,6 +163,7 @@ public static class ListingSearchScorer
               UNION ALL
               SELECT fv."ListingId", ot."Label"
               FROM listings.listing_field_values fv
+              JOIN cand ON cand.id = fv."ListingId"
               JOIN catalog.category_fields cf
                 ON cf."Id" = fv."CategoryFieldId" AND cf."IsActive" AND cf."IsSearchable"
               JOIN listings.listing_field_selections s ON s."ListingFieldValueId" = fv."Id"
@@ -155,20 +177,21 @@ public static class ListingSearchScorer
               FROM field_pieces
               GROUP BY listing_id
             ),
-            docs AS (
+            docs AS MATERIALIZED (
               SELECT l."Id" AS id,
                      public.rentox_norm(l."Title") AS title,
                      public.rentox_norm(l."Description") AS descr,
                      coalesce(ct.txt, '') AS cat,
                      coalesce(ft.txt, '') AS fields
               FROM listings.listings l
+              JOIN cand ON cand.id = l."Id"
               LEFT JOIN cat_text ct ON ct.category_id = l."CategoryId"
               LEFT JOIN field_text ft ON ft.listing_id = l."Id"
               WHERE l."Status" = @status
                 AND l."DeletedAtUtc" IS NULL
                 AND l."ExpiresAtUtc" > @now
             ),
-            scored AS (
+            scored AS MATERIALIZED (
               SELECT d.id,
             {scored}
               FROM docs d
@@ -181,5 +204,48 @@ public static class ListingSearchScorer
             """);
 
         return (sql, parameters);
+    }
+
+    /// <summary>
+    /// The listings that may contain one word anywhere (title, description,
+    /// category chain, field values, option names), found through indexes.
+    /// The exact scoring runs only on the listings every word may match.
+    /// </summary>
+    private static string Candidates(int t, List<string> names)
+    {
+        string live =
+            "l.\"Status\" = @status AND l.\"DeletedAtUtc\" IS NULL AND l.\"ExpiresAtUtc\" > @now";
+
+        return string.Create(
+            CultureInfo.InvariantCulture,
+            $"""
+            cand{t} AS MATERIALIZED (
+              SELECT l."Id" AS id FROM listings.listings l
+              WHERE {live} AND {SearchSql.Gate("public.rentox_norm(l.\"Title\")", names)}
+              UNION
+              SELECT l."Id" FROM listings.listings l
+              WHERE {live} AND {SearchSql.Gate("public.rentox_norm(l.\"Description\")", names, DescriptionIsTypoTolerant)}
+              UNION
+              SELECT l."Id" FROM listings.listings l
+              WHERE {live} AND l."CategoryId" IN (
+                SELECT ct.category_id FROM cat_text ct
+                WHERE {SearchSql.Field("ct.txt", names, 1)} > 0)
+              UNION
+              SELECT fv."ListingId" FROM listings.listing_field_values fv
+              WHERE {SearchSql.Gate("public.rentox_norm(fv.\"TextValue\")", names)}
+              UNION
+              SELECT fv."ListingId" FROM listings.listing_field_values fv
+              WHERE {SearchSql.Gate("public.rentox_norm(fv.\"CustomValue\")", names)}
+              UNION
+              SELECT fv."ListingId" FROM listings.listing_field_values fv
+              JOIN listings.listing_field_selections s ON s."ListingFieldValueId" = fv."Id"
+              WHERE s."CategoryFieldOptionId" IN (
+                SELECT o."Id" FROM catalog.category_field_options o
+                WHERE {SearchSql.Field("public.rentox_norm(o.\"Value\")", names, 1)} > 0
+                UNION
+                SELECT ot."CategoryFieldOptionId" FROM catalog.category_field_option_translations ot
+                WHERE {SearchSql.Field("public.rentox_norm(ot.\"Label\")", names, 1)} > 0)
+            )
+            """);
     }
 }

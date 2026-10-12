@@ -1308,4 +1308,151 @@ class AppL10nRu extends AppL10n {
 
   @override
   String get editLiveConfirm => 'Редактировать';
+
+  @override
+  String get themeTitle => 'Оформление';
+
+  @override
+  String get themeLight => 'День (светлая)';
+
+  @override
+  String get themeDark => 'Ночь (тёмная)';
+
+  @override
+  String get themeSchedule => 'Автоматически по времени';
+
+  @override
+  String get themeScheduleHint =>
+      'Дневной и ночной режимы переключаются сами в это время.';
+
+  @override
+  String get themeDayStarts => 'Дневной режим начинается';
+
+  @override
+  String get themeNightStarts => 'Ночной режим начинается';
+
+  @override
+  String get readMore => 'Читать далее';
+
+  @override
+  String get readLess => 'Свернуть';
+
+  @override
+  String get shareAction => 'Поделиться';
+
+  @override
+  String get linkCopied => 'Ссылка на объявление скопирована';
+
+  @override
+  String get locationLabel => 'Местоположение';
+
+  @override
+  String get locationChoose => 'Выберите город и район';
+
+  @override
+  String get locationChooseCity => 'Выберите город';
+
+  @override
+  String get locationSearchHint => 'Поиск города';
+
+  @override
+  String get locationAllCities => 'Все города';
+
+  @override
+  String get locationAllDistricts => 'Все районы';
+
+  @override
+  String get locationNothingFound => 'Ничего не найдено';
+
+  @override
+  String get locationRequired => 'Выберите город';
+
+  @override
+  String get districtRequired => 'Выберите район';
+
+  @override
+  String get periodAny => 'Любой';
+
+  @override
+  String get periodHourly => 'Почасовая';
+
+  @override
+  String get periodDaily => 'Посуточная';
+
+  @override
+  String get periodWeekly => 'Понедельная';
+
+  @override
+  String get periodMonthly => 'Помесячная';
+
+  @override
+  String get periodEvent => 'На мероприятие';
+
+  @override
+  String get periodNegotiable => 'Договорная';
+
+  @override
+  String get cityRow => 'Город';
+
+  @override
+  String get districtRow => 'Район';
+
+  @override
+  String get moreActions => 'Ещё';
+
+  @override
+  String get shareTitle => 'Поделиться объявлением';
+
+  @override
+  String get shareEmail => 'Почта';
+
+  @override
+  String get shareCopyLink => 'Копировать ссылку';
+
+  @override
+  String get shareMore => 'Ещё';
+
+  @override
+  String get categoryAllChip => 'Все';
+
+  @override
+  String get walletTopUpTitle => 'Пополнить';
+
+  @override
+  String get walletHistoryTitle => 'История';
+
+  @override
+  String get walletHistoryEmpty => 'Операций пока нет';
+
+  @override
+  String get walletHistoryEmptyHint => 'Пополнения и платежи появятся здесь.';
+
+  @override
+  String walletAfter(String amount) {
+    return 'Остаток: $amount';
+  }
+
+  @override
+  String get walletTopUpAndHistory => 'Пополнить · История';
+
+  @override
+  String get txTopUp => 'Пополнение';
+
+  @override
+  String get txListingFee => 'Активация объявления';
+
+  @override
+  String get txPromotionFee => 'Продвижение объявления';
+
+  @override
+  String get txRefund => 'Возврат';
+
+  @override
+  String get txBonus => 'Бонус';
+
+  @override
+  String get txAdjustment => 'Корректировка';
+
+  @override
+  String get loadMore => 'Показать ещё';
 }

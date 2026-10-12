@@ -18,7 +18,9 @@ import '../features/messages/presentation/messages_page.dart';
 import '../features/notifications/presentation/notifications_page.dart';
 import '../features/search/presentation/search_page.dart';
 import '../features/store/presentation/followed_stores_page.dart';
+import '../core/theme/page_transitions.dart';
 import '../features/support/domain/support_models.dart';
+import '../features/wallet/presentation/wallet_page.dart';
 import '../features/support/presentation/new_ticket_page.dart';
 import '../features/support/presentation/support_page.dart';
 import '../features/support/presentation/ticket_page.dart';
@@ -39,6 +41,7 @@ abstract final class Routes {
   static const profile = '/profile';
   static const profileEdit = '/profile/edit';
   static const support = '/support';
+  static const wallet = '/wallet';
 
   /// A support request: `/support/<id>`.
   static String ticket(String id) => '/support/$id';
@@ -75,17 +78,15 @@ abstract final class Routes {
   /// Listing details: `/listing/<id>`.
   static String listing(String id) => '/listing/$id';
 
-  /// Search, optionally pre-filled: `/search?q=toyota&categoryId=...`.
+  /// Search, optionally pre-filled: `/search?q=toyota`.
   static String searchWith({
     String? query,
-    String? categoryId,
     bool focus = false,
     bool stores = false,
   }) => Uri(
     path: search,
     queryParameters: {
       if (query != null && query.isNotEmpty) 'q': query,
-      'categoryId': ?categoryId,
       if (focus) 'focus': '1',
       if (stores) 'stores': '1',
     },
@@ -101,6 +102,7 @@ abstract final class Routes {
       path.startsWith('$profile/') ||
       path == followedStores ||
       path == support ||
+      path == wallet ||
       path.startsWith('$support/') ||
       path == myStore ||
       path.startsWith('$myStore/');
@@ -157,11 +159,16 @@ final routerProvider = Provider<GoRouter>((ref) {
       // Full-screen (outside the tab bar); reached from the home search bar.
       GoRoute(
         path: Routes.search,
-        builder: (_, state) => SearchPage(
-          initialQuery: state.uri.queryParameters['q'] ?? '',
-          initialCategoryId: state.uri.queryParameters['categoryId'],
-          autofocus: state.uri.queryParameters['focus'] == '1',
-          initialStores: state.uri.queryParameters['stores'] == '1',
+        pageBuilder: (_, state) => CustomTransitionPage<void>(
+          key: state.pageKey,
+          transitionDuration: const Duration(milliseconds: 420),
+          reverseTransitionDuration: const Duration(milliseconds: 280),
+          transitionsBuilder: searchPageTransition,
+          child: SearchPage(
+            initialQuery: state.uri.queryParameters['q'] ?? '',
+            autofocus: state.uri.queryParameters['focus'] == '1',
+            initialStores: state.uri.queryParameters['stores'] == '1',
+          ),
         ),
       ),
       GoRoute(
@@ -228,6 +235,7 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(path: 'edit', builder: (_, _) => const StoreFormPage()),
         ],
       ),
+      GoRoute(path: Routes.wallet, builder: (_, _) => const WalletPage()),
       GoRoute(
         path: Routes.followedStores,
         builder: (_, _) => const FollowedStoresPage(),

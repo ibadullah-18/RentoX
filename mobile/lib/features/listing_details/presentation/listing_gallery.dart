@@ -48,8 +48,8 @@ class _ListingGalleryState extends State<ListingGallery> {
     if (images.isEmpty) {
       return SizedBox(
         height: widget.height,
-        child: const ColoredBox(
-          color: AppColors.primarySoft,
+        child: ColoredBox(
+          color: context.primarySoft,
           child: Center(
             child: Icon(AppIcons.image, size: 56, color: AppColors.primary),
           ),
@@ -188,8 +188,8 @@ class _NetworkPhoto extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const placeholder = ColoredBox(
-      color: AppColors.primarySoft,
+    final placeholder = ColoredBox(
+      color: context.primarySoft,
       child: Center(
         child: Icon(AppIcons.image, size: 48, color: AppColors.primary),
       ),

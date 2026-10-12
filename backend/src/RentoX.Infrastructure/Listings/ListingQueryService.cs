@@ -150,6 +150,13 @@ public sealed class ListingQueryService(
                 .OrderBy(field => field.Key)
                 .ToList();
 
+        (string? City, string? District) location =
+            await LocationNamesAsync(
+                listing.CityId,
+                listing.DistrictId,
+                language,
+                cancellationToken);
+
         return new OwnedListingDetailsResult(
             listing.Id,
             listing.OwnerId,
@@ -166,7 +173,45 @@ public sealed class ListingQueryService(
             listing.PublishedAtUtc,
             listing.ExpiresAtUtc,
             images,
-            fields);
+            fields)
+        {
+            CityId = listing.CityId,
+            CityName = location.City,
+            DistrictId = listing.DistrictId,
+            DistrictName = location.District
+        };
+    }
+
+    private async Task<(string? City, string? District)> LocationNamesAsync(
+        Guid? cityId,
+        Guid? districtId,
+        PreferredLanguage language,
+        CancellationToken cancellationToken)
+    {
+        string? city = null;
+        string? district = null;
+
+        if (cityId.HasValue)
+        {
+            city = (await dbContext.Cities
+                    .AsNoTracking()
+                    .SingleOrDefaultAsync(
+                        item => item.Id == cityId.Value,
+                        cancellationToken))
+                ?.NameFor(language);
+        }
+
+        if (districtId.HasValue)
+        {
+            district = (await dbContext.Districts
+                    .AsNoTracking()
+                    .SingleOrDefaultAsync(
+                        item => item.Id == districtId.Value,
+                        cancellationToken))
+                ?.NameFor(language);
+        }
+
+        return (city, district);
     }
 
     private static ListingFieldValueDetailsResult MapFieldValue(

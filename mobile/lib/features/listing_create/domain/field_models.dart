@@ -150,7 +150,9 @@ class FieldAnswer {
   Map<String, dynamic>? toRequest(FieldDefinition def) {
     if (isEmptyFor(def)) return null;
 
-    final body = <String, dynamic>{'fieldId': def.id};
+    // The API insists on `optionIds` for every field (empty when the field
+    // is not a pick-from-a-list one).
+    final body = <String, dynamic>{'fieldId': def.id, 'optionIds': <String>[]};
     switch (def.type) {
       case FieldType.text:
         body['textValue'] = text.trim();

@@ -19,4 +19,12 @@ public sealed record PublicListingDetailsResponse(
     List<ListingFieldValueDetailsResponse> Fields)
 {
     public bool IsVip { get; init; }
+
+    public Guid? CityId { get; init; }
+
+    public string? CityName { get; init; }
+
+    public Guid? DistrictId { get; init; }
+
+    public string? DistrictName { get; init; }
 }

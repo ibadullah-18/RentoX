@@ -14,9 +14,6 @@ public sealed class ListingImagesController(
     : ControllerBase
 {
     [HttpGet("{imageId:guid}")]
-    [ResponseCache(
-        NoStore = true,
-        Location = ResponseCacheLocation.None)]
     [ProducesResponseType(
         StatusCodes.Status200OK)]
     [ProducesResponseType(
@@ -53,6 +50,15 @@ public sealed class ListingImagesController(
         }
 
         Response.Headers["X-Content-Type-Options"] = "nosniff";
+
+        // An image never changes under its id (a new photo is a new id), so
+        // the photos of a live listing may be kept by browsers and the CDN.
+        // One day only: a listing that is hidden, deleted or removed by a
+        // moderator must stop showing its photos soon, and nothing purges
+        // the CDN yet. Anything not public stays private.
+        Response.Headers.CacheControl = result.IsPublic
+            ? "public, max-age=86400"
+            : "private, no-store";
 
         return File(
             result.Content,

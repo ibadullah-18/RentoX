@@ -1,10 +1,9 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/l10n/locale_controller.dart';
-import '../../catalog/data/catalog_repository.dart';
-import '../../catalog/domain/paged_listings.dart';
 import '../domain/field_filter.dart';
+import '../../locations/domain/location_models.dart';
+import '../../catalog/domain/catalog_models.dart' show RentalPeriodUnit;
 import '../domain/search_options.dart';
 
 /// What the user is looking for. Immutable; every change creates a new value,
@@ -18,6 +17,8 @@ class SearchFilters {
     this.fields = const {},
     this.seller = SellerType.all,
     this.sort = SearchSort.date,
+    this.place = PlaceChoice.none,
+    this.period,
   });
 
   final String query;
@@ -30,6 +31,12 @@ class SearchFilters {
   final SellerType seller;
   final SearchSort sort;
 
+  /// City (and district) to look in; [PlaceChoice.none] = everywhere.
+  final PlaceChoice place;
+
+  /// Daily / monthly / ... only; `null` = any.
+  final RentalPeriodUnit? period;
+
   bool get hasPrice => minPrice != null || maxPrice != null;
 
   /// Price or category-field conditions (what the filter sheet edits).
@@ -37,7 +44,9 @@ class SearchFilters {
       hasPrice ||
       fields.isNotEmpty ||
       seller != SellerType.all ||
-      sort != SearchSort.date;
+      sort != SearchSort.date ||
+      !place.isNone ||
+      period != null;
 
   /// Category, price or fields chosen (the text query is not counted).
   bool get hasActiveFilters => categoryId != null || hasSheetFilters;
@@ -63,6 +72,8 @@ class SearchFilters {
         : fields,
     seller: seller,
     sort: sort,
+    place: place,
+    period: period,
   );
 
   @override
@@ -74,6 +85,8 @@ class SearchFilters {
       other.maxPrice == maxPrice &&
       other.seller == seller &&
       other.sort == sort &&
+      other.place == place &&
+      other.period == period &&
       mapEquals(other.fields, fields);
 
   @override
@@ -84,6 +97,8 @@ class SearchFilters {
     maxPrice,
     seller,
     sort,
+    place,
+    period,
     Object.hashAllUnordered(
       fields.entries.map((e) => Object.hash(e.key, e.value)),
     ),
@@ -94,19 +109,15 @@ class SearchFilters {
 /// providers, so each page instance gets its own (auto-disposed) state and no
 /// provider ever has to be modified while the page is building.
 class SearchSeed {
-  const SearchSeed({this.query = '', this.categoryId});
+  const SearchSeed({this.query = ''});
 
   final String query;
-  final String? categoryId;
 
   @override
-  bool operator ==(Object other) =>
-      other is SearchSeed &&
-      other.query == query &&
-      other.categoryId == categoryId;
+  bool operator ==(Object other) => other is SearchSeed && other.query == query;
 
   @override
-  int get hashCode => Object.hash(query, categoryId);
+  int get hashCode => query.hashCode;
 }
 
 class SearchFiltersNotifier extends Notifier<SearchFilters> {
@@ -115,8 +126,7 @@ class SearchFiltersNotifier extends Notifier<SearchFilters> {
   final SearchSeed seed;
 
   @override
-  SearchFilters build() =>
-      SearchFilters(query: seed.query.trim(), categoryId: seed.categoryId);
+  SearchFilters build() => SearchFilters(query: seed.query.trim());
 
   void setQuery(String query) => state = state.copyWith(query: query.trim());
 
@@ -132,6 +142,8 @@ class SearchFiltersNotifier extends Notifier<SearchFilters> {
     fields: state.fields,
     seller: state.seller,
     sort: state.sort,
+    place: state.place,
+    period: state.period,
   );
 
   /// What the filter sheet returned: price and category-field conditions.
@@ -141,6 +153,8 @@ class SearchFiltersNotifier extends Notifier<SearchFilters> {
     Map<String, FieldFilterValue> fields = const {},
     SellerType seller = SellerType.all,
     SearchSort sort = SearchSort.date,
+    PlaceChoice place = PlaceChoice.none,
+    RentalPeriodUnit? period,
   }) => state = SearchFilters(
     query: state.query,
     categoryId: state.categoryId,
@@ -152,6 +166,8 @@ class SearchFiltersNotifier extends Notifier<SearchFilters> {
     },
     seller: seller,
     sort: sort,
+    place: place,
+    period: period,
   );
 
   /// Drops category, price and fields but keeps what was typed.
@@ -162,74 +178,4 @@ class SearchFiltersNotifier extends Notifier<SearchFilters> {
 final searchFiltersProvider = NotifierProvider.autoDispose
     .family<SearchFiltersNotifier, SearchFilters, SearchSeed>(
       SearchFiltersNotifier.new,
-    );
-
-/// Listings matching the current [SearchFilters], loaded page by page.
-class SearchResultsController extends AsyncNotifier<PagedListings> {
-  SearchResultsController(this.seed);
-
-  final SearchSeed seed;
-
-  static const _pageSize = 20;
-
-  Future<PagedListings> _fetch(SearchFilters f, {int page = 1}) async {
-    final result = await ref
-        .read(catalogRepositoryProvider)
-        .listings(
-          language: ref.read(localeProvider).languageCode,
-          categoryId: f.categoryId,
-          search: f.query,
-          minPrice: f.minPrice,
-          maxPrice: f.maxPrice,
-          fieldFilters: encodeFieldFilters(f.fields),
-          seller: f.seller,
-          sort: f.sort,
-          page: page,
-          pageSize: _pageSize,
-        );
-    return PagedListings.first(result);
-  }
-
-  @override
-  Future<PagedListings> build() {
-    final filters = ref.watch(searchFiltersProvider(seed));
-    ref.watch(localeProvider);
-    return _fetch(filters);
-  }
-
-  Future<void> loadMore() async {
-    final current = state.value;
-    if (current == null || !current.hasMore || current.loadingMore) return;
-
-    final filters = ref.read(searchFiltersProvider(seed));
-    state = AsyncData(current.copyWith(loadingMore: true));
-    try {
-      final next = await ref
-          .read(catalogRepositoryProvider)
-          .listings(
-            language: ref.read(localeProvider).languageCode,
-            categoryId: filters.categoryId,
-            search: filters.query,
-            minPrice: filters.minPrice,
-            maxPrice: filters.maxPrice,
-            fieldFilters: encodeFieldFilters(filters.fields),
-            seller: filters.seller,
-            sort: filters.sort,
-            page: current.page + 1,
-            pageSize: _pageSize,
-          );
-      // Ignore the answer if the filters changed while it was in flight.
-      if (ref.read(searchFiltersProvider(seed)) != filters) return;
-      state = AsyncData(current.appended(next));
-    } catch (_) {
-      if (state.value != null) {
-        state = AsyncData(current.copyWith(loadingMore: false));
-      }
-    }
-  }
-}
-
-final searchResultsProvider = AsyncNotifierProvider.autoDispose
-    .family<SearchResultsController, PagedListings, SearchSeed>(
-      SearchResultsController.new,
     );

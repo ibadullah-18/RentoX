@@ -11,7 +11,7 @@ public static class ImageUploadValidator
     public const int MaximumDimension = 12_000;
     public const long MaximumPixelCount = 50_000_000;
 
-    private static readonly Configuration DecoderConfiguration =
+    internal static readonly Configuration DecoderConfiguration =
         CreateConfiguration();
 
     // The caller owns both the input stream and the returned buffer.

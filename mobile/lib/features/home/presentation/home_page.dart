@@ -14,6 +14,9 @@ import '../../../shared/widgets/listing_card.dart';
 import '../../../shared/widgets/listing_grid.dart';
 import '../../catalog/data/catalog_repository.dart';
 import '../../catalog/domain/catalog_models.dart';
+import '../../catalog/domain/paged_listings.dart';
+import '../../search/presentation/filters_sheet.dart';
+import 'home_state.dart';
 import '../../store/domain/store_models.dart';
 import '../../notifications/presentation/notifications_controller.dart';
 import '../../store/presentation/store_controller.dart';
@@ -37,7 +40,9 @@ class HomePage extends ConsumerWidget {
       },
       slivers: [
         const SliverToBoxAdapter(child: _SearchRow()),
-        SliverToBoxAdapter(child: _SectionHeader(title: l10n.categories)),
+        SliverToBoxAdapter(
+          child: _SectionHeader(title: _categoriesTitle(ref, l10n)),
+        ),
         const SliverToBoxAdapter(child: _CategoryStrip()),
         const SliverToBoxAdapter(child: _StoreStrip()),
         ...listings.when(
@@ -56,17 +61,45 @@ class HomePage extends ConsumerWidget {
               ),
             ),
           ],
-          data: (page) => _listingSlivers(context, l10n, page.items),
+          data: (page) {
+            final tree = ref.watch(categoriesProvider).value;
+            final path = ref.watch(homeCategoryPathProvider);
+            final picked = tree == null || path.isEmpty
+                ? null
+                : findCategory(tree, path.last);
+            return _listingSlivers(
+              context,
+              ref,
+              l10n,
+              page,
+              pickedName: picked?.name,
+            );
+          },
         ),
       ],
     );
   }
 
+  /// "Categories", or the picked chain: "Transport › Cars".
+  String _categoriesTitle(WidgetRef ref, AppL10n l10n) {
+    final tree = ref.watch(categoriesProvider).value;
+    final path = ref.watch(homeCategoryPathProvider);
+    if (tree == null || path.isEmpty) return l10n.categories;
+    final names = [
+      for (final id in path)
+        if (findCategory(tree, id) case final c?) c.name,
+    ];
+    return names.isEmpty ? l10n.categories : names.join(' › ');
+  }
+
   List<Widget> _listingSlivers(
     BuildContext context,
+    WidgetRef ref,
     AppL10n l10n,
-    List<ListingSummary> items,
-  ) {
+    PagedListings page, {
+    String? pickedName,
+  }) {
+    final items = page.items;
     if (items.isEmpty) {
       return [
         SliverToBoxAdapter(
@@ -79,7 +112,6 @@ class HomePage extends ConsumerWidget {
             ),
           ),
         ),
-        const SliverToBoxAdapter(child: _TrustBanner()),
       ];
     }
 
@@ -95,7 +127,6 @@ class HomePage extends ConsumerWidget {
               fill: 1,
               color: AppColors.warning,
             ),
-            onSeeAll: () => context.push(Routes.search),
           ),
         ),
         SliverToBoxAdapter(
@@ -114,24 +145,53 @@ class HomePage extends ConsumerWidget {
         ),
       ],
       SliverToBoxAdapter(
-        child: _SectionHeader(
-          title: l10n.forYou,
-          onSeeAll: () => context.push(Routes.search),
-        ),
+        child: _SectionHeader(title: pickedName ?? l10n.forYou),
       ),
       SliverListingGrid(items: items),
-      const SliverToBoxAdapter(child: _TrustBanner()),
+      if (page.loadingMore)
+        const SliverToBoxAdapter(
+          child: Padding(
+            padding: EdgeInsets.all(AppSpacing.xl),
+            child: Center(child: CircularProgressIndicator(strokeWidth: 2.4)),
+          ),
+        )
+      else if (page.hasMore)
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: AppSpacing.screenPadding,
+            child: OutlinedButton(
+              onPressed: () =>
+                  ref.read(homeListingsProvider.notifier).loadMore(),
+              child: Text(l10n.loadMore),
+            ),
+          ),
+        ),
     ];
   }
 }
 
-class _SearchRow extends StatelessWidget {
+class _SearchRow extends ConsumerWidget {
   const _SearchRow();
 
+  /// The filters apply to the home feed itself: no trip to the search page.
+  Future<void> _openFilters(BuildContext context, WidgetRef ref) async {
+    final path = ref.read(homeCategoryPathProvider);
+    final current = ref
+        .read(homeFiltersProvider)
+        .copyWith(
+          categoryId: path.isEmpty ? null : path.last,
+          clearCategory: path.isEmpty,
+        );
+    final result = await showFiltersSheet(context, current: current);
+    if (result == null || !context.mounted) return;
+    ref.read(homeFiltersProvider.notifier).apply(result);
+  }
+
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppL10n.of(context);
     final scheme = Theme.of(context).colorScheme;
+    final query = ref.watch(homeQueryProvider);
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(
@@ -144,7 +204,8 @@ class _SearchRow extends StatelessWidget {
         children: [
           Expanded(
             child: GestureDetector(
-              onTap: () => context.push(Routes.searchWith(focus: true)),
+              onTap: () =>
+                  context.push(Routes.searchWith(query: query, focus: true)),
               behavior: HitTestBehavior.opaque,
               child: Semantics(
                 button: true,
@@ -164,15 +225,36 @@ class _SearchRow extends StatelessWidget {
                         const SizedBox(width: 12),
                         Expanded(
                           child: Text(
-                            l10n.searchHint,
+                            query.isEmpty ? l10n.searchHint : query,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: TextStyle(
                               fontSize: 15,
-                              color: scheme.onSurfaceVariant,
+                              fontWeight: query.isEmpty
+                                  ? FontWeight.w400
+                                  : FontWeight.w700,
+                              color: query.isEmpty
+                                  ? scheme.onSurfaceVariant
+                                  : scheme.onSurface,
                             ),
                           ),
                         ),
+                        if (query.isNotEmpty)
+                          GestureDetector(
+                            key: const ValueKey('home-search-clear'),
+                            onTap: () =>
+                                ref.read(homeQueryProvider.notifier).set(''),
+                            behavior: HitTestBehavior.opaque,
+                            child: Padding(
+                              padding: const EdgeInsets.all(6),
+                              child: Icon(
+                                AppIcons.close,
+                                size: 20,
+                                semanticLabel: l10n.clearSearch,
+                                color: scheme.onSurfaceVariant,
+                              ),
+                            ),
+                          ),
                       ],
                     ),
                   ),
@@ -185,7 +267,8 @@ class _SearchRow extends StatelessWidget {
             icon: AppIcons.filter,
             size: 52,
             semanticLabel: l10n.filters,
-            onPressed: () => context.push(Routes.search),
+            showDot: ref.watch(homeFiltersProvider).hasSheetFilters,
+            onPressed: () => _openFilters(context, ref),
           ),
         ],
       ),
@@ -247,6 +330,10 @@ class _SectionHeader extends StatelessWidget {
   }
 }
 
+/// The categories as cards. Picking one stays on the home page and the
+/// strip then shows what is *inside* it (its sub-categories); a leading
+/// "back" card goes one level up. A category without children keeps showing
+/// its siblings with itself marked.
 class _CategoryStrip extends ConsumerWidget {
   const _CategoryStrip();
 
@@ -259,60 +346,177 @@ class _CategoryStrip extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppL10n.of(context);
     final categories = ref.watch(categoriesProvider);
+    final path = ref.watch(homeCategoryPathProvider);
+    final notifier = ref.read(homeCategoryPathProvider.notifier);
     final dark = Theme.of(context).brightness == Brightness.dark;
     final scheme = Theme.of(context).colorScheme;
 
     return SizedBox(
-      height: 100,
+      height: 64,
       child: categories.when(
         loading: () => const SizedBox.shrink(),
         error: (_, _) => const SizedBox.shrink(),
-        data: (items) => ListView.separated(
-          scrollDirection: Axis.horizontal,
-          padding: AppSpacing.screenPadding,
-          itemCount: items.length,
-          separatorBuilder: (_, _) => const SizedBox(width: 14),
-          itemBuilder: (context, i) {
-            final category = items[i];
-            final tint = _tints[i % _tints.length];
-            return GestureDetector(
-              onTap: () =>
-                  context.push(Routes.searchWith(categoryId: category.id)),
-              behavior: HitTestBehavior.opaque,
-              child: SizedBox(
-                width: 76,
-                child: Column(
-                  children: [
-                    Container(
-                      width: 62,
-                      height: 62,
-                      decoration: BoxDecoration(
-                        color: dark ? tint.withValues(alpha: 0.16) : tint,
-                        borderRadius: BorderRadius.circular(AppRadius.lg),
-                      ),
-                      child: Icon(
-                        AppIcons.categoryIcon(category.slug),
-                        size: 30,
-                        color: dark ? scheme.onSurface : AppColors.ink,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      category.name,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        fontSize: 12.5,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
+        data: (tree) {
+          // The picked chain, as far as it still exists in the tree.
+          final chain = <Category>[];
+          for (final id in path) {
+            final c = findCategory(tree, id);
+            if (c == null) break;
+            chain.add(c);
+          }
+          final last = chain.isEmpty ? null : chain.last;
+          final leafMode = last != null && last.children.isEmpty;
+
+          final List<Category> shown;
+          if (last == null) {
+            shown = tree;
+          } else if (!leafMode) {
+            shown = last.children;
+          } else {
+            shown = chain.length > 1 ? chain[chain.length - 2].children : tree;
+          }
+          final selectedId = leafMode ? last.id : null;
+
+          void pick(Category c) {
+            if (!leafMode) {
+              notifier.select(chain.length, c.id);
+            } else if (c.id == selectedId) {
+              notifier.clearFrom(chain.length - 1);
+            } else {
+              notifier.select(chain.length - 1, c.id);
+            }
+          }
+
+          final hasBack = chain.isNotEmpty;
+          return ListView.separated(
+            scrollDirection: Axis.horizontal,
+            padding: AppSpacing.screenPadding,
+            itemCount: shown.length + (hasBack ? 1 : 0),
+            separatorBuilder: (_, _) => const SizedBox(width: 10),
+            itemBuilder: (context, i) {
+              if (hasBack && i == 0) {
+                return _BackTile(
+                  label: l10n.backAction,
+                  onTap: () => notifier.clearFrom(chain.length - 1),
+                );
+              }
+              final category = shown[i - (hasBack ? 1 : 0)];
+              final tint = _tints[i % _tints.length];
+              return _CategoryTile(
+                label: category.name,
+                icon: AppIcons.categoryIcon(category.slug),
+                color: dark ? tint.withValues(alpha: 0.16) : tint,
+                iconColor: dark ? scheme.onSurface : AppColors.ink,
+                selected: category.id == selectedId,
+                onTap: () => pick(category),
+              );
+            },
+          );
+        },
+      ),
+    );
+  }
+}
+
+/// "Back" in the category strip: just the arrow, as narrow as a button.
+class _BackTile extends StatelessWidget {
+  const _BackTile({required this.label, required this.onTap});
+
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Semantics(
+      button: true,
+      label: label,
+      child: GestureDetector(
+        key: const ValueKey('category-back'),
+        onTap: onTap,
+        behavior: HitTestBehavior.opaque,
+        child: Container(
+          width: 48,
+          decoration: BoxDecoration(
+            color: scheme.primary.withValues(alpha: 0.10),
+            borderRadius: BorderRadius.circular(AppRadius.lg),
+          ),
+          child: Icon(AppIcons.back, size: 26, color: scheme.primary),
+        ),
+      ),
+    );
+  }
+}
+
+/// One category: a wide, low card with its icon and name side by side.
+class _CategoryTile extends StatelessWidget {
+  const _CategoryTile({
+    required this.label,
+    required this.icon,
+    required this.color,
+    required this.iconColor,
+    required this.onTap,
+    this.selected = false,
+  });
+
+  final String label;
+  final IconData icon;
+  final Color color;
+  final Color iconColor;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Semantics(
+      button: true,
+      selected: selected,
+      label: label,
+      child: GestureDetector(
+        onTap: onTap,
+        behavior: HitTestBehavior.opaque,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 160),
+          constraints: const BoxConstraints(minWidth: 120, maxWidth: 190),
+          padding: const EdgeInsets.fromLTRB(8, 8, 16, 8),
+          decoration: BoxDecoration(
+            color: color,
+            borderRadius: BorderRadius.circular(AppRadius.lg),
+            border: Border.all(
+              color: selected ? scheme.primary : Colors.transparent,
+              width: 2,
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: scheme.surface.withValues(alpha: 0.65),
+                  borderRadius: BorderRadius.circular(AppRadius.md),
+                ),
+                child: Icon(icon, size: 24, color: iconColor),
+              ),
+              const SizedBox(width: 10),
+              Flexible(
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: selected ? FontWeight.w800 : FontWeight.w700,
+                    color: selected ? scheme.primary : null,
+                  ),
                 ),
               ),
-            );
-          },
+            ],
+          ),
         ),
       ),
     );
@@ -401,74 +605,6 @@ class _StoreStrip extends ConsumerWidget {
           ),
         ),
       ],
-    );
-  }
-}
-
-class _TrustBanner extends StatelessWidget {
-  const _TrustBanner();
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppL10n.of(context);
-    final dark = Theme.of(context).brightness == Brightness.dark;
-
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        AppSpacing.lg,
-        AppSpacing.xl,
-        AppSpacing.lg,
-        0,
-      ),
-      child: Container(
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: dark
-              ? AppColors.success.withValues(alpha: 0.12)
-              : AppColors.successSoft,
-          borderRadius: BorderRadius.circular(AppRadius.lg),
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                color: AppColors.success.withValues(alpha: 0.18),
-                borderRadius: BorderRadius.circular(AppRadius.lg),
-              ),
-              child: const Icon(
-                AppIcons.shield,
-                color: AppColors.successInk,
-                size: 24,
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    l10n.trustTitle,
-                    style: TextStyle(
-                      fontWeight: FontWeight.w700,
-                      color: dark ? AppColors.success : AppColors.successInk,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    l10n.trustSubtitle,
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 }

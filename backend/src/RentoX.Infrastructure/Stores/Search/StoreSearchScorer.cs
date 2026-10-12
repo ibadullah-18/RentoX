@@ -88,7 +88,7 @@ public static class StoreSearchScorer
         string sql = string.Create(
             CultureInfo.InvariantCulture,
             $"""
-            WITH docs AS (
+            WITH docs AS MATERIALIZED (
               SELECT s."Id" AS id,
                      public.rentox_norm(s."Name") AS name,
                      public.rentox_norm(s."Description") AS descr,
@@ -96,7 +96,7 @@ public static class StoreSearchScorer
               FROM stores.store_profiles s
               WHERE s."Status" = @status
             ),
-            scored AS (
+            scored AS MATERIALIZED (
               SELECT d.id,
             {scored}
               FROM docs d

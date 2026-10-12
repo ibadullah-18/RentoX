@@ -272,6 +272,7 @@ class _TopUpSectionState extends ConsumerState<TopUpSection> {
           .topUp(_selected, idempotencyKey: _key ??= newIdempotencyKey());
       _key = null;
       ref.invalidate(walletBalanceProvider);
+      ref.invalidate(walletHistoryProvider);
       messenger.showSnackBar(SnackBar(content: Text(l10n.topUpDone)));
     } on ApiException {
       _failed = true;
@@ -326,82 +327,6 @@ class _TopUpSectionState extends ConsumerState<TopUpSection> {
           ),
         ],
       ],
-    );
-  }
-}
-
-/// Wallet overview (balance + demo top-up), opened from the profile page.
-Future<void> showWalletSheet(BuildContext context) {
-  return showModalBottomSheet<void>(
-    context: context,
-    // Opened from a tab: must sit above the floating navigation bar.
-    useRootNavigator: true,
-    isScrollControlled: true,
-    useSafeArea: true,
-    showDragHandle: true,
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.xl)),
-    ),
-    builder: (_) => const _WalletSheet(),
-  );
-}
-
-class _WalletSheet extends ConsumerWidget {
-  const _WalletSheet();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final l10n = AppL10n.of(context);
-    final theme = Theme.of(context);
-    final locale = Localizations.localeOf(context).toString();
-    final wallet = ref.watch(walletBalanceProvider);
-
-    return SingleChildScrollView(
-      padding: EdgeInsets.fromLTRB(
-        AppSpacing.lg,
-        0,
-        AppSpacing.lg,
-        MediaQuery.viewInsetsOf(context).bottom + AppSpacing.xl,
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            l10n.walletTitle,
-            style: theme.textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-          const SizedBox(height: AppSpacing.lg),
-          Text(
-            l10n.walletBalance,
-            style: TextStyle(color: theme.colorScheme.onSurfaceVariant),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            wallet.when(
-              loading: () => '…',
-              error: (_, _) => '—',
-              data: (w) => w == null ? '—' : formatMoney(locale, w.balance),
-            ),
-            style: theme.textTheme.headlineMedium?.copyWith(
-              fontWeight: FontWeight.w900,
-              color: theme.colorScheme.primary,
-            ),
-          ),
-          const SizedBox(height: AppSpacing.xl),
-          const TopUpSection(),
-          const SizedBox(height: AppSpacing.md),
-          Text(
-            l10n.demoNote,
-            style: TextStyle(
-              fontSize: 12.5,
-              color: theme.colorScheme.onSurfaceVariant,
-            ),
-          ),
-        ],
-      ),
     );
   }
 }

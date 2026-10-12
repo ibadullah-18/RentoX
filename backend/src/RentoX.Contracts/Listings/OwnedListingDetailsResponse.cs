@@ -16,4 +16,13 @@ public sealed record OwnedListingDetailsResponse(
     DateTimeOffset? PublishedAtUtc,
     DateTimeOffset? ExpiresAtUtc,
     IReadOnlyList<ListingImageItemResponse> Images,
-    IReadOnlyList<ListingFieldValueDetailsResponse> Fields);
+    IReadOnlyList<ListingFieldValueDetailsResponse> Fields)
+{
+    public Guid? CityId { get; init; }
+
+    public string? CityName { get; init; }
+
+    public Guid? DistrictId { get; init; }
+
+    public string? DistrictName { get; init; }
+}

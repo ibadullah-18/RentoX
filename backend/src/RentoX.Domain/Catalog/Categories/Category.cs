@@ -36,6 +36,15 @@ public sealed class Category : AggregateRoot
 
     public bool IsActive { get; private set; }
 
+    /// <summary>
+    /// Which rental periods (hour, day, week, month...) listings of this
+    /// category may use: bit <c>unit - 1</c> per period. 0 = not set here,
+    /// so the parent's choice (or "everything") applies.
+    /// </summary>
+    public int RentalPeriodMask { get; private set; }
+
+    public const int AllRentalPeriodsMask = 0b111111;
+
     public IReadOnlyCollection<CategoryTranslation> Translations =>
         _translations.AsReadOnly();
 
@@ -103,6 +112,33 @@ public sealed class Category : AggregateRoot
         IconUrl = NormalizeOptional(iconUrl);
         DisplayOrder = displayOrder;
     }
+
+    /// <summary>
+    /// Sets the allowed rental periods (values 1..6); an empty list means
+    /// "inherit".
+    /// </summary>
+    public void SetRentalPeriods(IEnumerable<int> periods)
+    {
+        ArgumentNullException.ThrowIfNull(periods);
+
+        int mask = 0;
+
+        foreach (int period in periods)
+        {
+            if (period is < 1 or > 6)
+            {
+                throw new DomainException(
+                    "Rental period is invalid.");
+            }
+
+            mask |= 1 << (period - 1);
+        }
+
+        RentalPeriodMask = mask;
+    }
+
+    public static IReadOnlyList<int> PeriodsOf(int mask) =>
+        [.. Enumerable.Range(1, 6).Where(p => (mask & (1 << (p - 1))) != 0)];
 
     public void Activate()
     {

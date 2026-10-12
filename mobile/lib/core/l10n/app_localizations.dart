@@ -2468,6 +2468,294 @@ abstract class AppL10n {
   /// In az, this message translates to:
   /// **'Redaktə et'**
   String get editLiveConfirm;
+
+  /// No description provided for @themeTitle.
+  ///
+  /// In az, this message translates to:
+  /// **'Görünüş'**
+  String get themeTitle;
+
+  /// No description provided for @themeLight.
+  ///
+  /// In az, this message translates to:
+  /// **'Gündüz (açıq)'**
+  String get themeLight;
+
+  /// No description provided for @themeDark.
+  ///
+  /// In az, this message translates to:
+  /// **'Gecə (tünd)'**
+  String get themeDark;
+
+  /// No description provided for @themeSchedule.
+  ///
+  /// In az, this message translates to:
+  /// **'Saata görə avtomatik'**
+  String get themeSchedule;
+
+  /// No description provided for @themeScheduleHint.
+  ///
+  /// In az, this message translates to:
+  /// **'Gündüz rejimi və gecə rejimi bu saatlarda öz-özünə dəyişir.'**
+  String get themeScheduleHint;
+
+  /// No description provided for @themeDayStarts.
+  ///
+  /// In az, this message translates to:
+  /// **'Gündüz rejimi başlayır'**
+  String get themeDayStarts;
+
+  /// No description provided for @themeNightStarts.
+  ///
+  /// In az, this message translates to:
+  /// **'Gecə rejimi başlayır'**
+  String get themeNightStarts;
+
+  /// No description provided for @readMore.
+  ///
+  /// In az, this message translates to:
+  /// **'Davamını oxu'**
+  String get readMore;
+
+  /// No description provided for @readLess.
+  ///
+  /// In az, this message translates to:
+  /// **'Daha az göstər'**
+  String get readLess;
+
+  /// No description provided for @shareAction.
+  ///
+  /// In az, this message translates to:
+  /// **'Paylaş'**
+  String get shareAction;
+
+  /// No description provided for @linkCopied.
+  ///
+  /// In az, this message translates to:
+  /// **'Elan linki kopyalandı'**
+  String get linkCopied;
+
+  /// No description provided for @locationLabel.
+  ///
+  /// In az, this message translates to:
+  /// **'Yer'**
+  String get locationLabel;
+
+  /// No description provided for @locationChoose.
+  ///
+  /// In az, this message translates to:
+  /// **'Şəhər və rayon seçin'**
+  String get locationChoose;
+
+  /// No description provided for @locationChooseCity.
+  ///
+  /// In az, this message translates to:
+  /// **'Şəhər seçin'**
+  String get locationChooseCity;
+
+  /// No description provided for @locationSearchHint.
+  ///
+  /// In az, this message translates to:
+  /// **'Şəhər axtar'**
+  String get locationSearchHint;
+
+  /// No description provided for @locationAllCities.
+  ///
+  /// In az, this message translates to:
+  /// **'Bütün şəhərlər'**
+  String get locationAllCities;
+
+  /// No description provided for @locationAllDistricts.
+  ///
+  /// In az, this message translates to:
+  /// **'Bütün rayonlar'**
+  String get locationAllDistricts;
+
+  /// No description provided for @locationNothingFound.
+  ///
+  /// In az, this message translates to:
+  /// **'Heç nə tapılmadı'**
+  String get locationNothingFound;
+
+  /// No description provided for @locationRequired.
+  ///
+  /// In az, this message translates to:
+  /// **'Şəhəri seçin'**
+  String get locationRequired;
+
+  /// No description provided for @districtRequired.
+  ///
+  /// In az, this message translates to:
+  /// **'Rayonu seçin'**
+  String get districtRequired;
+
+  /// No description provided for @periodAny.
+  ///
+  /// In az, this message translates to:
+  /// **'Hamısı'**
+  String get periodAny;
+
+  /// No description provided for @periodHourly.
+  ///
+  /// In az, this message translates to:
+  /// **'Saatlıq'**
+  String get periodHourly;
+
+  /// No description provided for @periodDaily.
+  ///
+  /// In az, this message translates to:
+  /// **'Günlük'**
+  String get periodDaily;
+
+  /// No description provided for @periodWeekly.
+  ///
+  /// In az, this message translates to:
+  /// **'Həftəlik'**
+  String get periodWeekly;
+
+  /// No description provided for @periodMonthly.
+  ///
+  /// In az, this message translates to:
+  /// **'Aylıq'**
+  String get periodMonthly;
+
+  /// No description provided for @periodEvent.
+  ///
+  /// In az, this message translates to:
+  /// **'Tədbir üçün'**
+  String get periodEvent;
+
+  /// No description provided for @periodNegotiable.
+  ///
+  /// In az, this message translates to:
+  /// **'Razılaşma ilə'**
+  String get periodNegotiable;
+
+  /// No description provided for @cityRow.
+  ///
+  /// In az, this message translates to:
+  /// **'Şəhər'**
+  String get cityRow;
+
+  /// No description provided for @districtRow.
+  ///
+  /// In az, this message translates to:
+  /// **'Rayon'**
+  String get districtRow;
+
+  /// No description provided for @moreActions.
+  ///
+  /// In az, this message translates to:
+  /// **'Daha çox'**
+  String get moreActions;
+
+  /// No description provided for @shareTitle.
+  ///
+  /// In az, this message translates to:
+  /// **'Elanı paylaş'**
+  String get shareTitle;
+
+  /// No description provided for @shareEmail.
+  ///
+  /// In az, this message translates to:
+  /// **'E-poçt'**
+  String get shareEmail;
+
+  /// No description provided for @shareCopyLink.
+  ///
+  /// In az, this message translates to:
+  /// **'Linki kopyala'**
+  String get shareCopyLink;
+
+  /// No description provided for @shareMore.
+  ///
+  /// In az, this message translates to:
+  /// **'Daha çox'**
+  String get shareMore;
+
+  /// No description provided for @categoryAllChip.
+  ///
+  /// In az, this message translates to:
+  /// **'Hamısı'**
+  String get categoryAllChip;
+
+  /// No description provided for @walletTopUpTitle.
+  ///
+  /// In az, this message translates to:
+  /// **'Balansı artır'**
+  String get walletTopUpTitle;
+
+  /// No description provided for @walletHistoryTitle.
+  ///
+  /// In az, this message translates to:
+  /// **'Tarixçə'**
+  String get walletHistoryTitle;
+
+  /// No description provided for @walletHistoryEmpty.
+  ///
+  /// In az, this message translates to:
+  /// **'Hələ əməliyyat yoxdur'**
+  String get walletHistoryEmpty;
+
+  /// No description provided for @walletHistoryEmptyHint.
+  ///
+  /// In az, this message translates to:
+  /// **'Balans artırdıqda və ya ödəniş etdikdə burada görünəcək.'**
+  String get walletHistoryEmptyHint;
+
+  /// No description provided for @walletAfter.
+  ///
+  /// In az, this message translates to:
+  /// **'Qalıq: {amount}'**
+  String walletAfter(String amount);
+
+  /// No description provided for @walletTopUpAndHistory.
+  ///
+  /// In az, this message translates to:
+  /// **'Artır · Tarixçə'**
+  String get walletTopUpAndHistory;
+
+  /// No description provided for @txTopUp.
+  ///
+  /// In az, this message translates to:
+  /// **'Balans artırıldı'**
+  String get txTopUp;
+
+  /// No description provided for @txListingFee.
+  ///
+  /// In az, this message translates to:
+  /// **'Elanın aktivləşdirilməsi'**
+  String get txListingFee;
+
+  /// No description provided for @txPromotionFee.
+  ///
+  /// In az, this message translates to:
+  /// **'Elanın irəli çəkilməsi'**
+  String get txPromotionFee;
+
+  /// No description provided for @txRefund.
+  ///
+  /// In az, this message translates to:
+  /// **'Geri qaytarma'**
+  String get txRefund;
+
+  /// No description provided for @txBonus.
+  ///
+  /// In az, this message translates to:
+  /// **'Bonus'**
+  String get txBonus;
+
+  /// No description provided for @txAdjustment.
+  ///
+  /// In az, this message translates to:
+  /// **'Düzəliş'**
+  String get txAdjustment;
+
+  /// No description provided for @loadMore.
+  ///
+  /// In az, this message translates to:
+  /// **'Daha çox göstər'**
+  String get loadMore;
 }
 
 class _AppL10nDelegate extends LocalizationsDelegate<AppL10n> {

@@ -20,4 +20,7 @@ public sealed record PublicListingSearchQuery(
     DateOnly? DateTo = null,
     IReadOnlyList<PublicListingFieldFilter>? FieldFilters = null,
     PublicListingSellerType SellerType = PublicListingSellerType.Any,
-    PublicListingSort Sort = PublicListingSort.Default);
+    PublicListingSort Sort = PublicListingSort.Default,
+    Guid? CityId = null,
+    Guid? DistrictId = null,
+    int? RentalPeriodUnit = null);

@@ -4,7 +4,7 @@ import 'dart:typed_data';
 /// `ListingImageService`). Checking them here gives instant feedback instead
 /// of failing halfway through an upload.
 abstract final class PhotoRules {
-  static const maxCount = 30;
+  static const maxCount = 15;
   static const maxBytes = 10 * 1024 * 1024;
 }
 

@@ -46,6 +46,9 @@ public sealed class PublicListingsController(
             [FromQuery] string? filters = null,
             [FromQuery] string? sellerType = null,
             [FromQuery] string? sort = null,
+            [FromQuery] Guid? cityId = null,
+            [FromQuery] Guid? districtId = null,
+            [FromQuery] int? rentalPeriod = null,
             CancellationToken cancellationToken = default)
     {
         PreferredLanguage? preferredLanguage =
@@ -161,7 +164,10 @@ public sealed class PublicListingsController(
             DateTo = dateTo,
             FieldFilters = fieldFilters,
             SellerType = seller,
-            Sort = order
+            Sort = order,
+            CityId = cityId,
+            DistrictId = districtId,
+            RentalPeriodUnit = rentalPeriod
         };
 
         PagedResult<PublicListingSummaryResult> result =
@@ -283,7 +289,8 @@ public sealed class PublicListingsController(
             item.PublishedAtUtc,
             item.ExpiresAtUtc)
         {
-            IsVip = item.IsVip
+            IsVip = item.IsVip,
+            Location = item.Location
         };
 
     [HttpGet("{listingId:guid}")]
@@ -391,7 +398,11 @@ public sealed class PublicListingsController(
             images,
             fields)
         {
-            IsVip = result.IsVip
+            IsVip = result.IsVip,
+            CityId = result.CityId,
+            CityName = result.CityName,
+            DistrictId = result.DistrictId,
+            DistrictName = result.DistrictName
         };
 
         return Ok(response);

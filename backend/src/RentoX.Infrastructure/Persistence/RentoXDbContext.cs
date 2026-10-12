@@ -34,6 +34,12 @@ public sealed class RentoXDbContext(
     public DbSet<Category> Categories =>
         Set<Category>();
 
+    public DbSet<RentoX.Domain.Locations.City> Cities =>
+        Set<RentoX.Domain.Locations.City>();
+
+    public DbSet<RentoX.Domain.Locations.District> Districts =>
+        Set<RentoX.Domain.Locations.District>();
+
     public DbSet<Listing> Listings =>
         Set<Listing>();
 

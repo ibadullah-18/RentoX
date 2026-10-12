@@ -54,6 +54,9 @@ class ListingCard extends StatelessWidget {
 
     return PressScale(
       scale: 0.97,
+      // One card: the photo runs to the edges (no frame at its top or
+      // sides) and the text below it sits in the same box, whose outline
+      // starts where the photo ends.
       child: Material(
         color: scheme.surface,
         borderRadius: BorderRadius.circular(AppRadius.lg),
@@ -63,15 +66,17 @@ class ListingCard extends StatelessWidget {
             onOpen?.call();
             context.push(Routes.listing(listing.id));
           },
-          child: Padding(
-            padding: const EdgeInsets.all(8),
+          child: CustomPaint(
+            foregroundPainter: _FramePainter(
+              color: scheme.outlineVariant.withValues(alpha: 0.7),
+              radius: AppRadius.lg,
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 AspectRatio(
                   aspectRatio: 4 / 3,
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(AppRadius.sm),
+                  child: ClipRect(
                     child: Stack(
                       fit: StackFit.expand,
                       children: [
@@ -96,7 +101,7 @@ class ListingCard extends StatelessWidget {
                   ),
                 ),
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(6, 10, 6, 4),
+                  padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -118,10 +123,11 @@ class ListingCard extends StatelessWidget {
                           fontWeight: FontWeight.w800,
                         ),
                       ),
-                      if (listing.categoryName != null) ...[
+                      if ((listing.location ?? listing.categoryName) !=
+                          null) ...[
                         const SizedBox(height: 3),
                         Text(
-                          listing.categoryName!,
+                          (listing.location ?? listing.categoryName)!,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: theme.textTheme.bodySmall?.copyWith(
@@ -148,8 +154,8 @@ class _Cover extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const placeholder = ColoredBox(
-      color: AppColors.primarySoft,
+    final placeholder = ColoredBox(
+      color: context.primarySoft,
       child: Center(
         child: Icon(AppIcons.image, color: AppColors.primary, size: 34),
       ),
@@ -193,4 +199,37 @@ class _VipBadge extends StatelessWidget {
       ],
     ),
   );
+}
+
+/// The card's outline, drawn only from the bottom of the 4:3 photo down:
+/// sides and bottom of the text part, so the photo itself has no frame.
+class _FramePainter extends CustomPainter {
+  const _FramePainter({required this.color, required this.radius});
+
+  final Color color;
+  final double radius;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final photoBottom = size.width * 3 / 4;
+    canvas.save();
+    canvas.clipRect(
+      Rect.fromLTWH(0, photoBottom, size.width, size.height - photoBottom),
+    );
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        (Offset.zero & size).deflate(0.5),
+        Radius.circular(radius),
+      ),
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1
+        ..color = color,
+    );
+    canvas.restore();
+  }
+
+  @override
+  bool shouldRepaint(_FramePainter old) =>
+      old.color != color || old.radius != radius;
 }

@@ -29,7 +29,7 @@ class SliverListingGrid extends StatelessWidget {
           final cardWidth = (cross - gap * (columns - 1)) / columns;
           final textScale = MediaQuery.textScalerOf(context).scale(1);
           // image (4:3) + paddings + three text lines.
-          final extent = (cardWidth - 16) * 3 / 4 + 32 + 66 * textScale;
+          final extent = cardWidth * 3 / 4 + 20 + 66 * textScale;
           return SliverGrid.builder(
             gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: columns,

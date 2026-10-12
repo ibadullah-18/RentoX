@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/l10n/app_localizations.dart';
 import '../core/l10n/locale_controller.dart';
 import '../core/theme/app_theme.dart';
+import '../core/theme/theme_controller.dart';
 import '../features/notifications/presentation/push_coordinator.dart';
 import 'router.dart';
 
@@ -22,7 +23,7 @@ class RentoXApp extends ConsumerWidget {
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
       darkTheme: AppTheme.dark,
-      themeMode: ThemeMode.system,
+      themeMode: ref.watch(themeModeProvider),
       locale: ref.watch(localeProvider),
       supportedLocales: AppL10n.supportedLocales,
       localizationsDelegates: const [

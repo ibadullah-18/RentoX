@@ -2,4 +2,5 @@
 
 public sealed record ListingImageContentResult(
     Stream Content,
-    string ContentType);
+    string ContentType,
+    bool IsPublic = false);

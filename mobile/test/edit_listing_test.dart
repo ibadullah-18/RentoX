@@ -9,7 +9,9 @@ import 'package:rentox/features/auth/presentation/auth_controller.dart';
 import 'package:rentox/features/catalog/data/catalog_repository.dart';
 import 'package:rentox/features/catalog/domain/catalog_models.dart';
 import 'package:rentox/features/listing_create/data/listing_create_repository.dart';
+import 'package:rentox/features/locations/data/locations_repository.dart';
 import 'package:rentox/features/my_listings/data/my_listings_repository.dart';
+import 'package:rentox/shared/widgets/app_dialogs.dart';
 import 'package:rentox/features/my_listings/domain/owned_listing_models.dart';
 import 'package:rentox/features/my_listings/presentation/edit_listing_page.dart';
 import 'package:rentox/features/my_listings/presentation/my_listing_details_page.dart';
@@ -77,6 +79,8 @@ class _Listings extends MyListingsRepository {
   List<ListingFieldValue> fields;
   final calls = <String>[];
   Map<String, dynamic>? savedDetails;
+  String? savedCityId;
+  String? savedDistrictId;
   List<Map<String, dynamic>>? savedFields;
 
   @override
@@ -93,6 +97,8 @@ class _Listings extends MyListingsRepository {
         images: const [],
         fields: fields,
         expiresAt: expiresAt,
+        cityId: 'sumgait',
+        cityName: 'Sumqayıt',
         rejectionReason: status == ListingStatus.rejected
             ? 'Photos are blurry'
             : null,
@@ -106,8 +112,12 @@ class _Listings extends MyListingsRepository {
     required double price,
     required RentalPeriodUnit unit,
     String currency = 'AZN',
+    String? cityId,
+    String? districtId,
   }) async {
     calls.add('details');
+    savedCityId = cityId;
+    savedDistrictId = districtId;
     savedDetails = {
       'title': title,
       'description': description,
@@ -150,6 +160,7 @@ Widget _app(Widget home, _Listings listings) => ProviderScope(
     walletRepositoryProvider.overrideWithValue(_Wallet()),
     catalogRepositoryProvider.overrideWithValue(_Catalog()),
     myListingsRepositoryProvider.overrideWithValue(listings),
+    locationsRepositoryProvider.overrideWithValue(FakeLocations()),
     listingCreateRepositoryProvider.overrideWithValue(
       FakeCreateRepo(
         defs: [
@@ -178,6 +189,22 @@ Widget _app(Widget home, _Listings listings) => ProviderScope(
     ),
   ),
 );
+
+/// The save button sits at the bottom of a long form: scroll to it first.
+Future<void> _tapSave(WidgetTester tester, AppL10n az) async {
+  await tester.scrollUntilVisible(
+    find.text(az.editSave),
+    300,
+    scrollable: find
+        .descendant(
+          of: find.byType(ListView),
+          matching: find.byType(Scrollable),
+        )
+        .first,
+  );
+  await tester.tap(find.text(az.editSave));
+  await tester.pumpAndSettle();
+}
 
 void tall(WidgetTester tester) {
   tester.view.physicalSize = const Size(1080, 3600);
@@ -264,7 +291,7 @@ void main() {
     // An empty title blocks saving and nothing is sent.
     await tester.enterText(find.widgetWithText(TextField, 'Toyota Camry'), '');
     await tester.pump();
-    await tester.tap(find.text(az.editSave));
+    await _tapSave(tester, az);
     await tester.pump();
     expect(find.text(az.titleRequired), findsOneWidget);
     expect(listings.calls, isEmpty);
@@ -273,16 +300,18 @@ void main() {
     await tester.enterText(find.byType(TextField).first, 'Toyota Camry 2024');
     await tester.enterText(find.widgetWithText(TextField, '85'), '90,5');
     await tester.pump();
-    await tester.tap(find.text(az.editSave));
+    await _tapSave(tester, az);
     await tester.pumpAndSettle();
 
     expect(listings.calls, ['details', 'fields']);
     expect(listings.savedDetails!['title'], 'Toyota Camry 2024');
     expect(listings.savedDetails!['price'], 90.5);
     expect(listings.savedDetails!['unit'], RentalPeriodUnit.day.id);
+    expect(listings.savedCityId, 'sumgait'); // the place is saved too
+    expect(listings.savedDistrictId, isNull);
     expect(listings.savedFields, [
-      {'fieldId': 'f-brand', 'textValue': 'Toyota'},
-      {'fieldId': 'f-year', 'numericValue': 2023.0},
+      {'fieldId': 'f-brand', 'textValue': 'Toyota', 'optionIds': []},
+      {'fieldId': 'f-year', 'numericValue': 2023.0, 'optionIds': []},
     ]);
   });
 
@@ -296,7 +325,7 @@ void main() {
 
     await tester.enterText(find.widgetWithText(TextField, 'Toyota'), '');
     await tester.pump();
-    await tester.tap(find.text(az.editSave));
+    await _tapSave(tester, az);
     await tester.pump();
 
     expect(find.text(az.fieldRequired), findsOneWidget);
@@ -389,7 +418,7 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(
         find.descendant(
-          of: find.byType(AlertDialog),
+          of: find.byType(AppDialogCard),
           matching: find.text(az.editLiveConfirm),
         ),
       );

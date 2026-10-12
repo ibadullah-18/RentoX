@@ -33,25 +33,26 @@ public sealed class FeedOrderTests(AuditPostgresFixture database)
         string pattern = string.Concat(plan.Page.Select(k => "VBP"[k]));
 
         Assert.Equal(
-            "VVVVVV" + "BBBB" + "PPPPPP" +
-            "VVVVVV" + "BB" + "PPPPPP" +
-            "VV" + "PPPPPP" + "PP",
-            pattern.Substring(0, 6 + 4 + 6 + 6 + 2 + 6 + 2 + 6 + 2));
+            "VVVV" + "BBBB" + "PPPPPP" +
+            "VVVV" + "BB" + "PPPPPP" +
+            "VVVV" + "PPPPPP" +
+            "VV" + "PP",
+            pattern);
         Assert.Equal(40, plan.Page.Count);
     }
 
     [Fact]
     public void SkipCountsWhatComesBeforeThePage()
     {
-        // Page 2 of size 8 starts at position 8: after 6 VIP and 2 bumped.
+        // Page 2 of size 8 starts at position 8: after 4 VIP and 4 bumped.
         ListingFeedInterleaver.Plan plan =
             ListingFeedInterleaver.Build(14, 6, 20, 8, 8);
 
-        Assert.Equal([6, 2, 0], plan.SkipPerKind);
+        Assert.Equal([4, 4, 0], plan.SkipPerKind);
         Assert.Equal(
-            "BBPPPPPP",
+            "PPPPPPVV",
             string.Concat(plan.Page.Select(k => "VBP"[k])));
-        Assert.Equal([0, 2, 6], plan.TakePerKind);
+        Assert.Equal([2, 0, 6], plan.TakePerKind);
     }
 
     [Fact]
@@ -73,8 +74,8 @@ public sealed class FeedOrderTests(AuditPostgresFixture database)
         List<string> first = await FeedAsync(1, 20);
         string pattern = string.Concat(first.Select(t => t[0]));
 
-        // 6 VIP, 4 bumped, 6 plain, then VIP again.
-        Assert.Equal("VVVVVV" + "BBBB" + "PPPPPP" + "VVVV", pattern);
+        // 4 VIP, 4 bumped, 6 plain, then VIP again.
+        Assert.Equal("VVVV" + "BBBB" + "PPPPPP" + "VVVV" + "BB", pattern);
 
         // Free listings are reachable on the very first page even though
         // there are more VIP listings than a page can hold.

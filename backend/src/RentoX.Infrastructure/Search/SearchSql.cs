@@ -59,13 +59,15 @@ internal static class SearchSql
     public static string Field(
         string column,
         List<string> names,
-        double weight)
+        double weight,
+        bool typoTolerant = true)
     {
         List<string> levels = [];
 
         for (int i = 0; i < names.Count; i++)
         {
-            levels.Add(Level(column, names[i], fuzzy: i == 0));
+            levels.Add(Level(
+                column, names[i], fuzzy: i == 0 && typoTolerant));
         }
 
         string best = levels.Count == 1
@@ -78,6 +80,51 @@ internal static class SearchSql
     }
 
     /// <summary>
+    /// A cheap test that is true for <b>every</b> text <see cref="Field"/>
+    /// can score above zero, and usually for few others. It can use the
+    /// trigram (GIN) index on <paramref name="column"/>, so a search reads
+    /// the few listings that may match instead of all of them. It may let
+    /// through a text that scores zero (the exact scoring decides), but never
+    /// drops one that scores above zero.
+    /// </summary>
+    /// <remarks>
+    /// <paramref name="typoTolerant"/> is <c>false</c> for long texts
+    /// (descriptions): "similar to some word somewhere in 400 letters" is
+    /// true of far too many listings to be useful, and slow.
+    /// Whole word, word start and part of a word are all "contains the word".
+    /// The typo-tolerant match needs <c>pg_trgm.word_similarity_threshold</c>
+    /// at its lowest used value, see <see cref="FuzzyThreshold"/>.
+    /// </remarks>
+    public static string Gate(
+        string column,
+        List<string> names,
+        bool typoTolerant = true)
+    {
+        List<string> parts = [];
+
+        foreach (string name in names)
+        {
+            parts.Add($"{column} LIKE '%'||@{name}||'%'");
+        }
+
+        if (typoTolerant)
+        {
+            parts.Add(
+                $"(length(@{names[0]}) >= 4 AND @{names[0]} <% {column})");
+        }
+
+        return "(" + string.Join(" OR ", parts) + ")";
+    }
+
+    /// <summary>
+    /// The lowest word similarity <see cref="Level"/> accepts (words of 7+
+    /// letters). The index operator <c>&lt;%</c> compares against one
+    /// setting, so it is set to this for the query and the exact scoring
+    /// then applies the stricter limits of shorter words.
+    /// </summary>
+    public const string FuzzyThreshold = "0.4";
+
+    /// <summary>
     /// Runs a search query. Returns <c>null</c> when the database has not
     /// been upgraded for smart search yet (the caller then falls back to the
     /// plain text search).
@@ -88,11 +135,30 @@ internal static class SearchSql
         List<NpgsqlParameter> parameters,
         CancellationToken cancellationToken)
     {
+        // SET LOCAL lives only inside a transaction. Join the caller's one
+        // when there is one (the setting then ends with it).
+        bool ownTransaction = dbContext.Database.CurrentTransaction is null;
+
+        await using var transaction = ownTransaction
+            ? await dbContext.Database.BeginTransactionAsync(cancellationToken)
+            : null;
+
         try
         {
-            return await dbContext.Database
+            await dbContext.Database.ExecuteSqlRawAsync(
+                $"SET LOCAL pg_trgm.word_similarity_threshold = {FuzzyThreshold}",
+                cancellationToken);
+
+            List<T> rows = await dbContext.Database
                 .SqlQueryRaw<T>(sql, [.. parameters])
                 .ToListAsync(cancellationToken);
+
+            if (transaction is not null)
+            {
+                await transaction.CommitAsync(cancellationToken);
+            }
+
+            return rows;
         }
         catch (PostgresException exception)
             when (exception.SqlState ==

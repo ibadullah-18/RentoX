@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 
 import '../../../app/router.dart';
 import '../../../core/l10n/app_localizations.dart';
+import '../../../shared/widgets/app_dialogs.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_icons.dart';
 import '../../../core/theme/app_spacing.dart';
@@ -338,14 +339,34 @@ class _ChatHeader extends StatelessWidget {
               ),
             ),
           ),
-          PopupMenuButton<String>(
-            tooltip: '',
+          IconButton(
+            tooltip: l10n.moreActions,
             icon: const Icon(AppIcons.more),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(AppRadius.lg),
-            ),
-            onSelected: (v) {
-              switch (v) {
+            onPressed: () async {
+              final choice = await showActionSheet<String>(
+                context,
+                items: [
+                  if (onOpenListing != null)
+                    ActionSheetItem(
+                      value: 'listing',
+                      label: l10n.chatViewListing,
+                      icon: AppIcons.listings,
+                    ),
+                  ActionSheetItem(
+                    value: 'block',
+                    label: blockedByMe ? l10n.chatUnblock : l10n.chatBlock,
+                    icon: AppIcons.block,
+                    destructive: !blockedByMe,
+                  ),
+                  ActionSheetItem(
+                    value: 'report',
+                    label: l10n.chatReport,
+                    icon: AppIcons.report,
+                    destructive: true,
+                  ),
+                ],
+              );
+              switch (choice) {
                 case 'listing':
                   onOpenListing?.call();
                 case 'block':
@@ -354,18 +375,6 @@ class _ChatHeader extends StatelessWidget {
                   onReport();
               }
             },
-            itemBuilder: (_) => [
-              if (onOpenListing != null)
-                PopupMenuItem(
-                  value: 'listing',
-                  child: Text(l10n.chatViewListing),
-                ),
-              PopupMenuItem(
-                value: 'block',
-                child: Text(blockedByMe ? l10n.chatUnblock : l10n.chatBlock),
-              ),
-              PopupMenuItem(value: 'report', child: Text(l10n.chatReport)),
-            ],
           ),
         ],
       ),
@@ -540,15 +549,21 @@ class _Bubble extends ConsumerWidget {
             Opacity(
               opacity: sending ? 0.7 : 1,
               child: Container(
-                decoration: BoxDecoration(
-                  color: mine ? scheme.primary : scheme.surface,
-                  borderRadius: radius,
-                  border: mine
-                      ? null
-                      : Border.all(color: scheme.outlineVariant),
-                ),
+                // Like WhatsApp on iPhone: a photo alone has no frame at all;
+                // a photo with words is one bubble, the words right under it.
+                decoration: hasImages && !hasText
+                    ? null
+                    : BoxDecoration(
+                        color: mine ? scheme.primary : scheme.surface,
+                        borderRadius: radius,
+                        border: mine || hasImages
+                            ? null
+                            : Border.all(color: scheme.outlineVariant),
+                      ),
                 padding: hasImages && !hasText
-                    ? const EdgeInsets.all(3)
+                    ? EdgeInsets.zero
+                    : hasImages
+                    ? const EdgeInsets.fromLTRB(4, 4, 4, 8)
                     : const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -558,13 +573,22 @@ class _Bubble extends ConsumerWidget {
                       _ImageGrid(
                         message: message,
                         headers: headers,
-                        radius: hasText ? AppRadius.md : AppRadius.lg,
+                        radius: hasText ? AppRadius.lg : AppRadius.xl,
                       ),
-                    if (hasImages && hasText) const SizedBox(height: 8),
+                    if (hasImages && hasText) const SizedBox(height: 6),
                     if (hasText)
-                      SelectableText(
-                        message.body,
-                        style: TextStyle(color: fg, fontSize: 15, height: 1.35),
+                      Padding(
+                        padding: hasImages
+                            ? const EdgeInsets.symmetric(horizontal: 8)
+                            : EdgeInsets.zero,
+                        child: SelectableText(
+                          message.body,
+                          style: TextStyle(
+                            color: fg,
+                            fontSize: 15,
+                            height: 1.35,
+                          ),
+                        ),
                       ),
                   ],
                 ),
@@ -670,9 +694,8 @@ class _ImageGrid extends StatelessWidget {
     final local = message.localImages;
     final count = remote.isNotEmpty ? remote.length : local.length;
     final single = count == 1;
-    final side = single ? 220.0 : 108.0;
 
-    Widget tile(int i) {
+    Widget tile(int i, double side) {
       final Widget image = remote.isNotEmpty
           ? CachedNetworkImage(
               imageUrl: remote[i].url,
@@ -702,10 +725,25 @@ class _ImageGrid extends StatelessWidget {
       );
     }
 
-    return Wrap(
-      spacing: 4,
-      runSpacing: 4,
-      children: [for (var i = 0; i < count; i++) tile(i)],
+    // The photos are sized from the room the bubble really has, and clipped
+    // to it: nothing can ever stick out of the bubble.
+    return LayoutBuilder(
+      builder: (context, c) {
+        final room = c.maxWidth.isFinite ? c.maxWidth : 220.0;
+        final side = single
+            ? room.clamp(0.0, 220.0)
+            : ((room - 4) / 2).clamp(0.0, 108.0);
+        return ClipRect(
+          child: SizedBox(
+            width: single ? side : room,
+            child: Wrap(
+              spacing: 4,
+              runSpacing: 4,
+              children: [for (var i = 0; i < count; i++) tile(i, side)],
+            ),
+          ),
+        );
+      },
     );
   }
 }

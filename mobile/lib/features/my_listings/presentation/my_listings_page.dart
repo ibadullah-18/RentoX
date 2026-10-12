@@ -208,15 +208,15 @@ class _OwnedCard extends StatelessWidget {
                   width: 92,
                   height: 92,
                   child: item.coverImageUrl == null
-                      ? const ColoredBox(
-                          color: AppColors.primarySoft,
+                      ? ColoredBox(
+                          color: context.primarySoft,
                           child: Icon(AppIcons.image, color: AppColors.primary),
                         )
                       : CachedNetworkImage(
                           imageUrl: item.coverImageUrl!,
                           fit: BoxFit.cover,
-                          errorWidget: (_, _, _) => const ColoredBox(
-                            color: AppColors.primarySoft,
+                          errorWidget: (_, _, _) => ColoredBox(
+                            color: context.primarySoft,
                             child: Icon(
                               AppIcons.image,
                               color: AppColors.primary,

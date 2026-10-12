@@ -1270,4 +1270,152 @@ class AppL10nAz extends AppL10n {
 
   @override
   String get editLiveConfirm => 'Redaktə et';
+
+  @override
+  String get themeTitle => 'Görünüş';
+
+  @override
+  String get themeLight => 'Gündüz (açıq)';
+
+  @override
+  String get themeDark => 'Gecə (tünd)';
+
+  @override
+  String get themeSchedule => 'Saata görə avtomatik';
+
+  @override
+  String get themeScheduleHint =>
+      'Gündüz rejimi və gecə rejimi bu saatlarda öz-özünə dəyişir.';
+
+  @override
+  String get themeDayStarts => 'Gündüz rejimi başlayır';
+
+  @override
+  String get themeNightStarts => 'Gecə rejimi başlayır';
+
+  @override
+  String get readMore => 'Davamını oxu';
+
+  @override
+  String get readLess => 'Daha az göstər';
+
+  @override
+  String get shareAction => 'Paylaş';
+
+  @override
+  String get linkCopied => 'Elan linki kopyalandı';
+
+  @override
+  String get locationLabel => 'Yer';
+
+  @override
+  String get locationChoose => 'Şəhər və rayon seçin';
+
+  @override
+  String get locationChooseCity => 'Şəhər seçin';
+
+  @override
+  String get locationSearchHint => 'Şəhər axtar';
+
+  @override
+  String get locationAllCities => 'Bütün şəhərlər';
+
+  @override
+  String get locationAllDistricts => 'Bütün rayonlar';
+
+  @override
+  String get locationNothingFound => 'Heç nə tapılmadı';
+
+  @override
+  String get locationRequired => 'Şəhəri seçin';
+
+  @override
+  String get districtRequired => 'Rayonu seçin';
+
+  @override
+  String get periodAny => 'Hamısı';
+
+  @override
+  String get periodHourly => 'Saatlıq';
+
+  @override
+  String get periodDaily => 'Günlük';
+
+  @override
+  String get periodWeekly => 'Həftəlik';
+
+  @override
+  String get periodMonthly => 'Aylıq';
+
+  @override
+  String get periodEvent => 'Tədbir üçün';
+
+  @override
+  String get periodNegotiable => 'Razılaşma ilə';
+
+  @override
+  String get cityRow => 'Şəhər';
+
+  @override
+  String get districtRow => 'Rayon';
+
+  @override
+  String get moreActions => 'Daha çox';
+
+  @override
+  String get shareTitle => 'Elanı paylaş';
+
+  @override
+  String get shareEmail => 'E-poçt';
+
+  @override
+  String get shareCopyLink => 'Linki kopyala';
+
+  @override
+  String get shareMore => 'Daha çox';
+
+  @override
+  String get categoryAllChip => 'Hamısı';
+
+  @override
+  String get walletTopUpTitle => 'Balansı artır';
+
+  @override
+  String get walletHistoryTitle => 'Tarixçə';
+
+  @override
+  String get walletHistoryEmpty => 'Hələ əməliyyat yoxdur';
+
+  @override
+  String get walletHistoryEmptyHint =>
+      'Balans artırdıqda və ya ödəniş etdikdə burada görünəcək.';
+
+  @override
+  String walletAfter(String amount) {
+    return 'Qalıq: $amount';
+  }
+
+  @override
+  String get walletTopUpAndHistory => 'Artır · Tarixçə';
+
+  @override
+  String get txTopUp => 'Balans artırıldı';
+
+  @override
+  String get txListingFee => 'Elanın aktivləşdirilməsi';
+
+  @override
+  String get txPromotionFee => 'Elanın irəli çəkilməsi';
+
+  @override
+  String get txRefund => 'Geri qaytarma';
+
+  @override
+  String get txBonus => 'Bonus';
+
+  @override
+  String get txAdjustment => 'Düzəliş';
+
+  @override
+  String get loadMore => 'Daha çox göstər';
 }

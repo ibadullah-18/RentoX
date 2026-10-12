@@ -272,6 +272,11 @@ namespace RentoX.Infrastructure.Persistence.Migrations
                     b.Property<Guid?>("ParentId")
                         .HasColumnType("uuid");
 
+                    b.Property<int>("RentalPeriodMask")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0);
+
                     b.Property<string>("Slug")
                         .IsRequired()
                         .HasMaxLength(160)
@@ -525,6 +530,9 @@ namespace RentoX.Infrastructure.Persistence.Migrations
                     b.Property<Guid>("CategoryId")
                         .HasColumnType("uuid");
 
+                    b.Property<Guid?>("CityId")
+                        .HasColumnType("uuid");
+
                     b.Property<DateTimeOffset>("CreatedAtUtc")
                         .HasColumnType("timestamp with time zone");
 
@@ -543,6 +551,9 @@ namespace RentoX.Infrastructure.Persistence.Migrations
                         .IsRequired()
                         .HasMaxLength(10000)
                         .HasColumnType("character varying(10000)");
+
+                    b.Property<Guid?>("DistrictId")
+                        .HasColumnType("uuid");
 
                     b.Property<DateTimeOffset?>("ExpiresAtUtc")
                         .HasColumnType("timestamp with time zone");
@@ -585,7 +596,11 @@ namespace RentoX.Infrastructure.Persistence.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("DistrictId");
+
                     b.HasIndex("OwnerId");
+
+                    b.HasIndex("CityId", "DistrictId");
 
                     b.HasIndex("CategoryId", "Status", "PublishedAtUtc");
 
@@ -759,6 +774,79 @@ namespace RentoX.Infrastructure.Persistence.Migrations
                     b.HasIndex("ListingId", "Type", "StartsAtUtc");
 
                     b.ToTable("listing_promotions", "payments");
+                });
+
+            modelBuilder.Entity("RentoX.Domain.Locations.City", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("DisplayOrder")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("NameAz")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("NameEn")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("NameRu")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("NameAz")
+                        .IsUnique();
+
+                    b.ToTable("cities", "locations");
+                });
+
+            modelBuilder.Entity("RentoX.Domain.Locations.District", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CityId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("DisplayOrder")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("NameAz")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("NameEn")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("NameRu")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CityId", "NameAz")
+                        .IsUnique();
+
+                    b.ToTable("districts", "locations");
                 });
 
             modelBuilder.Entity("RentoX.Domain.Messaging.Conversation", b =>
@@ -1738,6 +1826,16 @@ namespace RentoX.Infrastructure.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("RentoX.Domain.Locations.City", null)
+                        .WithMany()
+                        .HasForeignKey("CityId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("RentoX.Domain.Locations.District", null)
+                        .WithMany()
+                        .HasForeignKey("DistrictId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("RentoX.Infrastructure.Identity.AppUser", null)
                         .WithMany()
                         .HasForeignKey("OwnerId")
@@ -1810,6 +1908,15 @@ namespace RentoX.Infrastructure.Persistence.Migrations
                     b.HasOne("RentoX.Domain.Wallets.WalletTransaction", null)
                         .WithMany()
                         .HasForeignKey("WalletTransactionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("RentoX.Domain.Locations.District", b =>
+                {
+                    b.HasOne("RentoX.Domain.Locations.City", null)
+                        .WithMany()
+                        .HasForeignKey("CityId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });

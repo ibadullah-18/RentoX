@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:intl/intl.dart';
 
 import '../../../app/router.dart';
 import '../../../core/l10n/app_localizations.dart';
@@ -11,13 +10,11 @@ import '../../../core/theme/app_icons.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../shared/widgets/async_states.dart';
 import '../../../shared/widgets/glass.dart';
-import '../../../shared/widgets/listing_grid.dart';
 import '../../catalog/data/catalog_repository.dart';
 import '../../catalog/domain/catalog_models.dart';
-import '../../catalog/domain/paged_listings.dart';
+import '../../home/presentation/home_state.dart';
 import '../../store/presentation/store_tile.dart';
 import '../data/recent_searches.dart';
-import 'filters_sheet.dart';
 import 'search_controller.dart';
 import 'store_search_controller.dart';
 
@@ -25,13 +22,11 @@ class SearchPage extends ConsumerStatefulWidget {
   const SearchPage({
     super.key,
     this.initialQuery = '',
-    this.initialCategoryId,
     this.autofocus = false,
     this.initialStores = false,
   });
 
   final String initialQuery;
-  final String? initialCategoryId;
   final bool autofocus;
 
   /// Open on the stores tab.
@@ -45,10 +40,7 @@ class _SearchPageState extends ConsumerState<SearchPage> {
   static const _debounce = Duration(milliseconds: 400);
   static const _barHeight = 70.0;
 
-  late final SearchSeed _seed = SearchSeed(
-    query: widget.initialQuery.trim(),
-    categoryId: widget.initialCategoryId,
-  );
+  late final SearchSeed _seed = SearchSeed(query: widget.initialQuery.trim());
   late final TextEditingController _text;
   final _scroll = ScrollController();
   final _focus = FocusNode();
@@ -60,9 +52,6 @@ class _SearchPageState extends ConsumerState<SearchPage> {
   /// What is being typed and not searched yet: while it is non-empty the
   /// page shows word suggestions instead of listings.
   String _typed = '';
-
-  /// Name of the category picked from a suggestion (for its chip).
-  String? _categoryLabel;
 
   bool get _suggesting => !_stores && _typed.trim().length >= 2;
 
@@ -83,13 +72,9 @@ class _SearchPageState extends ConsumerState<SearchPage> {
   }
 
   void _onScroll() {
-    if (_scroll.hasClients && _scroll.position.extentAfter < 600) {
-      if (_stores) {
-        final query = ref.read(searchFiltersProvider(_seed)).query;
-        ref.read(storeSearchProvider(query).notifier).loadMore();
-      } else {
-        ref.read(searchResultsProvider(_seed).notifier).loadMore();
-      }
+    if (_stores && _scroll.hasClients && _scroll.position.extentAfter < 600) {
+      final query = ref.read(searchFiltersProvider(_seed)).query;
+      ref.read(storeSearchProvider(query).notifier).loadMore();
     }
   }
 
@@ -115,12 +100,38 @@ class _SearchPageState extends ConsumerState<SearchPage> {
     });
   }
 
+  /// Shows the result on the home page: the feed there follows these words
+  /// and category, and its filters know what that category accepts.
+  Future<void> _showOnHome(String query, String? categoryId) async {
+    var tree = const <Category>[];
+    if (categoryId != null) {
+      try {
+        tree = await ref.read(categoriesProvider.future);
+      } catch (_) {
+        // Without the tree the words still search everywhere.
+      }
+    }
+    if (!mounted) return;
+    ref.read(homeQueryProvider.notifier).set(query);
+    ref
+        .read(homeCategoryPathProvider.notifier)
+        .set(
+          categoryId == null ? const [] : categoryChainIds(tree, categoryId),
+        );
+    _focus.unfocus();
+    context.go(Routes.home);
+  }
+
   void _submit(String value) {
     _timer?.cancel();
-    ref.read(searchFiltersProvider(_seed).notifier).setQuery(value);
-    ref.read(recentSearchesProvider.notifier).add(value);
-    _focus.unfocus();
-    setState(() => _typed = '');
+    final query = value.trim();
+    if (_stores) {
+      ref.read(searchFiltersProvider(_seed).notifier).setQuery(query);
+      _focus.unfocus();
+      return;
+    }
+    if (query.isNotEmpty) ref.read(recentSearchesProvider.notifier).add(query);
+    _showOnHome(query, null);
   }
 
   void _applyPhrase(String phrase) {
@@ -133,22 +144,9 @@ class _SearchPageState extends ConsumerState<SearchPage> {
   /// open the category.
   void _applySuggestion(SearchSuggestion s) {
     _timer?.cancel();
-    final filters = ref.read(searchFiltersProvider(_seed).notifier);
     final word = s.isCategory ? '' : s.text;
-
-    _text.text = word;
-    _text.selection = TextSelection.collapsed(offset: word.length);
-    filters
-      ..setQuery(word)
-      ..setCategory(s.categoryId);
-    if (word.isNotEmpty) {
-      ref.read(recentSearchesProvider.notifier).add(word);
-    }
-    _focus.unfocus();
-    setState(() {
-      _typed = '';
-      _categoryLabel = s.isCategory ? s.text : s.path.lastOrNull;
-    });
+    if (word.isNotEmpty) ref.read(recentSearchesProvider.notifier).add(word);
+    _showOnHome(word, s.categoryId);
   }
 
   void _clearText() {
@@ -158,37 +156,16 @@ class _SearchPageState extends ConsumerState<SearchPage> {
     setState(() => _typed = '');
   }
 
-  Future<void> _openFilters() async {
-    final filters = ref.read(searchFiltersProvider(_seed));
-    final result = await showFiltersSheet(context, current: filters);
-    if (result == null || !mounted) return;
-    ref
-        .read(searchFiltersProvider(_seed).notifier)
-        .setSheetFilters(
-          min: result.min,
-          max: result.max,
-          fields: result.fields,
-          seller: result.seller,
-          sort: result.sort,
-        );
-  }
-
   void _goBack() => context.canPop() ? context.pop() : context.go(Routes.home);
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppL10n.of(context);
     final filters = ref.watch(searchFiltersProvider(_seed));
-    // Only the visible tab is loaded; the other one waits until it is opened.
-    final results = _stores
-        ? const AsyncData<PagedListings>(PagedListings())
-        : ref.watch(searchResultsProvider(_seed));
     final recents = ref.watch(recentSearchesProvider);
-    final categories = ref.watch(categoriesProvider).value ?? const [];
     final padding = MediaQuery.paddingOf(context);
-    final locale = Localizations.localeOf(context).toString();
 
-    final showRecents = filters.isEmpty && recents.isNotEmpty;
+    final showRecents = !_stores && recents.isNotEmpty;
 
     return Scaffold(
       body: Stack(
@@ -217,81 +194,6 @@ class _SearchPageState extends ConsumerState<SearchPage> {
                     ),
                   ),
                 ),
-                if (!_stores)
-                  SliverToBoxAdapter(
-                    child: SizedBox(
-                      height: 46,
-                      child: ListView(
-                        scrollDirection: Axis.horizontal,
-                        padding: AppSpacing.screenPadding,
-                        children: [
-                          _CategoryChip(
-                            label: l10n.allCategories,
-                            selected: filters.categoryId == null,
-                            onTap: () => ref
-                                .read(searchFiltersProvider(_seed).notifier)
-                                .setCategory(null),
-                          ),
-                          for (final c in categories) ...[
-                            const SizedBox(width: AppSpacing.sm),
-                            _CategoryChip(
-                              label: c.name,
-                              selected: filters.categoryId == c.id,
-                              onTap: () => ref
-                                  .read(searchFiltersProvider(_seed).notifier)
-                                  .setCategory(c.id),
-                            ),
-                          ],
-                        ],
-                      ),
-                    ),
-                  ),
-                if (!_stores &&
-                    filters.categoryId != null &&
-                    _categoryLabel != null &&
-                    categories.every((c) => c.id != filters.categoryId))
-                  SliverToBoxAdapter(
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(
-                        AppSpacing.lg,
-                        AppSpacing.sm,
-                        AppSpacing.lg,
-                        0,
-                      ),
-                      child: Align(
-                        alignment: AlignmentDirectional.centerStart,
-                        child: _RemovableChip(
-                          label: _categoryLabel!,
-                          onRemove: () {
-                            ref
-                                .read(searchFiltersProvider(_seed).notifier)
-                                .setCategory(null);
-                            setState(() => _categoryLabel = null);
-                          },
-                        ),
-                      ),
-                    ),
-                  ),
-                if (!_stores && filters.hasPrice)
-                  SliverToBoxAdapter(
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(
-                        AppSpacing.lg,
-                        AppSpacing.sm,
-                        AppSpacing.lg,
-                        0,
-                      ),
-                      child: Align(
-                        alignment: AlignmentDirectional.centerStart,
-                        child: _RemovableChip(
-                          label: _priceLabel(filters, locale),
-                          onRemove: () => ref
-                              .read(searchFiltersProvider(_seed).notifier)
-                              .setPrice(),
-                        ),
-                      ),
-                    ),
-                  ),
                 if (showRecents)
                   SliverToBoxAdapter(
                     child: _Recents(
@@ -301,108 +203,7 @@ class _SearchPageState extends ConsumerState<SearchPage> {
                           ref.read(recentSearchesProvider.notifier).clear(),
                     ),
                   ),
-                if (_stores)
-                  ..._storeSlivers(context, ref, filters.query)
-                else
-                  ...results.when(
-                    // Keep the previous results on screen while a refinement loads.
-                    skipLoadingOnReload: true,
-                    loading: () => [
-                      const SliverToBoxAdapter(
-                        child: Padding(
-                          padding: EdgeInsets.symmetric(vertical: 64),
-                          child: Center(child: CircularProgressIndicator()),
-                        ),
-                      ),
-                    ],
-                    error: (e, _) => [
-                      SliverToBoxAdapter(
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 32),
-                          child: ErrorView(
-                            error: e,
-                            onRetry: () =>
-                                ref.invalidate(searchResultsProvider(_seed)),
-                          ),
-                        ),
-                      ),
-                    ],
-                    data: (state) => [
-                      SliverToBoxAdapter(
-                        child: Padding(
-                          padding: const EdgeInsets.fromLTRB(
-                            AppSpacing.lg,
-                            AppSpacing.lg,
-                            AppSpacing.lg,
-                            AppSpacing.md,
-                          ),
-                          child: Text(
-                            l10n.resultsFound(state.totalCount),
-                            style: TextStyle(
-                              fontWeight: FontWeight.w600,
-                              color: Theme.of(context)
-                                  .colorScheme
-                                  .onSurfaceVariant,
-                            ),
-                          ),
-                        ),
-                      ),
-                      if (state.items.isEmpty)
-                        SliverToBoxAdapter(
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 32),
-                            child: EmptyView(
-                              icon: AppIcons.search,
-                              title: l10n.noResults,
-                              message: l10n.noResultsHint,
-                              action: filters.hasActiveFilters
-                                  ? OutlinedButton(
-                                      onPressed: () => ref
-                                          .read(
-                                            searchFiltersProvider(_seed)
-                                                .notifier,
-                                          )
-                                          .clearFilters(),
-                                      style: OutlinedButton.styleFrom(
-                                        minimumSize: const Size(200, 52),
-                                      ),
-                                      child: Text(l10n.clearFilters),
-                                    )
-                                  : null,
-                            ),
-                          ),
-                        )
-                      else ...[
-                        SliverListingGrid(
-                          items: state.items,
-                          onOpen: (_) {
-                            if (filters.query.isNotEmpty) {
-                              ref
-                                  .read(recentSearchesProvider.notifier)
-                                  .add(filters.query);
-                            }
-                          },
-                        ),
-                        if (state.loadingMore)
-                          const SliverToBoxAdapter(
-                            child: Padding(
-                              padding: EdgeInsets.symmetric(
-                                vertical: AppSpacing.xl,
-                              ),
-                              child: Center(
-                                child: SizedBox(
-                                  width: 26,
-                                  height: 26,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2.4,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                      ],
-                    ],
-                  ),
+                if (_stores) ..._storeSlivers(context, ref, filters.query),
               ],
               SliverToBoxAdapter(child: SizedBox(height: padding.bottom + 32)),
             ],
@@ -469,15 +270,6 @@ class _SearchPageState extends ConsumerState<SearchPage> {
                       ),
                     ),
                   ),
-                  if (!_stores) ...[
-                    const SizedBox(width: 10),
-                    GlassIconButton(
-                      icon: AppIcons.filter,
-                      semanticLabel: l10n.filters,
-                      showDot: filters.hasSheetFilters,
-                      onPressed: _openFilters,
-                    ),
-                  ],
                 ],
               ),
             ),
@@ -513,43 +305,50 @@ class _SearchPageState extends ConsumerState<SearchPage> {
                     ? l10n.searchSuggestionCategory
                     : s.path.join(' › '))
               : s.path.join(' › ');
-          return InkWell(
-            onTap: () => _applySuggestion(s),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppSpacing.lg,
-                vertical: 12,
-              ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          s.text,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w700,
-                            fontSize: 16,
-                          ),
-                        ),
-                        if (path.isNotEmpty)
+          // The wave starts under the finger and spreads from there.
+          return Material(
+            type: MaterialType.transparency,
+            child: InkWell(
+              splashFactory: InkRipple.splashFactory,
+              splashColor: scheme.primary.withValues(alpha: 0.20),
+              highlightColor: scheme.primary.withValues(alpha: 0.06),
+              onTap: () => _applySuggestion(s),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.lg,
+                  vertical: 12,
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
                           Text(
-                            path,
+                            s.text,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: scheme.onSurfaceVariant,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w700,
+                              fontSize: 16,
                             ),
                           ),
-                      ],
+                          if (path.isNotEmpty)
+                            Text(
+                              path,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: scheme.onSurfaceVariant,
+                              ),
+                            ),
+                        ],
+                      ),
                     ),
-                  ),
-                  Icon(AppIcons.forward, color: scheme.onSurfaceVariant),
-                ],
+                    Icon(AppIcons.forward, color: scheme.onSurfaceVariant),
+                  ],
+                ),
               ),
             ),
           );
@@ -641,15 +440,6 @@ class _SearchPageState extends ConsumerState<SearchPage> {
       ],
     );
   }
-
-  String _priceLabel(SearchFilters f, String locale) {
-    final fmt = NumberFormat.decimalPattern(locale);
-    final min = f.minPrice == null ? null : fmt.format(f.minPrice);
-    final max = f.maxPrice == null ? null : fmt.format(f.maxPrice);
-    if (min != null && max != null) return '$min – $max AZN';
-    if (min != null) return '≥ $min AZN';
-    return '≤ $max AZN';
-  }
 }
 
 /// "Listings | Stores" switch under the search bar.
@@ -712,89 +502,6 @@ class _ModeTabs extends StatelessWidget {
   }
 }
 
-class _CategoryChip extends StatelessWidget {
-  const _CategoryChip({
-    required this.label,
-    required this.selected,
-    required this.onTap,
-  });
-
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    return Semantics(
-      button: true,
-      selected: selected,
-      label: label,
-      child: GestureDetector(
-        onTap: onTap,
-        behavior: HitTestBehavior.opaque,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 180),
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            color: selected ? scheme.primary : scheme.surface,
-            borderRadius: BorderRadius.circular(AppRadius.pill),
-            border: Border.all(
-              color: selected ? scheme.primary : scheme.outline,
-            ),
-          ),
-          child: Text(
-            label,
-            style: TextStyle(
-              fontWeight: FontWeight.w600,
-              fontSize: 14,
-              color: selected ? scheme.onPrimary : scheme.onSurface,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _RemovableChip extends StatelessWidget {
-  const _RemovableChip({required this.label, required this.onRemove});
-
-  final String label;
-  final VoidCallback onRemove;
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    return GestureDetector(
-      onTap: onRemove,
-      child: Container(
-        padding: const EdgeInsets.fromLTRB(14, 7, 8, 7),
-        decoration: BoxDecoration(
-          color: scheme.primary.withValues(alpha: 0.12),
-          borderRadius: BorderRadius.circular(AppRadius.pill),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              label,
-              style: TextStyle(
-                fontWeight: FontWeight.w700,
-                fontSize: 13.5,
-                color: scheme.primary,
-              ),
-            ),
-            const SizedBox(width: 4),
-            Icon(AppIcons.close, size: 16, color: scheme.primary),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
 class _Recents extends StatelessWidget {
   const _Recents({
     required this.phrases,
@@ -850,35 +557,40 @@ class _Recents extends StatelessWidget {
             runSpacing: AppSpacing.sm,
             children: [
               for (final phrase in phrases)
-                GestureDetector(
-                  onTap: () => onTap(phrase),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 8,
-                    ),
-                    decoration: BoxDecoration(
-                      color: scheme.surface,
-                      borderRadius: BorderRadius.circular(AppRadius.pill),
-                      border: Border.all(color: scheme.outline),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          AppIcons.history,
-                          size: 18,
-                          color: scheme.onSurfaceVariant,
-                        ),
-                        const SizedBox(width: 6),
-                        Text(
-                          phrase,
-                          style: const TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
+                Material(
+                  color: scheme.surface,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(AppRadius.pill),
+                    side: BorderSide(color: scheme.outline),
+                  ),
+                  clipBehavior: Clip.antiAlias,
+                  child: InkWell(
+                    splashFactory: InkRipple.splashFactory,
+                    splashColor: scheme.primary.withValues(alpha: 0.20),
+                    onTap: () => onTap(phrase),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            AppIcons.history,
+                            size: 18,
+                            color: scheme.onSurfaceVariant,
                           ),
-                        ),
-                      ],
+                          const SizedBox(width: 6),
+                          Text(
+                            phrase,
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),

@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:rentox/core/l10n/app_localizations.dart';
 import 'package:rentox/features/catalog/data/catalog_repository.dart';
@@ -12,6 +13,7 @@ import 'package:rentox/features/listing_details/presentation/listing_formatting.
 import 'package:rentox/shared/widgets/listing_card.dart';
 import 'package:rentox/features/search/presentation/price_filter_sheet.dart';
 import 'package:rentox/features/search/domain/search_options.dart';
+import 'package:rentox/features/home/presentation/home_state.dart';
 import 'package:rentox/features/search/presentation/search_page.dart';
 import 'package:rentox/features/search/presentation/search_controller.dart';
 
@@ -42,7 +44,14 @@ class FakeCatalog extends CatalogRepository {
   final calls = <_Call>[];
 
   @override
-  Future<List<Category>> categories(String language) async => const [];
+  Future<List<Category>> categories(String language) async => const [
+    Category(
+      id: 't',
+      slug: 'neqliyyat',
+      name: 'Nəqliyyat',
+      children: [Category(id: 'cat-1', slug: 'cars', name: 'Avtomobil')],
+    ),
+  ];
 
   @override
   Future<List<SearchSuggestion>> suggestions(
@@ -73,6 +82,9 @@ class FakeCatalog extends CatalogRepository {
     List<Map<String, dynamic>>? fieldFilters,
     SellerType seller = SellerType.all,
     SearchSort sort = SearchSort.date,
+    String? cityId,
+    String? districtId,
+    RentalPeriodUnit? rentalPeriod,
     int page = 1,
     int pageSize = 20,
   }) async {
@@ -114,13 +126,12 @@ void main() {
     });
 
     test('starts from the seed, then updates, trims and clears', () {
-      const seed = SearchSeed(query: '  toyota ', categoryId: 'cat');
+      const seed = SearchSeed(query: '  toyota ');
       final c = ProviderContainer();
       addTearDown(c.dispose);
       c.listen(searchFiltersProvider(seed), (_, _) {});
 
       expect(c.read(searchFiltersProvider(seed)).query, 'toyota');
-      expect(c.read(searchFiltersProvider(seed)).categoryId, 'cat');
 
       final n = c.read(searchFiltersProvider(seed).notifier);
       n.setPrice(min: 10, max: 50);
@@ -134,49 +145,48 @@ void main() {
     });
   });
 
-  group('SearchResultsController', () {
-    const seed = SearchSeed();
-
+  group('HomeFeedController', () {
     ProviderContainer container(FakeCatalog repo) {
       final c = ProviderContainer(
         overrides: [catalogRepositoryProvider.overrideWithValue(repo)],
       );
       addTearDown(c.dispose);
-      c.listen(searchFiltersProvider(seed), (_, _) {});
-      c.listen(searchResultsProvider(seed), (_, _) {});
+      c.listen(homeListingsProvider, (_, _) {});
       return c;
     }
 
-    test('refetches page 1 with the new filters', () async {
-      final repo = FakeCatalog();
-      final c = container(repo);
+    test(
+      'refetches page 1 with the searched words, category and filters',
+      () async {
+        final repo = FakeCatalog();
+        final c = container(repo);
 
-      await c.read(searchResultsProvider(seed).future);
-      expect(repo.calls.last.search, '');
+        await c.read(homeListingsProvider.future);
+        expect(repo.calls.last.search, '');
 
-      c.read(searchFiltersProvider(seed).notifier)
-        ..setQuery('camry')
-        ..setPrice(min: 20);
-      final state = await c.read(searchResultsProvider(seed).future);
+        c.read(homeQueryProvider.notifier).set('  camry ');
+        c.read(homeCategoryPathProvider.notifier).set(['t', 'cars']);
+        final state = await c.read(homeListingsProvider.future);
 
-      expect(repo.calls.last.search, 'camry');
-      expect(repo.calls.last.minPrice, 20);
-      expect(repo.calls.last.page, 1);
-      expect(state.items.map((e) => e.id), ['a', 'b']);
-    });
+        expect(repo.calls.last.search, 'camry');
+        expect(repo.calls.last.categoryId, 'cars');
+        expect(repo.calls.last.page, 1);
+        expect(state.items.map((e) => e.id), ['a', 'b']);
+      },
+    );
 
     test('loadMore appends the next page without duplicates', () async {
       final repo = FakeCatalog();
       final c = container(repo);
-      await c.read(searchResultsProvider(seed).future);
+      await c.read(homeListingsProvider.future);
 
-      await c.read(searchResultsProvider(seed).notifier).loadMore();
-      final state = c.read(searchResultsProvider(seed)).requireValue;
+      await c.read(homeListingsProvider.notifier).loadMore();
+      final state = c.read(homeListingsProvider).requireValue;
 
       expect(state.items.map((e) => e.id), ['a', 'b', 'c']);
       expect(state.hasMore, isFalse);
 
-      await c.read(searchResultsProvider(seed).notifier).loadMore();
+      await c.read(homeListingsProvider.notifier).loadMore();
       expect(repo.calls.map((e) => e.page), [1, 2]); // nothing left to load
     });
   });
@@ -289,32 +299,45 @@ void main() {
   });
 
   group('SearchPage', () {
-    testWidgets('opens cleanly, shows results and searches as you type', (
+    testWidgets('typing suggests words; a pick opens the home page with it', (
       tester,
     ) async {
       SharedPreferences.setMockInitialValues({});
       final repo = FakeCatalog();
+      final container = ProviderContainer(
+        overrides: [catalogRepositoryProvider.overrideWithValue(repo)],
+      );
+      addTearDown(container.dispose);
 
+      final router = GoRouter(
+        initialLocation: '/search',
+        routes: [
+          GoRoute(
+            path: '/',
+            builder: (_, _) => const Scaffold(body: Text('HOME PAGE')),
+          ),
+          GoRoute(path: '/search', builder: (_, _) => const SearchPage()),
+        ],
+      );
       await tester.pumpWidget(
-        ProviderScope(
-          overrides: [catalogRepositoryProvider.overrideWithValue(repo)],
-          child: MaterialApp(
+        UncontrolledProviderScope(
+          container: container,
+          child: MaterialApp.router(
             locale: const Locale('az'),
             localizationsDelegates: AppL10n.localizationsDelegates,
             supportedLocales: AppL10n.supportedLocales,
-            home: const SearchPage(initialQuery: 'cam'),
+            routerConfig: router,
           ),
         ),
       );
-      await tester.pump(); // first frame must not throw
+      await tester.pump();
       await tester.pump(const Duration(milliseconds: 50));
-
       expect(tester.takeException(), isNull);
-      expect(repo.calls.first.search, 'cam'); // seeded from the route
-      expect(find.text('Listing a'), findsOneWidget);
-      expect(find.text(az.resultsFound(4)), findsOneWidget);
 
-      final before = repo.calls.length;
+      // No category chips and no filter button on this page any more.
+      expect(find.text(az.allCategories), findsNothing);
+      expect(find.bySemanticsLabel(az.filters), findsNothing);
+
       await tester.enterText(find.byType(TextField), 'camr');
       await tester.pump(const Duration(milliseconds: 300)); // debounce
       await tester.pump();
@@ -322,17 +345,54 @@ void main() {
       // Typing shows words with their category chain, not listings.
       expect(find.text('camrry'), findsOneWidget);
       expect(find.text('Nəqliyyat › Avtomobil'), findsOneWidget);
-      expect(repo.calls.length, before);
+      expect(repo.calls, isEmpty);
 
       await tester.tap(find.text('camrry'));
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 50));
+      await tester.pumpAndSettle();
 
-      // Tapping searches that word inside its category.
-      expect(repo.calls.last.search, 'camrry');
-      expect(repo.calls.last.categoryId, 'cat-1');
-      expect(find.text('Nəqliyyat › Avtomobil'), findsNothing);
-      expect(tester.takeException(), isNull);
+      // The result lives on the home page: words plus the category chain.
+      expect(find.text('HOME PAGE'), findsOneWidget);
+      expect(container.read(homeQueryProvider), 'camrry');
+      expect(container.read(homeCategoryPathProvider), ['t', 'cat-1']);
+    });
+
+    testWidgets('submitting plain words searches everywhere', (tester) async {
+      SharedPreferences.setMockInitialValues({});
+      final container = ProviderContainer(
+        overrides: [catalogRepositoryProvider.overrideWithValue(FakeCatalog())],
+      );
+      addTearDown(container.dispose);
+      container.read(homeCategoryPathProvider.notifier).set(['t']);
+
+      final router = GoRouter(
+        initialLocation: '/search',
+        routes: [
+          GoRoute(
+            path: '/',
+            builder: (_, _) => const Scaffold(body: Text('HOME PAGE')),
+          ),
+          GoRoute(path: '/search', builder: (_, _) => const SearchPage()),
+        ],
+      );
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: MaterialApp.router(
+            locale: const Locale('az'),
+            localizationsDelegates: AppL10n.localizationsDelegates,
+            supportedLocales: AppL10n.supportedLocales,
+            routerConfig: router,
+          ),
+        ),
+      );
+      await tester.pump();
+      await tester.enterText(find.byType(TextField), 'kamera');
+      await tester.testTextInput.receiveAction(TextInputAction.search);
+      await tester.pumpAndSettle();
+
+      expect(find.text('HOME PAGE'), findsOneWidget);
+      expect(container.read(homeQueryProvider), 'kamera');
+      expect(container.read(homeCategoryPathProvider), isEmpty);
     });
   });
 

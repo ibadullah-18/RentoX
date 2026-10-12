@@ -10,7 +10,7 @@ namespace RentoX.Infrastructure.Listings;
 /// </summary>
 public static class ListingFeedInterleaver
 {
-    public const int VipPerRound = 6;
+    public const int VipPerRound = 4;
     public const int BumpedPerRound = 4;
     public const int PlainPerRound = 6;
 

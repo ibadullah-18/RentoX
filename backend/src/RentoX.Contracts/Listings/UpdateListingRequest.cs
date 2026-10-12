@@ -5,4 +5,6 @@ public sealed record UpdateListingRequest(
     string Description,
     decimal Price,
     string Currency,
-    int RentalPeriodUnit);
+    int RentalPeriodUnit,
+    Guid? CityId = null,
+    Guid? DistrictId = null);

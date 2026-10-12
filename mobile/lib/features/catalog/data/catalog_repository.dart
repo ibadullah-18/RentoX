@@ -35,6 +35,9 @@ class CatalogRepository {
     List<Map<String, dynamic>>? fieldFilters,
     SellerType seller = SellerType.all,
     SearchSort sort = SearchSort.date,
+    String? cityId,
+    String? districtId,
+    RentalPeriodUnit? rentalPeriod,
     int page = 1,
     int pageSize = 20,
   }) => guardApi(() async {
@@ -52,6 +55,9 @@ class CatalogRepository {
           'filters': jsonEncode(fieldFilters),
         if (seller != SellerType.all) 'sellerType': seller.apiValue,
         if (sort != SearchSort.date) 'sort': sort.apiValue,
+        'cityId': ?cityId,
+        'districtId': ?districtId,
+        if (rentalPeriod != null) 'rentalPeriod': rentalPeriod.id,
       },
     );
     return Paged.fromJson(res.data!, ListingSummary.fromJson);
@@ -117,13 +123,6 @@ final searchSuggestionsProvider = FutureProvider.autoDispose
           .watch(catalogRepositoryProvider)
           .suggestions(text, locale.languageCode);
     });
-
-final homeListingsProvider = FutureProvider<Paged<ListingSummary>>((ref) {
-  final Locale locale = ref.watch(localeProvider);
-  return ref
-      .watch(catalogRepositoryProvider)
-      .listings(language: locale.languageCode, pageSize: 24);
-});
 
 /// Details of one listing. Disposed when the page closes, so reopening it
 /// always fetches fresh data (view counter, favourite state...).

@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../../core/l10n/app_localizations.dart';
+import '../../../shared/widgets/app_dialogs.dart';
 import '../../../core/l10n/locale_controller.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
@@ -12,6 +13,9 @@ import '../../catalog/domain/catalog_models.dart';
 import '../../listing_create/data/listing_create_repository.dart';
 import '../../listing_create/domain/field_models.dart';
 import '../domain/field_filter.dart';
+import '../../locations/domain/location_models.dart';
+import '../../locations/presentation/location_field.dart';
+import '../../catalog/data/catalog_repository.dart';
 import '../domain/search_options.dart';
 import 'price_filter_sheet.dart';
 import 'search_controller.dart';
@@ -22,6 +26,8 @@ typedef SheetFilters = ({
   Map<String, FieldFilterValue> fields,
   SellerType seller,
   SearchSort sort,
+  PlaceChoice place,
+  RentalPeriodUnit? period,
 });
 
 /// The category's fields the search may filter on (brand, year, fuel...).
@@ -60,6 +66,43 @@ Future<SheetFilters?> showFiltersSheet(
   );
 }
 
+/// Price periods worth offering in the filter: the chosen category's, or
+/// every period any category allows.
+List<RentalPeriodUnit> periodsForFilter(
+  List<Category> tree,
+  String? categoryId,
+) {
+  if (categoryId != null) {
+    final c = findCategory(tree, categoryId);
+    if (c != null) return c.rentalPeriods;
+  }
+  final all = <RentalPeriodUnit>{};
+  void walk(List<Category> list) {
+    for (final c in list) {
+      all.addAll(c.rentalPeriods);
+      walk(c.children);
+    }
+  }
+
+  walk(tree);
+  return all.isEmpty
+      ? RentalPeriodUnit.values
+      : [
+          for (final u in RentalPeriodUnit.values)
+            if (all.contains(u)) u,
+        ];
+}
+
+/// "Daily", "Monthly"... as filter chip labels.
+String periodFilterLabel(AppL10n l10n, RentalPeriodUnit unit) => switch (unit) {
+  RentalPeriodUnit.hour => l10n.periodHourly,
+  RentalPeriodUnit.day => l10n.periodDaily,
+  RentalPeriodUnit.week => l10n.periodWeekly,
+  RentalPeriodUnit.month => l10n.periodMonthly,
+  RentalPeriodUnit.event => l10n.periodEvent,
+  RentalPeriodUnit.negotiable => l10n.periodNegotiable,
+};
+
 class FiltersSheet extends ConsumerStatefulWidget {
   const FiltersSheet({super.key, required this.current});
 
@@ -81,6 +124,8 @@ class _FiltersSheetState extends ConsumerState<FiltersSheet> {
   );
   late SellerType _seller = widget.current.seller;
   late SearchSort _sort = widget.current.sort;
+  late PlaceChoice _place = widget.current.place;
+  late RentalPeriodUnit? _period = widget.current.period;
   bool _invalid = false;
 
   static String _initial(double? v) {
@@ -118,9 +163,15 @@ class _FiltersSheetState extends ConsumerState<FiltersSheet> {
       setState(() => _invalid = true);
       return;
     }
-    Navigator.of(
-      context,
-    ).pop((min: min, max: max, fields: _fields, seller: _seller, sort: _sort));
+    Navigator.of(context).pop((
+      min: min,
+      max: max,
+      fields: _fields,
+      seller: _seller,
+      sort: _sort,
+      place: _place,
+      period: _period,
+    ));
   }
 
   void _reset() => Navigator.of(context).pop((
@@ -129,6 +180,8 @@ class _FiltersSheetState extends ConsumerState<FiltersSheet> {
     fields: const <String, FieldFilterValue>{},
     seller: SellerType.all,
     sort: SearchSort.date,
+    place: PlaceChoice.none,
+    period: null,
   ));
 
   @override
@@ -141,6 +194,8 @@ class _FiltersSheetState extends ConsumerState<FiltersSheet> {
         ? null
         : ref.watch(filterFieldsProvider(categoryId));
     final keyboard = MediaQuery.viewInsetsOf(context).bottom;
+    final tree = ref.watch(categoriesProvider).value ?? const <Category>[];
+    final periods = periodsForFilter(tree, categoryId);
 
     Widget priceField(TextEditingController c, String label) => Expanded(
       child: TextField(
@@ -182,6 +237,34 @@ class _FiltersSheetState extends ConsumerState<FiltersSheet> {
                   priceField(_max, l10n.priceMax),
                 ],
               ),
+              const SizedBox(height: AppSpacing.xl),
+              _Label(l10n.locationLabel),
+              LocationField(
+                forFilter: true,
+                value: _place,
+                onChanged: (v) => setState(() => _place = v),
+              ),
+              if (periods.length > 1) ...[
+                const SizedBox(height: AppSpacing.xl),
+                _Label(l10n.pricePer),
+                Wrap(
+                  spacing: AppSpacing.sm,
+                  runSpacing: AppSpacing.sm,
+                  children: [
+                    _Choice(
+                      label: l10n.periodAny,
+                      selected: _period == null,
+                      onTap: () => setState(() => _period = null),
+                    ),
+                    for (final unit in periods)
+                      _Choice(
+                        label: periodFilterLabel(l10n, unit),
+                        selected: _period == unit,
+                        onTap: () => setState(() => _period = unit),
+                      ),
+                  ],
+                ),
+              ],
               const SizedBox(height: AppSpacing.xl),
               _Label(l10n.sellerType),
               Wrap(
@@ -505,11 +588,12 @@ class _DateBox extends StatelessWidget {
       child: OutlinedButton(
         onPressed: () async {
           final now = DateTime.now();
-          final picked = await showDatePicker(
-            context: context,
-            initialDate: value ?? now,
-            firstDate: DateTime(now.year - 30),
-            lastDate: DateTime(now.year + 30),
+          final picked = await showDateWheelSheet(
+            context,
+            initial: value ?? now,
+            first: DateTime(now.year - 30),
+            last: DateTime(now.year + 30),
+            title: label,
           );
           if (picked != null) onChanged(picked);
         },

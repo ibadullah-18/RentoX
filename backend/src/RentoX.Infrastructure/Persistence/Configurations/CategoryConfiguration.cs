@@ -27,6 +27,10 @@ public sealed class CategoryConfiguration
         builder.Property(category => category.DisplayOrder)
             .IsRequired();
 
+        builder.Property(category => category.RentalPeriodMask)
+            .HasDefaultValue(0)
+            .IsRequired();
+
         builder.Property(category => category.IsActive)
             .IsRequired();
 

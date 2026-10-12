@@ -7,6 +7,7 @@ import 'package:rentox/features/listing_create/data/listing_create_repository.da
 import 'package:rentox/features/listing_create/domain/field_models.dart';
 import 'package:rentox/features/listing_create/domain/photo.dart';
 import 'package:rentox/features/listing_create/presentation/create_listing_controller.dart';
+import 'package:rentox/features/locations/domain/location_models.dart';
 import 'package:rentox/features/my_listings/data/my_listings_repository.dart';
 import 'package:rentox/features/my_listings/domain/owned_listing_models.dart';
 
@@ -43,6 +44,7 @@ Future<void> fillValid(
   n
     ..setTitle('  Toyota Camry  ')
     ..setDescription('Clean car ')
+    ..setPlace(const PlaceChoice(FakeLocations.sumgait))
     ..setUnit(unit)
     ..setPriceText('85,5');
 }
@@ -91,26 +93,26 @@ void main() {
     test('builds the exact API shape for each field type', () {
       expect(
         const FieldAnswer(text: ' Toyota ').toRequest(def('f', FieldType.text)),
-        {'fieldId': 'f', 'textValue': 'Toyota'},
+        {'fieldId': 'f', 'textValue': 'Toyota', 'optionIds': []},
       );
       expect(
         const FieldAnswer(text: '2023')
             .toRequest(def('f', FieldType.wholeNumber)),
-        {'fieldId': 'f', 'numericValue': 2023.0},
+        {'fieldId': 'f', 'numericValue': 2023.0, 'optionIds': []},
       );
       expect(
         const FieldAnswer(text: '12,5')
             .toRequest(def('f', FieldType.fractionalNumber)),
-        {'fieldId': 'f', 'numericValue': 12.5},
+        {'fieldId': 'f', 'numericValue': 12.5, 'optionIds': []},
       );
       expect(
         const FieldAnswer(flag: false).toRequest(def('f', FieldType.boolean)),
-        {'fieldId': 'f', 'flagValue': false},
+        {'fieldId': 'f', 'flagValue': false, 'optionIds': []},
       );
       expect(
         FieldAnswer(date: DateTime(2026, 3, 7))
             .toRequest(def('f', FieldType.date)),
-        {'fieldId': 'f', 'calendarValue': '2026-03-07'},
+        {'fieldId': 'f', 'calendarValue': '2026-03-07', 'optionIds': []},
       );
     });
 
@@ -130,6 +132,7 @@ void main() {
       );
       expect(const FieldAnswer(custom: ' Other ').toRequest(d), {
         'fieldId': 'f',
+        'optionIds': [],
         'customValue': 'Other',
       });
     });
@@ -201,7 +204,7 @@ void main() {
         s.c.read(createListingProvider).photos,
         hasLength(PhotoRules.maxCount),
       );
-      expect(many.overLimit, 12);
+      expect(many.overLimit, 40 - (PhotoRules.maxCount - 2));
     });
 
     test(
@@ -223,6 +226,7 @@ void main() {
           DetailsError.noCategory,
           DetailsError.noTitle,
           DetailsError.noDescription,
+          DetailsError.noCity,
         });
 
         await fillValid(s.c);
@@ -261,6 +265,54 @@ void main() {
           .read(createListingProvider.notifier)
           .setAnswer('year', const FieldAnswer(text: '2023'));
       expect(s.c.read(createListingProvider).specsValid, isTrue);
+    });
+
+    test('the price period follows what the category allows', () async {
+      final s = setup();
+      final n = s.c.read(createListingProvider.notifier);
+
+      // Anything goes before a category is chosen.
+      expect(
+        s.c.read(createListingProvider).allowedUnits,
+        RentalPeriodUnit.values,
+      );
+
+      n.setUnit(RentalPeriodUnit.hour);
+      await n.selectCategory([
+        const Category(
+          id: 'flats',
+          slug: 'f',
+          name: 'F',
+          rentalPeriods: [RentalPeriodUnit.day, RentalPeriodUnit.month],
+        ),
+      ]);
+      final st = s.c.read(createListingProvider);
+      expect(st.allowedUnits, [RentalPeriodUnit.day, RentalPeriodUnit.month]);
+      // "hour" is not allowed here: a day is chosen instead.
+      expect(st.unit, RentalPeriodUnit.day);
+
+      // A still allowed period is kept.
+      n.setUnit(RentalPeriodUnit.month);
+      await n.selectCategory([
+        const Category(
+          id: 'cars',
+          slug: 'c',
+          name: 'C',
+          rentalPeriods: [RentalPeriodUnit.month, RentalPeriodUnit.week],
+        ),
+      ]);
+      expect(s.c.read(createListingProvider).unit, RentalPeriodUnit.month);
+
+      // No day allowed: the first allowed one.
+      await n.selectCategory([
+        const Category(
+          id: 'events',
+          slug: 'e',
+          name: 'E',
+          rentalPeriods: [RentalPeriodUnit.event],
+        ),
+      ]);
+      expect(s.c.read(createListingProvider).unit, RentalPeriodUnit.event);
     });
 
     test('changing category clears the previous answers', () async {
@@ -309,9 +361,31 @@ void main() {
           {
             'fieldId': 'year',
             'numericValue': 2023.0,
+            'optionIds': [],
           }, // optional 'note' omitted
         ],
       });
+      // The place goes along, outside the body map above.
+      expect(s.create.createdCityId, 'sumgait');
+      expect(s.create.createdDistrictId, isNull);
+    });
+
+    test('a city with districts also needs a district', () async {
+      final s = setup();
+      await fillValid(s.c);
+      final n = s.c.read(createListingProvider.notifier);
+
+      n.setPlace(const PlaceChoice(FakeLocations.baku));
+      expect(s.c.read(createListingProvider).detailsErrors, {
+        DetailsError.noDistrict,
+      });
+
+      n.setPlace(const PlaceChoice(FakeLocations.baku, FakeLocations.nasimi));
+      expect(s.c.read(createListingProvider).detailsErrors, isEmpty);
+
+      await n.submit();
+      expect(s.create.createdCityId, 'baku');
+      expect(s.create.createdDistrictId, 'nasimi');
     });
 
     test('does nothing while the form is invalid', () async {

@@ -35,6 +35,18 @@ public sealed class ListingConfiguration
         builder.Property(listing => listing.Status)
             .IsRequired();
 
+        builder.HasIndex(listing => new { listing.CityId, listing.DistrictId });
+
+        builder.HasOne<RentoX.Domain.Locations.City>()
+            .WithMany()
+            .HasForeignKey(listing => listing.CityId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasOne<RentoX.Domain.Locations.District>()
+            .WithMany()
+            .HasForeignKey(listing => listing.DistrictId)
+            .OnDelete(DeleteBehavior.Restrict);
+
         builder.Property(listing => listing.ViewCount)
             .HasDefaultValue(0L)
             .IsRequired();

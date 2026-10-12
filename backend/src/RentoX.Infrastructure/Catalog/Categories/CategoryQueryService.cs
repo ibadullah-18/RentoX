@@ -34,7 +34,8 @@ public sealed class CategoryQueryService(
             null,
             language,
             lookup,
-            []);
+            [],
+            Category.AllRentalPeriodsMask);
     }
 
     private static List<CategoryTreeResult>
@@ -42,7 +43,8 @@ public sealed class CategoryQueryService(
             Guid? parentId,
             PreferredLanguage language,
             ILookup<Guid?, Category> lookup,
-            HashSet<Guid> parentPath)
+            HashSet<Guid> parentPath,
+            int inheritedMask)
     {
         List<CategoryTreeResult> result = [];
 
@@ -61,12 +63,19 @@ public sealed class CategoryQueryService(
                     PreferredLanguage.Azerbaijani)
                 ?? category.Translations.FirstOrDefault();
 
+            // Own choice, else the parent's (or everything at the top).
+            int effectiveMask =
+                category.RentalPeriodMask != 0
+                    ? category.RentalPeriodMask
+                    : inheritedMask;
+
             List<CategoryTreeResult> children =
                 BuildChildren(
                     category.Id,
                     language,
                     lookup,
-                    parentPath);
+                    parentPath,
+                    effectiveMask);
 
             result.Add(new CategoryTreeResult(
                 category.Id,
@@ -75,7 +84,10 @@ public sealed class CategoryQueryService(
                 translation?.Name ?? category.Slug,
                 category.IconUrl,
                 category.DisplayOrder,
-                children));
+                children)
+            {
+                RentalPeriods = Category.PeriodsOf(effectiveMask)
+            });
 
             parentPath.Remove(category.Id);
         }

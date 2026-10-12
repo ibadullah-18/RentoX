@@ -25,12 +25,18 @@ String storeStatusLabel(AppL10n l10n, StoreStatus s) => switch (s) {
   StoreStatus.deleted => l10n.statusDeleted,
 };
 
-Color storeStatusColor(StoreStatus s) => switch (s) {
-  StoreStatus.active => AppColors.successInk,
-  StoreStatus.pendingReview => AppColors.warningInk,
-  StoreStatus.rejected || StoreStatus.suspended => AppColors.danger,
-  StoreStatus.draft || StoreStatus.deleted => AppColors.inkSecondary,
-};
+Color storeStatusColor(StoreStatus s, [Brightness b = Brightness.light]) =>
+    switch (s) {
+      StoreStatus.active =>
+        b == Brightness.dark ? AppColors.success : AppColors.successInk,
+      StoreStatus.pendingReview =>
+        b == Brightness.dark ? AppColors.warning : AppColors.warningInk,
+      StoreStatus.rejected || StoreStatus.suspended => AppColors.danger,
+      StoreStatus.draft || StoreStatus.deleted =>
+        b == Brightness.dark
+            ? AppColors.darkInkSecondary
+            : AppColors.inkSecondary,
+    };
 
 /// The owner's store: look, status and what they can do next.
 class MyStorePage extends ConsumerWidget {
@@ -178,7 +184,7 @@ class _StoreViewState extends ConsumerState<_StoreView> {
     // Follow the live value so a new logo/cover shows at once.
     final store = ref.watch(myStoreProvider).value ?? s;
     final editable = store.status.canEdit;
-    final color = storeStatusColor(store.status);
+    final color = storeStatusColor(store.status, Theme.of(context).brightness);
 
     return ListView(
       padding: EdgeInsets.fromLTRB(
@@ -301,10 +307,7 @@ class _StoreViewState extends ConsumerState<_StoreView> {
               padding: const EdgeInsets.only(bottom: AppSpacing.sm),
               child: Text(
                 l10n.storeSubmitNeedsLogo,
-                style: const TextStyle(
-                  color: AppColors.warningInk,
-                  fontSize: 13.5,
-                ),
+                style: TextStyle(color: context.warningText, fontSize: 13.5),
               ),
             ),
           FilledButton(

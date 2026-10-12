@@ -3,6 +3,7 @@ using RentoX.Application.Listings;
 using RentoX.Domain.Common.Exceptions;
 using RentoX.Domain.Listings;
 using RentoX.Domain.Listings.Enums;
+using RentoX.Infrastructure.Locations;
 using RentoX.Infrastructure.Persistence;
 
 namespace RentoX.Infrastructure.Listings;
@@ -35,6 +36,21 @@ public sealed class ListingUpdateService(
             ?? throw new DomainException(
                 "Listing was not found.");
 
+        await ListingRules.ValidateRentalPeriodAsync(
+            dbContext,
+            listing.CategoryId,
+            (RentalPeriodUnit)command.RentalPeriodUnit,
+            cancellationToken);
+
+        // A location is optional here (older listings have none); when sent
+        // it is checked and replaces the old one.
+        await ListingRules.ValidateLocationAsync(
+            dbContext,
+            command.CityId,
+            command.DistrictId,
+            required: false,
+            cancellationToken);
+
         listing.UpdateDetails(
             command.Title,
             command.Description,
@@ -42,6 +58,11 @@ public sealed class ListingUpdateService(
             command.Currency,
             (RentalPeriodUnit)
                 command.RentalPeriodUnit);
+
+        if (command.CityId.HasValue)
+        {
+            listing.SetLocation(command.CityId.Value, command.DistrictId);
+        }
 
         await dbContext.SaveChangesAsync(
             cancellationToken);

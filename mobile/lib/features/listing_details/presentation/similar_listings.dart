@@ -8,6 +8,8 @@ import '../../../core/theme/app_icons.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../shared/widgets/listing_grid.dart';
 import '../../catalog/data/catalog_repository.dart';
+import '../../catalog/domain/catalog_models.dart';
+import '../../home/presentation/home_state.dart';
 
 /// "Similar listings" at the bottom of a listing: the same brand first, then
 /// the same category, then neighbouring categories (the backend mixes them),
@@ -63,8 +65,21 @@ class SimilarListingsSliver extends ConsumerWidget {
                 0,
               ),
               child: OutlinedButton(
-                onPressed: () =>
-                    context.push(Routes.searchWith(categoryId: categoryId)),
+                onPressed: () async {
+                  // The category's listings, on the home page.
+                  var tree = const <Category>[];
+                  try {
+                    tree = await ref.read(categoriesProvider.future);
+                  } catch (_) {
+                    // No tree: the home page then simply shows everything.
+                  }
+                  if (!context.mounted) return;
+                  ref.read(homeQueryProvider.notifier).set('');
+                  ref
+                      .read(homeCategoryPathProvider.notifier)
+                      .set(categoryChainIds(tree, categoryId!));
+                  context.go(Routes.home);
+                },
                 style: OutlinedButton.styleFrom(
                   minimumSize: const Size.fromHeight(52),
                 ),

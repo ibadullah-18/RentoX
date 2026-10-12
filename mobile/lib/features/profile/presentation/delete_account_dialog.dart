@@ -4,16 +4,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/l10n/app_localizations.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
+import '../../../shared/widgets/app_dialogs.dart';
 import '../../auth/presentation/auth_controller.dart';
 import '../data/account_repository.dart';
 
 /// Asks the user to confirm, by typing a word, that the account (and
 /// everything in it) goes away for good, then deletes it and signs out.
 Future<void> confirmAndDeleteAccount(BuildContext context) async {
-  await showDialog<void>(
-    context: context,
+  await showAppDialog<void>(
+    context,
     barrierDismissible: false,
-    useRootNavigator: true,
     builder: (_) => const _DeleteAccountDialog(),
   );
 }
@@ -66,14 +66,25 @@ class _DeleteAccountDialogState extends ConsumerState<_DeleteAccountDialog> {
     final l10n = AppL10n.of(context);
     final word = l10n.deleteAccountWord;
 
-    return AlertDialog(
-      title: Text(l10n.deleteAccountTitle),
-      content: SingleChildScrollView(
+    return AppDialogCard(
+      child: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(l10n.deleteAccountMessage),
+            Text(
+              l10n.deleteAccountTitle,
+              style: Theme.of(context).textTheme.titleLarge
+                  ?.copyWith(fontWeight: FontWeight.w800),
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            Text(
+              l10n.deleteAccountMessage,
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                height: 1.4,
+              ),
+            ),
             const SizedBox(height: AppSpacing.md),
             Text(
               l10n.deleteAccountType(word),
@@ -94,31 +105,29 @@ class _DeleteAccountDialogState extends ConsumerState<_DeleteAccountDialog> {
                 style: const TextStyle(color: AppColors.danger, fontSize: 13),
               ),
             ],
+            const SizedBox(height: AppSpacing.xl),
+            FilledButton(
+              onPressed: (_deleting || !_matches(word)) ? null : _delete,
+              style: FilledButton.styleFrom(backgroundColor: AppColors.danger),
+              child: _deleting
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                    )
+                  : Text(l10n.deleteAccountConfirm),
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            TextButton(
+              onPressed: _deleting ? null : () => Navigator.of(context).pop(),
+              child: Text(l10n.cancelAction),
+            ),
           ],
         ),
       ),
-      actions: [
-        TextButton(
-          onPressed: _deleting ? null : () => Navigator.of(context).pop(),
-          child: Text(l10n.cancelAction),
-        ),
-        TextButton(
-          onPressed: (_deleting || !_matches(word)) ? null : _delete,
-          child: _deleting
-              ? const SizedBox(
-                  width: 18,
-                  height: 18,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
-              : Text(
-                  l10n.deleteAccountConfirm,
-                  style: TextStyle(
-                    color: _matches(word) ? AppColors.danger : null,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-        ),
-      ],
     );
   }
 }

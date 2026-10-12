@@ -103,6 +103,28 @@ public sealed class AdminCategoriesController(
             result.IsActive));
     }
 
+    /// <summary>
+    /// Which rental periods listings of this category may use (1 hour,
+    /// 2 day, 3 week, 4 month, 5 event, 6 negotiable). An empty list means
+    /// "the parent's choice, or all".
+    /// </summary>
+    [HttpPut("{categoryId:guid}/rental-periods")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> SetRentalPeriodsAsync(
+        Guid categoryId,
+        SetCategoryRentalPeriodsRequest request,
+        CancellationToken cancellationToken)
+    {
+        await categoryManagementService.SetRentalPeriodsAsync(
+            categoryId,
+            request.Periods.ToArray(),
+            cancellationToken);
+
+        return NoContent();
+    }
+
     [HttpPatch("{categoryId:guid}/status")]
     [ProducesResponseType(
     StatusCodes.Status204NoContent)]

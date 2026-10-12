@@ -1300,4 +1300,152 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get editLiveConfirm => 'Edit';
+
+  @override
+  String get themeTitle => 'Appearance';
+
+  @override
+  String get themeLight => 'Day (light)';
+
+  @override
+  String get themeDark => 'Night (dark)';
+
+  @override
+  String get themeSchedule => 'Automatic by time';
+
+  @override
+  String get themeScheduleHint =>
+      'The day and night looks switch by themselves at these times.';
+
+  @override
+  String get themeDayStarts => 'Day mode starts';
+
+  @override
+  String get themeNightStarts => 'Night mode starts';
+
+  @override
+  String get readMore => 'Read more';
+
+  @override
+  String get readLess => 'Show less';
+
+  @override
+  String get shareAction => 'Share';
+
+  @override
+  String get linkCopied => 'Listing link copied';
+
+  @override
+  String get locationLabel => 'Location';
+
+  @override
+  String get locationChoose => 'Choose city and district';
+
+  @override
+  String get locationChooseCity => 'Choose a city';
+
+  @override
+  String get locationSearchHint => 'Search cities';
+
+  @override
+  String get locationAllCities => 'All cities';
+
+  @override
+  String get locationAllDistricts => 'All districts';
+
+  @override
+  String get locationNothingFound => 'Nothing found';
+
+  @override
+  String get locationRequired => 'Choose the city';
+
+  @override
+  String get districtRequired => 'Choose the district';
+
+  @override
+  String get periodAny => 'Any';
+
+  @override
+  String get periodHourly => 'Hourly';
+
+  @override
+  String get periodDaily => 'Daily';
+
+  @override
+  String get periodWeekly => 'Weekly';
+
+  @override
+  String get periodMonthly => 'Monthly';
+
+  @override
+  String get periodEvent => 'Per event';
+
+  @override
+  String get periodNegotiable => 'Negotiable';
+
+  @override
+  String get cityRow => 'City';
+
+  @override
+  String get districtRow => 'District';
+
+  @override
+  String get moreActions => 'More';
+
+  @override
+  String get shareTitle => 'Share this listing';
+
+  @override
+  String get shareEmail => 'Email';
+
+  @override
+  String get shareCopyLink => 'Copy link';
+
+  @override
+  String get shareMore => 'More';
+
+  @override
+  String get categoryAllChip => 'All';
+
+  @override
+  String get walletTopUpTitle => 'Top up';
+
+  @override
+  String get walletHistoryTitle => 'History';
+
+  @override
+  String get walletHistoryEmpty => 'No transactions yet';
+
+  @override
+  String get walletHistoryEmptyHint =>
+      'Top-ups and payments will show up here.';
+
+  @override
+  String walletAfter(String amount) {
+    return 'Balance: $amount';
+  }
+
+  @override
+  String get walletTopUpAndHistory => 'Top up · History';
+
+  @override
+  String get txTopUp => 'Top-up';
+
+  @override
+  String get txListingFee => 'Listing activation';
+
+  @override
+  String get txPromotionFee => 'Listing promotion';
+
+  @override
+  String get txRefund => 'Refund';
+
+  @override
+  String get txBonus => 'Bonus';
+
+  @override
+  String get txAdjustment => 'Adjustment';
+
+  @override
+  String get loadMore => 'Show more';
 }

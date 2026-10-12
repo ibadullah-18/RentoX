@@ -7,4 +7,8 @@ public sealed record CategoryTreeResult(
     string Name,
     string? IconUrl,
     int DisplayOrder,
-    IReadOnlyList<CategoryTreeResult> Children);
+    IReadOnlyList<CategoryTreeResult> Children)
+{
+    /// <summary>Rental periods (1 hour .. 6 negotiable) listings may use.</summary>
+    public IReadOnlyList<int> RentalPeriods { get; init; } = [];
+}

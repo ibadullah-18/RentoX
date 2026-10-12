@@ -6,7 +6,7 @@ namespace RentoX.Domain.Listings;
 
 public sealed class Listing : AuditableEntity
 {
-    public const int MaximumImageCount = 30;
+    public const int MaximumImageCount = 15;
 
     private readonly List<ListingImage> _images = [];
 
@@ -41,6 +41,14 @@ public sealed class Listing : AuditableEntity
     public Guid OwnerId { get; private set; }
 
     public Guid CategoryId { get; private set; }
+
+    /// <summary>
+    /// Where the item is. Required for new listings; older listings may not
+    /// have one yet.
+    /// </summary>
+    public Guid? CityId { get; private set; }
+
+    public Guid? DistrictId { get; private set; }
 
     public string Title { get; private set; } =
         string.Empty;
@@ -132,6 +140,22 @@ public sealed class Listing : AuditableEntity
             rentalPeriodUnit);
     }
 
+    public void SetLocation(Guid cityId, Guid? districtId)
+    {
+        if (cityId == Guid.Empty)
+        {
+            throw new DomainException("City is required.");
+        }
+
+        if (districtId == Guid.Empty)
+        {
+            throw new DomainException("District id is invalid.");
+        }
+
+        CityId = cityId;
+        DistrictId = districtId;
+    }
+
     public ListingImage AddImage(
         string storageKey,
         string contentType,
@@ -140,7 +164,7 @@ public sealed class Listing : AuditableEntity
         if (_images.Count >= MaximumImageCount)
         {
             throw new DomainException(
-                "A listing can contain a maximum of 30 images.");
+                "A listing can contain a maximum of 15 images.");
         }
 
         int displayOrder = _images.Count;

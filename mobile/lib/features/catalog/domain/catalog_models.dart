@@ -36,6 +36,7 @@ class Category {
     required this.name,
     this.iconUrl,
     this.children = const [],
+    this.rentalPeriods = RentalPeriodUnit.values,
   });
 
   final String id;
@@ -44,16 +45,47 @@ class Category {
   final String? iconUrl;
   final List<Category> children;
 
-  factory Category.fromJson(Map<String, dynamic> json) => Category(
-    id: json['id'] as String,
-    slug: (json['slug'] as String?) ?? '',
-    name: (json['name'] as String?) ?? '',
-    iconUrl: json['iconUrl'] as String?,
-    children: ((json['children'] as List?) ?? const [])
-        .cast<Map<String, dynamic>>()
-        .map(Category.fromJson)
-        .toList(growable: false),
-  );
+  /// Which price periods (per day, per month...) listings of this category
+  /// may use. Everything is allowed when the server does not say.
+  final List<RentalPeriodUnit> rentalPeriods;
+
+  factory Category.fromJson(Map<String, dynamic> json) {
+    final periods = [
+      for (final p in (json['rentalPeriods'] as List?) ?? const [])
+        RentalPeriodUnit.fromId((p as num).toInt()),
+    ];
+    return Category(
+      id: json['id'] as String,
+      slug: (json['slug'] as String?) ?? '',
+      name: (json['name'] as String?) ?? '',
+      iconUrl: json['iconUrl'] as String?,
+      children: ((json['children'] as List?) ?? const [])
+          .cast<Map<String, dynamic>>()
+          .map(Category.fromJson)
+          .toList(growable: false),
+      rentalPeriods: periods.isEmpty ? RentalPeriodUnit.values : periods,
+    );
+  }
+}
+
+/// The category with [id] anywhere in [tree], or `null`.
+Category? findCategory(List<Category> tree, String id) {
+  for (final c in tree) {
+    if (c.id == id) return c;
+    final inChild = findCategory(c.children, id);
+    if (inChild != null) return inChild;
+  }
+  return null;
+}
+
+/// Ids from the top category down to [id] (empty when [id] is not in [tree]).
+List<String> categoryChainIds(List<Category> tree, String id) {
+  for (final c in tree) {
+    if (c.id == id) return [c.id];
+    final below = categoryChainIds(c.children, id);
+    if (below.isNotEmpty) return [c.id, ...below];
+  }
+  return const [];
 }
 
 /// Mirrors the backend `RentalPeriodUnit` enum.
@@ -85,6 +117,7 @@ class ListingSummary {
     required this.favoriteCount,
     this.categoryName,
     this.coverImageUrl,
+    this.location,
   });
 
   final String id;
@@ -99,6 +132,9 @@ class ListingSummary {
   final String? categoryName;
   final String? coverImageUrl;
 
+  /// "City, district" shown on the card.
+  final String? location;
+
   factory ListingSummary.fromJson(Map<String, dynamic> json) => ListingSummary(
     id: json['id'] as String,
     title: (json['title'] as String?) ?? '',
@@ -111,6 +147,7 @@ class ListingSummary {
     favoriteCount: (json['favoriteCount'] as num?)?.toInt() ?? 0,
     categoryName: json['categoryName'] as String?,
     coverImageUrl: AppConfig.resolveUrl(json['coverImageUrl'] as String?),
+    location: json['location'] as String?,
   );
 }
 
@@ -270,6 +307,8 @@ class ListingDetails {
     required this.fields,
     this.categoryName,
     this.categoryId,
+    this.cityName,
+    this.districtName,
   });
 
   final String id;
@@ -288,6 +327,8 @@ class ListingDetails {
   final List<ListingFieldValue> fields;
   final String? categoryName;
   final String? categoryId;
+  final String? cityName;
+  final String? districtName;
 
   factory ListingDetails.fromJson(Map<String, dynamic> json) {
     final images =
@@ -313,6 +354,8 @@ class ListingDetails {
           DateTime.now(),
       categoryName: json['categoryName'] as String?,
       categoryId: json['categoryId'] as String?,
+      cityName: json['cityName'] as String?,
+      districtName: json['districtName'] as String?,
       owner: ListingOwner.fromJson(json['owner'] as Map<String, dynamic>),
       images: images,
       fields: ((json['fields'] as List?) ?? const [])

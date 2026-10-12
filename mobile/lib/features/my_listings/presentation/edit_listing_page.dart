@@ -8,10 +8,14 @@ import '../../../core/l10n/locale_controller.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_icons.dart';
 import '../../../core/theme/app_spacing.dart';
+import '../../../shared/widgets/app_dialogs.dart';
 import '../../../shared/widgets/async_states.dart';
 import '../../../shared/widgets/listing_card.dart';
 import '../../../shared/widgets/sub_page.dart';
+import '../../catalog/data/catalog_repository.dart';
 import '../../catalog/domain/catalog_models.dart';
+import '../../locations/domain/location_models.dart';
+import '../../locations/presentation/location_field.dart';
 import '../../listing_create/data/listing_create_repository.dart';
 import '../../listing_create/data/photo_source.dart';
 import '../../listing_create/domain/field_models.dart';
@@ -88,11 +92,42 @@ class _EditFormState extends ConsumerState<_EditForm> {
     text: _priceText(widget.details.price),
   );
   late RentalPeriodUnit _unit = widget.details.unit;
+  late PlaceChoice _place = _initialPlace(widget.details);
   Map<String, FieldAnswer>? _answers;
 
   bool _saving = false;
   bool _photoBusy = false;
   bool _showErrors = false;
+
+  /// The place the server stored (names only: whether the city has
+  /// districts follows from the listing having one).
+  static PlaceChoice _initialPlace(OwnedListingDetails d) {
+    if (d.cityId == null) return PlaceChoice.none;
+    final city = City(
+      id: d.cityId!,
+      name: d.cityName ?? '',
+      hasDistricts: d.districtId != null,
+    );
+    final district = d.districtId == null
+        ? null
+        : District(id: d.districtId!, name: d.districtName ?? '');
+    return PlaceChoice(city, district);
+  }
+
+  bool get _placeOk => _place.isComplete;
+
+  /// The price periods this listing's category allows (its current one is
+  /// always kept, so an old listing is never forced to change).
+  List<RentalPeriodUnit> _allowedUnits(WidgetRef ref) {
+    final tree = ref.watch(categoriesProvider).value;
+    final category = tree == null
+        ? null
+        : findCategory(tree, widget.details.categoryId);
+    final allowed = category?.rentalPeriods ?? RentalPeriodUnit.values;
+    return allowed.contains(widget.details.unit)
+        ? allowed
+        : [widget.details.unit, ...allowed];
+  }
 
   static String _priceText(double v) =>
       v == v.truncateToDouble() ? '${v.toInt()}' : '$v';
@@ -166,6 +201,7 @@ class _EditFormState extends ConsumerState<_EditForm> {
     setState(() => _showErrors = true);
     if (!_titleOk ||
         !_descriptionOk ||
+        !_placeOk ||
         _priceError != null ||
         _fieldErrors(defs).isNotEmpty) {
       return;
@@ -181,6 +217,8 @@ class _EditFormState extends ConsumerState<_EditForm> {
         description: _description.text.trim(),
         price: FieldAnswer.parseNumber(_price.text) ?? 0,
         unit: _unit,
+        cityId: _place.city?.id,
+        districtId: _place.district?.id,
       );
       final answers = _answers ?? const <String, FieldAnswer>{};
       final body = <Map<String, dynamic>>[];
@@ -260,57 +298,33 @@ class _EditFormState extends ConsumerState<_EditForm> {
     final repo = ref.read(myListingsRepositoryProvider);
     final id = widget.details.id;
 
-    final choice = await showModalBottomSheet<String>(
-      context: context,
-      showDragHandle: true,
-      useSafeArea: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.xl)),
-      ),
-      builder: (context) => Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (!image.isCover)
-            ListTile(
-              leading: const Icon(AppIcons.cover),
-              title: Text(l10n.makeCover),
-              onTap: () => Navigator.pop(context, 'cover'),
-            ),
-          ListTile(
-            leading: const Icon(AppIcons.trash, color: AppColors.danger),
-            title: Text(
-              l10n.removePhoto,
-              style: const TextStyle(color: AppColors.danger),
-            ),
-            onTap: () => Navigator.pop(context, 'remove'),
+    final choice = await showActionSheet<String>(
+      context,
+      items: [
+        if (!image.isCover)
+          ActionSheetItem(
+            value: 'cover',
+            label: l10n.makeCover,
+            icon: AppIcons.cover,
           ),
-          const SizedBox(height: AppSpacing.md),
-        ],
-      ),
+        ActionSheetItem(
+          value: 'remove',
+          label: l10n.removePhoto,
+          icon: AppIcons.trash,
+          destructive: true,
+        ),
+      ],
     );
     if (choice == null || !mounted) return;
 
     if (choice == 'cover') {
       await _runPhoto(() => repo.setCover(id, image.id));
     } else {
-      final ok = await showDialog<bool>(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: Text(l10n.editPhotoRemoveTitle),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: Text(l10n.cancelAction),
-            ),
-            TextButton(
-              onPressed: () => Navigator.pop(context, true),
-              child: Text(
-                l10n.removePhoto,
-                style: const TextStyle(color: AppColors.danger),
-              ),
-            ),
-          ],
-        ),
+      final ok = await showConfirmDialog(
+        context,
+        title: l10n.editPhotoRemoveTitle,
+        confirmLabel: l10n.removePhoto,
+        destructive: true,
       );
       if (ok == true) await _runPhoto(() => repo.deleteImage(id, image.id));
     }
@@ -393,12 +407,25 @@ class _EditFormState extends ConsumerState<_EditForm> {
           const SizedBox(height: AppSpacing.sm),
           Text(
             l10n.editPhotoNeeded,
-            style: const TextStyle(color: AppColors.warningInk, fontSize: 13),
+            style: TextStyle(color: context.warningText, fontSize: 13),
           ),
         ],
         const SizedBox(height: AppSpacing.xl),
 
         // --- text ---
+        LocationField(
+          label: l10n.locationLabel,
+          required: true,
+          value: _place,
+          enabled: !_saving,
+          onChanged: (v) => setState(() => _place = v),
+          errorText: !_showErrors
+              ? null
+              : (_place.isNone
+                    ? l10n.locationRequired
+                    : (_placeOk ? null : l10n.districtRequired)),
+        ),
+        const SizedBox(height: AppSpacing.lg),
         TextField(
           controller: _title,
           enabled: !_saving,
@@ -501,7 +528,7 @@ class _EditFormState extends ConsumerState<_EditForm> {
           spacing: AppSpacing.sm,
           runSpacing: AppSpacing.sm,
           children: [
-            for (final unit in RentalPeriodUnit.values)
+            for (final unit in _allowedUnits(ref))
               ChoiceChip(
                 label: Text(rentalUnitLabel(l10n, unit)),
                 selected: _unit == unit,

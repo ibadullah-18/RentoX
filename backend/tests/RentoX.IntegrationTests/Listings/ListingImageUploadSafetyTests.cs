@@ -201,9 +201,11 @@ public sealed class ListingImageUploadSafetyTests(
                 "image/png",
                 bytes.LongLength));
 
+        // What is kept is the optimized WebP, not the original upload.
         Assert.Equal(1, storage.SaveCount);
-        Assert.Equal(bytes.LongLength, storage.SavedSize);
-        Assert.Equal("image/png", storage.SavedContentType);
+        Assert.True(storage.SavedSize > 0);
+        Assert.Equal("image/webp", storage.SavedContentType);
+        Assert.Equal("image/webp", result.ContentType);
 
         await using RentoXDbContext verification =
             database.CreateContext();
@@ -212,7 +214,7 @@ public sealed class ListingImageUploadSafetyTests(
             .SingleAsync(item => item.Id == result.Id);
 
         Assert.Equal(seed.ListingId, saved.ListingId);
-        Assert.Equal(bytes.LongLength, saved.SizeBytes);
+        Assert.Equal(storage.SavedSize, saved.SizeBytes);
         Assert.Equal(storage.SavedKey, saved.StorageKey);
     }
 

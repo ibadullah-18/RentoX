@@ -5,6 +5,7 @@ using RentoX.Domain.Common.Exceptions;
 using RentoX.Domain.Listings;
 using RentoX.Domain.Listings.Enums;
 using RentoX.Domain.Users.Enums;
+using RentoX.Infrastructure.Locations;
 using RentoX.Infrastructure.Persistence;
 
 namespace RentoX.Infrastructure.Listings;
@@ -46,6 +47,19 @@ public sealed class ListingCreationService(
                 "Owner account was not found.");
         }
 
+        await ListingRules.ValidateLocationAsync(
+            dbContext,
+            command.CityId,
+            command.DistrictId,
+            required: true,
+            cancellationToken);
+
+        await ListingRules.ValidateRentalPeriodAsync(
+            dbContext,
+            command.CategoryId,
+            (RentalPeriodUnit)command.RentalPeriodUnit,
+            cancellationToken);
+
         IReadOnlyList<CategoryFieldDefinitionResult>
             availableFields =
                 await fieldQueryService.GetForCategoryAsync(
@@ -71,6 +85,8 @@ public sealed class ListingCreationService(
             command.Price,
             command.Currency,
             (RentalPeriodUnit)command.RentalPeriodUnit);
+
+        listing.SetLocation(command.CityId!.Value, command.DistrictId);
 
         foreach (CreateListingFieldInput input
                  in command.Fields)

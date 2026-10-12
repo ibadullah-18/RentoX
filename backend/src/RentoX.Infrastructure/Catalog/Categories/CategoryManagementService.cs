@@ -49,6 +49,26 @@ public sealed class CategoryManagementService(
         return CreateResult(category);
     }
 
+    public async Task SetRentalPeriodsAsync(
+        Guid categoryId,
+        IReadOnlyCollection<int> periods,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(periods);
+
+        Category category =
+            await dbContext.Categories
+                .SingleOrDefaultAsync(
+                    item => item.Id == categoryId,
+                    cancellationToken)
+            ?? throw new DomainException(
+                "Category was not found.");
+
+        category.SetRentalPeriods(periods);
+
+        await dbContext.SaveChangesAsync(cancellationToken);
+    }
+
     public async Task<CreateCategoryResult> UpdateAsync(
         Guid categoryId,
         UpdateCategoryCommand command,

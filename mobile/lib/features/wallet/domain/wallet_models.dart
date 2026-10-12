@@ -63,3 +63,44 @@ String newIdempotencyKey([Random? random]) {
   final bytes = List<int>.generate(16, (_) => r.nextInt(256));
   return 'rx-${bytes.map((b) => b.toRadixString(16).padLeft(2, '0')).join()}';
 }
+
+/// Mirrors the backend `WalletTransactionType`.
+enum WalletTxType { topUp, listingFee, promotionFee, refund, bonus, adjustment }
+
+/// One line of the wallet history (`GET /api/wallet/transactions`).
+class WalletTransaction {
+  const WalletTransaction({
+    required this.id,
+    required this.isCredit,
+    required this.type,
+    required this.amount,
+    required this.balanceAfter,
+    required this.occurredAt,
+  });
+
+  final String id;
+
+  /// Money came in (`true`) or went out.
+  final bool isCredit;
+  final WalletTxType type;
+  final double amount;
+  final double balanceAfter;
+  final DateTime occurredAt;
+
+  factory WalletTransaction.fromJson(Map<String, dynamic> json) =>
+      WalletTransaction(
+        id: json['id'].toString(),
+        isCredit: json['direction'] == 1,
+        type: switch (json['type']) {
+          1 => WalletTxType.topUp,
+          2 => WalletTxType.listingFee,
+          3 => WalletTxType.promotionFee,
+          4 => WalletTxType.refund,
+          5 => WalletTxType.bonus,
+          _ => WalletTxType.adjustment,
+        },
+        amount: (json['amount'] as num).toDouble(),
+        balanceAfter: (json['balanceAfter'] as num).toDouble(),
+        occurredAt: DateTime.parse(json['occurredAtUtc'] as String).toLocal(),
+      );
+}

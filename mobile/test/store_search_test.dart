@@ -37,6 +37,9 @@ class FakeCatalog extends CatalogRepository {
     List<Map<String, dynamic>>? fieldFilters,
     SellerType seller = SellerType.all,
     SearchSort sort = SearchSort.date,
+    String? cityId,
+    String? districtId,
+    RentalPeriodUnit? rentalPeriod,
     int page = 1,
     int pageSize = 20,
   }) async => const Paged(items: [], page: 1, totalPages: 0, totalCount: 0);
@@ -185,7 +188,7 @@ void main() {
       await tester.tap(find.text(az.searchTabListings));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 50));
-      expect(find.text(az.noResults), findsOneWidget);
+      expect(find.text('Store a'), findsNothing); // back on the words tab
       expect(tester.takeException(), isNull);
     });
   });

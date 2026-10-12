@@ -11,6 +11,7 @@ import 'package:rentox/features/catalog/data/catalog_repository.dart';
 import 'package:rentox/features/catalog/domain/catalog_models.dart';
 import 'package:rentox/features/listing_create/data/listing_create_repository.dart';
 import 'package:rentox/features/listing_create/domain/field_models.dart';
+import 'package:rentox/features/locations/data/locations_repository.dart';
 import 'package:rentox/features/search/domain/field_filter.dart';
 import 'package:rentox/features/search/domain/search_options.dart';
 import 'package:rentox/features/search/presentation/filters_sheet.dart';
@@ -73,6 +74,18 @@ Future<void> reveal(WidgetTester tester, Finder target) =>
           )
           .first,
     );
+
+class _Cats extends FakeCatalogBase {
+  @override
+  Future<List<Category>> categories(String language) async => const [
+    Category(
+      id: 'cars',
+      slug: 'cars',
+      name: 'Cars',
+      rentalPeriods: [RentalPeriodUnit.day, RentalPeriodUnit.month],
+    ),
+  ];
+}
 
 void main() {
   final az = lookupAppL10n(const Locale('az'));
@@ -184,7 +197,7 @@ void main() {
     });
 
     test('the notifier keeps only non-empty conditions', () {
-      const seed = SearchSeed(categoryId: 'cars');
+      const seed = SearchSeed();
       final c = ProviderContainer();
       addTearDown(c.dispose);
       c.listen(searchFiltersProvider(seed), (_, _) {});
@@ -258,6 +271,7 @@ void main() {
       await open(tester, current: const SearchFilters(), defs: const []);
 
       expect(find.text(az.priceFilter), findsOneWidget);
+      await reveal(tester, find.text(az.filtersPickCategory));
       expect(find.text(az.filtersPickCategory), findsOneWidget);
       expect(tester.takeException(), isNull);
     });
@@ -288,6 +302,8 @@ void main() {
             listingCreateRepositoryProvider.overrideWithValue(
               FakeCreateRepo(defs: defs),
             ),
+            locationsRepositoryProvider.overrideWithValue(FakeLocations()),
+            catalogRepositoryProvider.overrideWithValue(_Cats()),
           ],
           child: MaterialApp(
             locale: const Locale('az'),
@@ -311,12 +327,33 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 400));
 
+      await reveal(tester, find.text('Label brand'));
       expect(find.text('Label brand'), findsOneWidget);
       expect(find.text('Not filterable'), findsNothing);
+      await tester.drag(find.byType(ListView).first, const Offset(0, 4000));
+      await tester.pumpAndSettle();
+
+      // Place and price period come first.
+      await tester.tap(find.text(az.locationAllCities));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Bakı'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(FakeLocations.nasimi.name));
+      await tester.pumpAndSettle();
+      expect(find.text('Bakı, Nəsimi'), findsOneWidget);
+
+      // Only the periods the category allows are offered.
+      expect(find.text(az.periodDaily), findsOneWidget);
+      expect(find.text(az.periodMonthly), findsOneWidget);
+      expect(find.text(az.periodHourly), findsNothing);
+      await tester.tap(find.text(az.periodMonthly));
+      await tester.pump();
 
       // Seller type and sorting are always offered.
+      await reveal(tester, find.text(az.sellerStore));
       await tester.tap(find.text(az.sellerStore));
       await tester.pump();
+      await reveal(tester, find.text(az.sortPriceAsc));
       await tester.tap(find.text(az.sortPriceAsc));
       await tester.pump();
 
@@ -365,6 +402,9 @@ void main() {
       expect(result!.fields['gear']!.optionIds, {'Auto'});
       expect(result!.fields['year']!.min, 2020);
       expect(result!.fields['electric']!.flag, isTrue);
+      expect(result!.place.city?.id, 'baku');
+      expect(result!.place.district?.id, 'nasimi');
+      expect(result!.period, RentalPeriodUnit.month);
       expect(result!.seller, SellerType.store);
       expect(result!.sort, SearchSort.priceAsc);
       expect(find.text('Label year'), findsNothing); // sheet closed

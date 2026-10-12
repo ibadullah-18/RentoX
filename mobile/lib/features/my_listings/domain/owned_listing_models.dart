@@ -120,6 +120,10 @@ class OwnedListingDetails {
     this.rejectionReason,
     this.publishedAt,
     this.expiresAt,
+    this.cityId,
+    this.cityName,
+    this.districtId,
+    this.districtName,
   });
 
   final String id;
@@ -135,6 +139,10 @@ class OwnedListingDetails {
   final String? rejectionReason;
   final DateTime? publishedAt;
   final DateTime? expiresAt;
+  final String? cityId;
+  final String? cityName;
+  final String? districtId;
+  final String? districtName;
 
   /// Its 30 days are over: it can be renewed (and nothing else promoted).
   bool isExpiredAt(DateTime now) =>
@@ -160,6 +168,10 @@ class OwnedListingDetails {
       rejectionReason: json['rejectionReason'] as String?,
       publishedAt: _date(json['publishedAtUtc']),
       expiresAt: _date(json['expiresAtUtc']),
+      cityId: json['cityId'] as String?,
+      cityName: json['cityName'] as String?,
+      districtId: json['districtId'] as String?,
+      districtName: json['districtName'] as String?,
       images: images,
       fields: ((json['fields'] as List?) ?? const [])
           .cast<Map<String, dynamic>>()

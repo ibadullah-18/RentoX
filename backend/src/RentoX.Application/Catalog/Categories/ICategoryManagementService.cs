@@ -11,6 +11,15 @@ public interface ICategoryManagementService
         UpdateCategoryCommand command,
         CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// Which rental periods listings of this category may use (empty = the
+    /// parent's choice, or all of them).
+    /// </summary>
+    Task SetRentalPeriodsAsync(
+        Guid categoryId,
+        IReadOnlyCollection<int> periods,
+        CancellationToken cancellationToken = default);
+
     Task SetActiveStatusAsync(
         Guid categoryId,
         bool isActive,

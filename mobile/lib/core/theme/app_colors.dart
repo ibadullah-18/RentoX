@@ -37,3 +37,23 @@ abstract final class AppColors {
   static const darkInkSecondary = Color(0xFFA9A6CF);
   static const darkPrimary = Color(0xFF6A5CFF);
 }
+
+/// Shades that must change with the light/dark look (text on a tint, soft
+/// backgrounds). Use these instead of the fixed light-only colours.
+extension RentoxThemeColors on BuildContext {
+  bool get isDarkTheme => Theme.of(this).brightness == Brightness.dark;
+
+  /// Soft indigo background (placeholders, avatars).
+  Color get primarySoft => isDarkTheme
+      ? AppColors.darkPrimary.withValues(alpha: 0.20)
+      : AppColors.primarySoft;
+
+  Color get successText =>
+      isDarkTheme ? AppColors.success : AppColors.successInk;
+
+  Color get warningText =>
+      isDarkTheme ? AppColors.warning : AppColors.warningInk;
+
+  /// Quiet grey text.
+  Color get mutedText => Theme.of(this).colorScheme.onSurfaceVariant;
+}

@@ -12,6 +12,16 @@ abstract final class AppConfig {
     return 'http://localhost:5155';
   }
 
+  static const _shareBase = String.fromEnvironment(
+    'SHARE_BASE_URL',
+    defaultValue: 'https://rentox.az',
+  );
+
+  /// The public site used in links people share (no trailing slash).
+  static String get shareBaseUrl => _shareBase.endsWith('/')
+      ? _shareBase.substring(0, _shareBase.length - 1)
+      : _shareBase;
+
   /// The API returns relative media paths (e.g. `/api/listing-images/{id}`).
   static String? resolveUrl(String? path) {
     if (path == null || path.isEmpty) return null;

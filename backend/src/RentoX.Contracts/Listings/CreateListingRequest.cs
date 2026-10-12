@@ -7,4 +7,6 @@ public sealed record CreateListingRequest(
     decimal Price,
     string Currency,
     int RentalPeriodUnit,
-    IReadOnlyList<CreateListingFieldRequest> Fields);
+    IReadOnlyList<CreateListingFieldRequest> Fields,
+    Guid? CityId = null,
+    Guid? DistrictId = null);

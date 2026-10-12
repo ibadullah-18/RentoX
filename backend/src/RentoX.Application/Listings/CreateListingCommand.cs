@@ -8,4 +8,6 @@ public sealed record CreateListingCommand(
     decimal Price,
     string Currency,
     int RentalPeriodUnit,
-    IReadOnlyList<CreateListingFieldInput> Fields);
+    IReadOnlyList<CreateListingFieldInput> Fields,
+    Guid? CityId = null,
+    Guid? DistrictId = null);

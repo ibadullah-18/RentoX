@@ -71,6 +71,8 @@ public sealed class ListingImageAccessTests(
         {
             Assert.NotNull(result);
             Assert.Equal("image/png", result.ContentType);
+            // Only the photos of a live listing may be cached by everybody.
+            Assert.Equal(status == ListingStatus.Active, result.IsPublic);
             Assert.Equal(1, storage.OpenCount);
             Assert.Equal(data.StorageKey, storage.LastOpenedKey);
         }

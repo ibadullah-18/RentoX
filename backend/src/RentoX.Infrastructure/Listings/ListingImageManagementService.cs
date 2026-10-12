@@ -68,7 +68,14 @@ public sealed class ListingImageManagementService(
             select new
             {
                 item.StorageKey,
-                item.ContentType
+                item.ContentType,
+                // Visible to everybody (not only to the owner or a
+                // moderator): safe for browsers and a CDN to keep.
+                IsPublic = listing.Status == ListingStatus.Active
+                    && listing.PublishedAtUtc != null
+                    && listing.PublishedAtUtc <= utcNow
+                    && listing.ExpiresAtUtc != null
+                    && listing.ExpiresAtUtc > utcNow
             })
             .SingleOrDefaultAsync(cancellationToken);
 
@@ -85,7 +92,8 @@ public sealed class ListingImageManagementService(
             ? null
             : new ListingImageContentResult(
                 content,
-                image.ContentType);
+                image.ContentType,
+                image.IsPublic);
     }
 
     public async Task DeleteAsync(

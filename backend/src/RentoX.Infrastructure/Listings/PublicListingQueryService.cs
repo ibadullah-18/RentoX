@@ -302,6 +302,42 @@ public sealed class PublicListingQueryService(
                         listing.CategoryId));
         }
 
+        if (query.CityId.HasValue)
+        {
+            Guid cityFilter = query.CityId.Value;
+
+            listingQuery =
+                listingQuery.Where(listing =>
+                    listing.CityId == cityFilter);
+        }
+
+        if (query.DistrictId.HasValue)
+        {
+            Guid districtFilter = query.DistrictId.Value;
+
+            listingQuery =
+                listingQuery.Where(listing =>
+                    listing.DistrictId == districtFilter);
+        }
+
+        if (query.RentalPeriodUnit.HasValue)
+        {
+            if (!Enum.IsDefined(
+                    typeof(RentalPeriodUnit),
+                    query.RentalPeriodUnit.Value))
+            {
+                throw new DomainException(
+                    "Rental period is invalid.");
+            }
+
+            RentalPeriodUnit unitFilter =
+                (RentalPeriodUnit)query.RentalPeriodUnit.Value;
+
+            listingQuery =
+                listingQuery.Where(listing =>
+                    listing.RentalPeriodUnit == unitFilter);
+        }
+
         // Smart search: words are matched with typo tolerance, synonyms and
         // category names, and scored in the database. `null` means the
         // database has not been upgraded for it yet (plain text fallback).
@@ -854,6 +890,47 @@ public sealed class PublicListingQueryService(
                     category,
                     language));
 
+        Guid[] summaryCityIds =
+            projections
+                .Where(item => item.CityId.HasValue)
+                .Select(item => item.CityId!.Value)
+                .Distinct()
+                .ToArray();
+
+        Guid[] summaryDistrictIds =
+            projections
+                .Where(item => item.DistrictId.HasValue)
+                .Select(item => item.DistrictId!.Value)
+                .Distinct()
+                .ToArray();
+
+        Dictionary<Guid, string> cityNames = [];
+        Dictionary<Guid, string> districtNames = [];
+
+        if (summaryCityIds.Length > 0)
+        {
+            cityNames =
+                (await dbContext.Cities
+                    .AsNoTracking()
+                    .Where(city => summaryCityIds.Contains(city.Id))
+                    .ToListAsync(cancellationToken))
+                .ToDictionary(
+                    city => city.Id,
+                    city => city.NameFor(language));
+        }
+
+        if (summaryDistrictIds.Length > 0)
+        {
+            districtNames =
+                (await dbContext.Districts
+                    .AsNoTracking()
+                    .Where(district => summaryDistrictIds.Contains(district.Id))
+                    .ToListAsync(cancellationToken))
+                .ToDictionary(
+                    district => district.Id,
+                    district => district.NameFor(language));
+        }
+
         List<PublicListingSummaryResult> items =
             projections
                 .Select(item =>
@@ -878,7 +955,23 @@ public sealed class PublicListingQueryService(
                     item.ExpiresAtUtc)
                     {
                         IsVip =
-                            vipListingIds.Contains(item.Id)
+                            vipListingIds.Contains(item.Id),
+                        Location = string.Join(
+                            ", ",
+                            new[]
+                            {
+                                item.CityId.HasValue
+                                    ? cityNames.GetValueOrDefault(
+                                        item.CityId.Value)
+                                    : null,
+                                item.DistrictId.HasValue
+                                    ? districtNames.GetValueOrDefault(
+                                        item.DistrictId.Value)
+                                    : null
+                            }.Where(name => !string.IsNullOrEmpty(name)))
+                            is { Length: > 0 } text
+                            ? text
+                            : null
                     })
                 .ToList();
 
@@ -1113,7 +1206,9 @@ public sealed class PublicListingQueryService(
                         .FirstOrDefault(),
                     listing.ViewCount,
                     listing.PublishedAtUtc!.Value,
-                    listing.ExpiresAtUtc!.Value);
+                    listing.ExpiresAtUtc!.Value,
+                    listing.CityId,
+                    listing.DistrictId);
 
     /// <summary>The previous search: plain "contains" matching.</summary>
     private IQueryable<Listing> ApplyPlainTextSearch(
@@ -1286,7 +1381,9 @@ public sealed class PublicListingQueryService(
         Guid? CoverImageId,
         long ViewCount,
         DateTimeOffset PublishedAtUtc,
-        DateTimeOffset ExpiresAtUtc);
+        DateTimeOffset ExpiresAtUtc,
+        Guid? CityId,
+        Guid? DistrictId);
 
     public async Task<PublicListingDetailsResult?> GetByIdAsync(
         Guid listingId,
@@ -1437,6 +1534,31 @@ public sealed class PublicListingQueryService(
                         promotion.EndsAtUtc > now,
                     cancellationToken);
 
+        string? cityName = null;
+        string? districtName = null;
+
+        if (listing.CityId.HasValue)
+        {
+            cityName =
+                (await dbContext.Cities
+                    .AsNoTracking()
+                    .SingleOrDefaultAsync(
+                        city => city.Id == listing.CityId.Value,
+                        cancellationToken))
+                ?.NameFor(language);
+        }
+
+        if (listing.DistrictId.HasValue)
+        {
+            districtName =
+                (await dbContext.Districts
+                    .AsNoTracking()
+                    .SingleOrDefaultAsync(
+                        district => district.Id == listing.DistrictId.Value,
+                        cancellationToken))
+                ?.NameFor(language);
+        }
+
         var ownerStore =
             await dbContext.Set<StoreProfile>()
                 .AsNoTracking()
@@ -1488,6 +1610,10 @@ public sealed class PublicListingQueryService(
             images,
             fields)
         {
+            CityId = listing.CityId,
+            CityName = cityName,
+            DistrictId = listing.DistrictId,
+            DistrictName = districtName,
             IsVip = isVip
         };
     }

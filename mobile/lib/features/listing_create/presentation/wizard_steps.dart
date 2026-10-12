@@ -13,6 +13,7 @@ import '../../catalog/domain/catalog_models.dart';
 import '../data/photo_source.dart';
 import '../domain/field_models.dart';
 import '../domain/photo.dart';
+import '../../locations/presentation/location_field.dart';
 import 'category_picker.dart';
 import 'create_listing_controller.dart';
 import 'field_editors.dart';
@@ -201,7 +202,7 @@ class PhotosStep extends ConsumerWidget {
                   label: l10n.addPhotos,
                   child: Container(
                     decoration: BoxDecoration(
-                      color: AppColors.primarySoft.withValues(alpha: 0.6),
+                      color: context.primarySoft.withValues(alpha: 0.6),
                       borderRadius: BorderRadius.circular(AppRadius.lg),
                       border: Border.all(
                         color: scheme.primary.withValues(alpha: 0.5),
@@ -394,6 +395,19 @@ class _DetailsStepState extends ConsumerState<DetailsStep> {
           ),
         ],
         const SizedBox(height: AppSpacing.xl),
+        LocationField(
+          label: l10n.locationLabel,
+          required: true,
+          value: state.place,
+          enabled: !state.locked,
+          onChanged: controller.setPlace,
+          errorText: errors.contains(DetailsError.noCity)
+              ? l10n.locationRequired
+              : (errors.contains(DetailsError.noDistrict)
+                    ? l10n.districtRequired
+                    : null),
+        ),
+        const SizedBox(height: AppSpacing.xl),
         TextField(
           controller: _title,
           enabled: !state.locked,
@@ -547,7 +561,7 @@ class _SpecsStepState extends ConsumerState<SpecsStep> {
           spacing: AppSpacing.sm,
           runSpacing: AppSpacing.sm,
           children: [
-            for (final unit in RentalPeriodUnit.values)
+            for (final unit in state.allowedUnits)
               ChoiceChip(
                 label: Text(unitChipLabel(l10n, unit)),
                 selected: state.unit == unit,
@@ -582,6 +596,7 @@ class ReviewStep extends ConsumerWidget {
 
     final defs = s.fields.value ?? const <FieldDefinition>[];
     final rows = <(String, String)>[
+      if (!s.place.isNone) (l10n.locationLabel, s.place.label),
       for (final d in defs)
         if (answerDisplay(
               l10n,

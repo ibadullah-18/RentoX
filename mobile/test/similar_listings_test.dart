@@ -7,6 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:rentox/core/l10n/app_localizations.dart';
 import 'package:rentox/features/catalog/data/catalog_repository.dart';
 import 'package:rentox/features/catalog/domain/catalog_models.dart';
+import 'package:rentox/features/home/presentation/home_state.dart';
 import 'package:rentox/features/listing_details/presentation/similar_listings.dart';
 
 ListingSummary summary(String id) => ListingSummary(
@@ -26,6 +27,11 @@ class FakeCatalog extends CatalogRepository {
 
   final List<ListingSummary> result;
   final asked = <String>[];
+
+  @override
+  Future<List<Category>> categories(String language) async => const [
+    Category(id: 'cat-1', slug: 'cars', name: 'Cars'),
+  ];
 
   @override
   Future<List<ListingSummary>> similar(String id, String language) async {
@@ -98,7 +104,11 @@ void main() {
     await tester.tap(find.text(az.similarMore));
     await tester.pumpAndSettle();
 
-    expect(find.text('search:cat-1'), findsOneWidget);
+    // The category's listings open on the home page.
+    final container = ProviderScope.containerOf(
+      tester.element(find.byType(SimilarListingsSliver)),
+    );
+    expect(container.read(homeCategoryPathProvider), ['cat-1']);
   });
 
   testWidgets('shows nothing when there is nothing similar', (tester) async {

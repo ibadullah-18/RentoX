@@ -90,6 +90,8 @@ class MyListingsRepository {
     required double price,
     required RentalPeriodUnit unit,
     String currency = 'AZN',
+    String? cityId,
+    String? districtId,
   }) => guardApi(
     () => _dio.put<void>(
       '/api/listings/$id',
@@ -99,6 +101,7 @@ class MyListingsRepository {
         'price': price,
         'currency': currency,
         'rentalPeriodUnit': unit.id,
+        if (cityId != null) ...{'cityId': cityId, 'districtId': districtId},
       },
     ),
   );

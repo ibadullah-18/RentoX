@@ -55,6 +55,41 @@ public sealed class SmartSearchTests(AuditPostgresFixture database)
         Assert.Equal("Toyota Camry 2023", titles[0]);
     }
 
+    [Fact]
+    public async Task TyposAreForgivenInTheTitleButNotInTheDescription()
+    {
+        await EnsureSeededAsync();
+
+        // Spelled right, the word is found in the Hyundai's description...
+        Assert.Contains(
+            "Hyundai Elantra", await SearchTitlesAsync("toyota"));
+
+        // ...a typo is only forgiven where the word is short and important.
+        List<string> titles = await SearchTitlesAsync("toyta");
+        Assert.Contains("Toyota Camry 2023", titles);
+        Assert.DoesNotContain("Hyundai Elantra", titles);
+    }
+
+    [Fact]
+    public async Task SearchIndexesExist()
+    {
+        await EnsureSeededAsync();
+        await using RentoXDbContext db = database.CreateContext();
+
+        List<string> names = await db.Database
+            .SqlQueryRaw<string>(
+                """
+                SELECT indexname AS "Value" FROM pg_indexes
+                WHERE indexname LIKE '%trgm'
+                """)
+            .ToListAsync();
+
+        Assert.Contains("ix_listings_title_trgm", names);
+        Assert.Contains("ix_listings_description_trgm", names);
+        Assert.Contains("ix_listing_field_values_text_trgm", names);
+        Assert.Contains("ix_listing_field_values_custom_trgm", names);
+    }
+
     [Theory]
     [InlineData("maşın")]
     [InlineData("masin")]
@@ -196,7 +231,7 @@ public sealed class SmartSearchTests(AuditPostgresFixture database)
 
         // Simulate a database that has not run the new migration.
         await db.Database.ExecuteSqlRawAsync(
-            "DROP FUNCTION public.rentox_norm(text);",
+            "DROP FUNCTION public.rentox_norm(text) CASCADE;",
             timeout.Token);
 
         PublicListingQueryService service =

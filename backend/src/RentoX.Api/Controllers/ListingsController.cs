@@ -70,7 +70,9 @@ public sealed class ListingsController(
             request.Price,
             request.Currency,
             request.RentalPeriodUnit,
-            fields);
+            fields,
+            request.CityId,
+            request.DistrictId);
 
         CreateListingResult result =
             await listingCreationService.CreateAsync(
@@ -368,7 +370,13 @@ public sealed class ListingsController(
             result.PublishedAtUtc,
             result.ExpiresAtUtc,
             images,
-            fields));
+            fields)
+        {
+            CityId = result.CityId,
+            CityName = result.CityName,
+            DistrictId = result.DistrictId,
+            DistrictName = result.DistrictName
+        });
     }
 
     [Authorize]
@@ -397,7 +405,9 @@ public sealed class ListingsController(
             request.Description,
             request.Price,
             request.Currency,
-            request.RentalPeriodUnit);
+            request.RentalPeriodUnit,
+            request.CityId,
+            request.DistrictId);
 
         UpdateListingResult result =
             await listingUpdateService.UpdateAsync(

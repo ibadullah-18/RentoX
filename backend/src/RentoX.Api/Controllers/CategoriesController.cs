@@ -62,6 +62,9 @@ public sealed class CategoriesController(
             category.Name,
             category.IconUrl,
             category.DisplayOrder,
-            category.Children.Select(Map).ToArray());
+            category.Children.Select(Map).ToArray())
+        {
+            RentalPeriods = category.RentalPeriods
+        };
     }
 }

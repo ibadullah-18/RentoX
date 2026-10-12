@@ -17,4 +17,6 @@ public sealed record PublicListingSummaryResponse(
     DateTimeOffset ExpiresAtUtc)
 {
     public bool IsVip { get; init; }
+
+    public string? Location { get; init; }
 }

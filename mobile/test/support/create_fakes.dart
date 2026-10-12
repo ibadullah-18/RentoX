@@ -4,6 +4,8 @@ import 'package:dio/dio.dart';
 import 'package:rentox/features/catalog/data/catalog_repository.dart';
 import 'package:rentox/features/catalog/domain/catalog_models.dart';
 import 'package:rentox/features/listing_create/data/listing_create_repository.dart';
+import 'package:rentox/features/locations/data/locations_repository.dart';
+import 'package:rentox/features/locations/domain/location_models.dart';
 import 'package:rentox/features/listing_create/domain/field_models.dart';
 import 'package:rentox/features/listing_create/domain/photo.dart';
 import 'package:rentox/features/my_listings/data/my_listings_repository.dart';
@@ -36,6 +38,24 @@ FieldDefinition def(
   options: [for (final o in options) FieldOption(id: o, value: o, label: o)],
 );
 
+/// Two cities: Baku (has districts) and Sumgait (has none).
+class FakeLocations extends LocationsRepository {
+  FakeLocations() : super(Dio());
+
+  static const baku = City(id: 'baku', name: 'Bakı', hasDistricts: true);
+  static const sumgait = City(id: 'sumgait', name: 'Sumqayıt');
+  static const nasimi = District(id: 'nasimi', name: 'Nəsimi');
+
+  @override
+  Future<List<City>> cities(String language) async => const [baku, sumgait];
+
+  @override
+  Future<List<District>> districts(String cityId, String language) async =>
+      cityId == 'baku'
+      ? const [nasimi, District(id: 'yasamal', name: 'Yasamal')]
+      : const [];
+}
+
 class FakeCatalogBase extends CatalogRepository {
   FakeCatalogBase() : super(Dio());
 }
@@ -46,6 +66,8 @@ class FakeCreateRepo extends ListingCreateRepository {
   final List<FieldDefinition> defs;
   final calls = <String>[];
   Map<String, dynamic>? createdBody;
+  String? createdCityId;
+  String? createdDistrictId;
   Object? failCreate;
   int? failUploadAt; // index (0-based) of the upload that throws once
 
@@ -61,9 +83,13 @@ class FakeCreateRepo extends ListingCreateRepository {
     required double price,
     required RentalPeriodUnit unit,
     required List<Map<String, dynamic>> fields,
+    required String cityId,
+    String? districtId,
     String currency = 'AZN',
   }) async {
     calls.add('create');
+    createdCityId = cityId;
+    createdDistrictId = districtId;
     if (failCreate != null) throw failCreate!;
     createdBody = {
       'categoryId': categoryId,

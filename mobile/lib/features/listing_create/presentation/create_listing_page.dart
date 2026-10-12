@@ -1,9 +1,13 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/router.dart';
 import '../../../core/l10n/app_localizations.dart';
+import '../../../shared/widgets/app_dialogs.dart';
+
+import '../../../core/network/api_exception.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_icons.dart';
 import '../../../core/theme/app_spacing.dart';
@@ -47,25 +51,13 @@ class _CreateListingPageState extends ConsumerState<CreateListingPage> {
 
   Future<bool?> _confirmLeave() {
     final l10n = AppL10n.of(context);
-    return showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(l10n.leaveTitle),
-        content: Text(l10n.leaveBody),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: Text(l10n.leaveStay),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: Text(
-              l10n.leaveExit,
-              style: const TextStyle(color: AppColors.danger),
-            ),
-          ),
-        ],
-      ),
+    return showConfirmDialog(
+      context,
+      title: l10n.leaveTitle,
+      message: l10n.leaveBody,
+      confirmLabel: l10n.leaveExit,
+      cancelLabel: l10n.leaveStay,
+      destructive: true,
     );
   }
 
@@ -307,6 +299,19 @@ class _SubmitOverlay extends ConsumerWidget {
                         color: theme.colorScheme.onSurfaceVariant,
                       ),
                     ),
+                    // While developing: the server's own words help find the cause.
+                    if (kDebugMode && state.error is ApiException) ...[
+                      const SizedBox(height: AppSpacing.xs),
+                      Text(
+                        '${(state.error! as ApiException).statusCode}: '
+                        '${(state.error! as ApiException).message}',
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          fontSize: 11,
+                          color: AppColors.danger,
+                        ),
+                      ),
+                    ],
                     if (state.locked) ...[
                       const SizedBox(height: AppSpacing.sm),
                       Text(
@@ -448,13 +453,12 @@ class _DonePanel extends ConsumerWidget {
                             width: 72,
                             height: 72,
                             child: d.images.isEmpty
-                                ? const ColoredBox(color: AppColors.primarySoft)
+                                ? ColoredBox(color: context.primarySoft)
                                 : Image.network(
                                     d.images.first.url,
                                     fit: BoxFit.cover,
-                                    errorBuilder: (_, _, _) => const ColoredBox(
-                                      color: AppColors.primarySoft,
-                                    ),
+                                    errorBuilder: (_, _, _) =>
+                                        ColoredBox(color: context.primarySoft),
                                   ),
                           ),
                         ),

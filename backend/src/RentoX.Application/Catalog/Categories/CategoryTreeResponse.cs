@@ -7,4 +7,7 @@ public sealed record CategoryTreeResponse(
     string Name,
     string? IconUrl,
     int DisplayOrder,
-    IReadOnlyList<CategoryTreeResponse> Children);
+    IReadOnlyList<CategoryTreeResponse> Children)
+{
+    public IReadOnlyList<int> RentalPeriods { get; init; } = [];
+}

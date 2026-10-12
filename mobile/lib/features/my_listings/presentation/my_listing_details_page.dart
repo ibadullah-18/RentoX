@@ -5,6 +5,8 @@ import 'package:intl/intl.dart';
 
 import '../../../app/router.dart';
 import '../../../core/l10n/app_localizations.dart';
+import '../../../shared/widgets/app_dialogs.dart';
+
 import '../../../core/network/api_exception.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_icons.dart';
@@ -154,22 +156,11 @@ class _BodyState extends ConsumerState<_Body> {
       // make sure that is what the owner wants.
       final l10n = AppL10n.of(context);
       final messenger = ScaffoldMessenger.of(context);
-      final ok = await showDialog<bool>(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: Text(l10n.editLiveTitle),
-          content: Text(l10n.editLiveMessage),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: Text(l10n.cancelAction),
-            ),
-            TextButton(
-              onPressed: () => Navigator.pop(context, true),
-              child: Text(l10n.editLiveConfirm),
-            ),
-          ],
-        ),
+      final ok = await showConfirmDialog(
+        context,
+        title: l10n.editLiveTitle,
+        message: l10n.editLiveMessage,
+        confirmLabel: l10n.editLiveConfirm,
       );
       if (ok != true || _busy || !mounted) return;
 
@@ -198,25 +189,12 @@ class _BodyState extends ConsumerState<_Body> {
     final l10n = AppL10n.of(context);
     final messenger = ScaffoldMessenger.of(context);
     final router = GoRouter.of(context);
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(l10n.deleteListingTitle),
-        content: Text(l10n.deleteListingMessage),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: Text(l10n.cancelAction),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: Text(
-              l10n.deleteListingConfirm,
-              style: const TextStyle(color: AppColors.danger),
-            ),
-          ),
-        ],
-      ),
+    final ok = await showConfirmDialog(
+      context,
+      title: l10n.deleteListingTitle,
+      message: l10n.deleteListingMessage,
+      confirmLabel: l10n.deleteListingConfirm,
+      destructive: true,
     );
     if (ok != true || _busy) return;
 
@@ -576,9 +554,9 @@ class _VipActive extends StatelessWidget {
           const SizedBox(width: 8),
           Text(
             label,
-            style: const TextStyle(
+            style: TextStyle(
               fontWeight: FontWeight.w800,
-              color: AppColors.warningInk,
+              color: context.warningText,
             ),
           ),
         ],

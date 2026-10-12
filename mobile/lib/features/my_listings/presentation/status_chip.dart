@@ -16,16 +16,22 @@ String statusLabel(AppL10n l10n, ListingStatus s) => switch (s) {
   ListingStatus.paymentRequired => l10n.statusPaymentRequired,
 };
 
-Color statusColor(ListingStatus s) => switch (s) {
-  ListingStatus.active => AppColors.successInk,
-  ListingStatus.pendingReview => AppColors.warningInk,
-  ListingStatus.paymentRequired => AppColors.primary,
-  ListingStatus.rejected => AppColors.danger,
-  ListingStatus.draft ||
-  ListingStatus.expired ||
-  ListingStatus.deactivated ||
-  ListingStatus.deleted => AppColors.inkSecondary,
-};
+Color statusColor(ListingStatus s, [Brightness b = Brightness.light]) =>
+    switch (s) {
+      ListingStatus.active =>
+        b == Brightness.dark ? AppColors.success : AppColors.successInk,
+      ListingStatus.pendingReview =>
+        b == Brightness.dark ? AppColors.warning : AppColors.warningInk,
+      ListingStatus.paymentRequired => AppColors.primary,
+      ListingStatus.rejected => AppColors.danger,
+      ListingStatus.draft ||
+      ListingStatus.expired ||
+      ListingStatus.deactivated ||
+      ListingStatus.deleted =>
+        b == Brightness.dark
+            ? AppColors.darkInkSecondary
+            : AppColors.inkSecondary,
+    };
 
 class ListingStatusChip extends StatelessWidget {
   const ListingStatusChip({super.key, required this.status});
@@ -34,7 +40,7 @@ class ListingStatusChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = statusColor(status);
+    final color = statusColor(status, Theme.of(context).brightness);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(

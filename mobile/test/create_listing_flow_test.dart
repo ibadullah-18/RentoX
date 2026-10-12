@@ -10,6 +10,7 @@ import 'package:rentox/features/catalog/domain/catalog_models.dart';
 import 'package:rentox/features/listing_create/data/listing_create_repository.dart';
 import 'package:rentox/features/listing_create/data/photo_source.dart';
 import 'package:rentox/features/listing_create/presentation/create_listing_page.dart';
+import 'package:rentox/features/locations/data/locations_repository.dart';
 import 'package:rentox/features/my_listings/data/my_listings_repository.dart';
 
 import 'support/create_fakes.dart';
@@ -67,6 +68,7 @@ void main() {
           listingCreateRepositoryProvider.overrideWithValue(create),
           myListingsRepositoryProvider.overrideWithValue(mine),
           catalogRepositoryProvider.overrideWithValue(_FakeCatalog()),
+          locationsRepositoryProvider.overrideWithValue(FakeLocations()),
         ],
         child: MaterialApp(
           locale: const Locale('az'),
@@ -103,11 +105,18 @@ void main() {
     await tapText(az.nextAction);
     expect(find.text(az.categoryRequired), findsOneWidget);
     expect(find.text(az.titleRequired), findsOneWidget);
+    expect(find.text(az.locationRequired), findsOneWidget);
 
     await tapText(az.chooseCategory);
     await tapText('Vehicles'); // has children -> goes one level down
     await tapText('Cars');
     expect(find.text('Vehicles › Cars'), findsOneWidget);
+
+    // The place: Baku needs a district, Sumgait does not.
+    await tapText(az.locationChoose);
+    await tapText('Bakı');
+    await tapText('Nəsimi');
+    expect(find.text('Bakı, Nəsimi'), findsOneWidget);
 
     await tester.enterText(
       find.byWidgetPredicate(
@@ -167,7 +176,7 @@ void main() {
       'price': 85.5,
       'unit': 2,
       'fields': [
-        {'fieldId': 'year', 'numericValue': 2023.0},
+        {'fieldId': 'year', 'numericValue': 2023.0, 'optionIds': []},
         {
           'fieldId': 'fuel',
           'optionIds': ['petrol'],

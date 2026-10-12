@@ -46,6 +46,8 @@ abstract final class AppIcons {
   static const IconData read = Symbols.done_all_rounded;
   static const IconData lock = Symbols.lock_rounded;
   static const IconData language = Symbols.language_rounded;
+  static const IconData appearance = Symbols.contrast_rounded;
+  static const IconData share = Symbols.ios_share_rounded;
   static const IconData devices = Symbols.devices_rounded;
   static const IconData edit = Symbols.edit_rounded;
   static const IconData store = Symbols.storefront_rounded;

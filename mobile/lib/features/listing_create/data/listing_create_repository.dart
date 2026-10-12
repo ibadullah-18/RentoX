@@ -34,6 +34,8 @@ class ListingCreateRepository {
     required double price,
     required RentalPeriodUnit unit,
     required List<Map<String, dynamic>> fields,
+    required String cityId,
+    String? districtId,
     String currency = 'AZN',
   }) => guardApi(() async {
     final res = await _dio.post<Map<String, dynamic>>(
@@ -46,6 +48,8 @@ class ListingCreateRepository {
         'currency': currency,
         'rentalPeriodUnit': unit.id,
         'fields': fields,
+        'cityId': cityId,
+        'districtId': districtId,
       },
     );
     return res.data!['id'] as String;

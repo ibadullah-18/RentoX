@@ -315,6 +315,10 @@ public static class DependencyInjection
             ConversationService>();
         services.AddScoped<RentoX.Application.Messaging.IConversationBlockService, RentoX.Infrastructure.Messaging.ConversationBlockService>();
         services.AddScoped<
+            RentoX.Application.Locations.ILocationQueryService,
+            RentoX.Infrastructure.Locations.LocationQueryService>();
+
+        services.AddScoped<
             RentoX.Application.Accounts.IAccountDeletionService,
             RentoX.Infrastructure.Accounts.AccountDeletionService>();
 

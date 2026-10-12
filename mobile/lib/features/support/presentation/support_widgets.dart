@@ -23,12 +23,18 @@ String supportStatusLabel(AppL10n l10n, SupportStatus s) => switch (s) {
   SupportStatus.closed => l10n.supportStClosed,
 };
 
-Color supportStatusColor(SupportStatus s) => switch (s) {
-  SupportStatus.open => AppColors.primary,
-  SupportStatus.inProgress => AppColors.warningInk,
-  SupportStatus.resolved => AppColors.successInk,
-  SupportStatus.closed => AppColors.inkSecondary,
-};
+Color supportStatusColor(SupportStatus s, [Brightness b = Brightness.light]) =>
+    switch (s) {
+      SupportStatus.open => AppColors.primary,
+      SupportStatus.inProgress =>
+        b == Brightness.dark ? AppColors.warning : AppColors.warningInk,
+      SupportStatus.resolved =>
+        b == Brightness.dark ? AppColors.success : AppColors.successInk,
+      SupportStatus.closed =>
+        b == Brightness.dark
+            ? AppColors.darkInkSecondary
+            : AppColors.inkSecondary,
+    };
 
 class SupportStatusChip extends StatelessWidget {
   const SupportStatusChip({super.key, required this.status});
@@ -37,7 +43,7 @@ class SupportStatusChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = supportStatusColor(status);
+    final color = supportStatusColor(status, Theme.of(context).brightness);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(

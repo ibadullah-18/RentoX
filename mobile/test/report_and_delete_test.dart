@@ -339,8 +339,8 @@ void main() {
       return accounts;
     }
 
-    TextButton confirm(WidgetTester tester) => tester.widget<TextButton>(
-      find.widgetWithText(TextButton, az.deleteAccountConfirm),
+    FilledButton confirm(WidgetTester tester) => tester.widget<FilledButton>(
+      find.widgetWithText(FilledButton, az.deleteAccountConfirm),
     );
 
     testWidgets('needs the confirmation word, then deletes and signs out', (

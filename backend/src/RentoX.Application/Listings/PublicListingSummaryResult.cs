@@ -17,4 +17,7 @@ public sealed record PublicListingSummaryResult(
     DateTimeOffset ExpiresAtUtc)
 {
     public bool IsVip { get; init; }
+
+    /// <summary>"City, district" for the card.</summary>
+    public string? Location { get; init; }
 }

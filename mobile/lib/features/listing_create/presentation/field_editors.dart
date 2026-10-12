@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 
 import '../../../core/l10n/app_localizations.dart';
+import '../../../shared/widgets/app_dialogs.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_icons.dart';
 import '../../../core/theme/app_spacing.dart';
@@ -136,11 +137,12 @@ class FieldEditor extends StatelessWidget {
             onPressed: enabled
                 ? () async {
                     final now = DateTime.now();
-                    final picked = await showDatePicker(
-                      context: context,
-                      initialDate: answer.date ?? now,
-                      firstDate: DateTime(1950),
-                      lastDate: DateTime(now.year + 30),
+                    final picked = await showDateWheelSheet(
+                      context,
+                      initial: answer.date ?? now,
+                      first: DateTime(1950),
+                      last: DateTime(now.year + 30),
+                      title: label,
                     );
                     if (picked != null) {
                       onChanged(answer.copyWith(date: picked));

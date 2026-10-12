@@ -9,6 +9,7 @@ import '../../my_listings/domain/owned_listing_models.dart';
 import '../data/listing_create_repository.dart';
 import '../domain/field_models.dart';
 import '../domain/photo.dart';
+import '../../locations/domain/location_models.dart';
 
 enum SubmitPhase { idle, creating, uploading, submitting, done, failed }
 
@@ -18,7 +19,7 @@ abstract final class ListingRules {
   static const maxDescription = 10000;
 }
 
-enum DetailsError { noCategory, noTitle, noDescription }
+enum DetailsError { noCategory, noTitle, noDescription, noCity, noDistrict }
 
 enum PriceError { required, invalid }
 
@@ -32,6 +33,7 @@ class CreateListingState {
     this.description = '',
     this.priceText = '',
     this.unit = RentalPeriodUnit.day,
+    this.place = PlaceChoice.none,
     this.answers = const {},
     this.fields = const AsyncData([]),
     this.showErrors = false,
@@ -53,6 +55,9 @@ class CreateListingState {
   final String description;
   final String priceText;
   final RentalPeriodUnit unit;
+
+  /// Where the item is: a city and, for cities that have them, a district.
+  final PlaceChoice place;
   final Map<String, FieldAnswer> answers;
   final AsyncValue<List<FieldDefinition>> fields;
 
@@ -70,6 +75,10 @@ class CreateListingState {
 
   Category? get category => categoryPath.isEmpty ? null : categoryPath.last;
 
+  /// Price periods the chosen category allows (all of them before a choice).
+  List<RentalPeriodUnit> get allowedUnits =>
+      category?.rentalPeriods ?? RentalPeriodUnit.values;
+
   bool get busy =>
       phase == SubmitPhase.creating ||
       phase == SubmitPhase.uploading ||
@@ -84,7 +93,8 @@ class CreateListingState {
       title.isNotEmpty ||
       description.isNotEmpty ||
       priceText.isNotEmpty ||
-      categoryPath.isNotEmpty;
+      categoryPath.isNotEmpty ||
+      !place.isNone;
 
   // --- validation (pure; no side effects) ---------------------------------
 
@@ -94,6 +104,8 @@ class CreateListingState {
     if (category == null) DetailsError.noCategory,
     if (title.trim().isEmpty) DetailsError.noTitle,
     if (description.trim().isEmpty) DetailsError.noDescription,
+    if (place.city == null) DetailsError.noCity,
+    if (place.city != null && !place.isComplete) DetailsError.noDistrict,
   };
 
   /// Price is optional only for "negotiable" listings.
@@ -136,6 +148,7 @@ class CreateListingState {
     String? description,
     String? priceText,
     RentalPeriodUnit? unit,
+    PlaceChoice? place,
     Map<String, FieldAnswer>? answers,
     AsyncValue<List<FieldDefinition>>? fields,
     bool? showErrors,
@@ -153,6 +166,7 @@ class CreateListingState {
     description: description ?? this.description,
     priceText: priceText ?? this.priceText,
     unit: unit ?? this.unit,
+    place: place ?? this.place,
     answers: answers ?? this.answers,
     fields: fields ?? this.fields,
     showErrors: showErrors ?? this.showErrors,
@@ -239,6 +253,7 @@ class CreateListingController extends Notifier<CreateListingState> {
       _edit(() => state = state.copyWith(priceText: v));
   void setUnit(RentalPeriodUnit v) =>
       _edit(() => state = state.copyWith(unit: v));
+  void setPlace(PlaceChoice v) => _edit(() => state = state.copyWith(place: v));
 
   void setAnswer(String fieldId, FieldAnswer answer) => _edit(
     () => state = state.copyWith(answers: {...state.answers, fieldId: answer}),
@@ -253,8 +268,17 @@ class CreateListingController extends Notifier<CreateListingState> {
   Future<void> selectCategory(List<Category> path) async {
     if (state.locked || path.isEmpty) return;
     final id = path.last.id;
+    // Keep the price period if the new category allows it, else pick one
+    // it does allow (a day if possible).
+    final allowed = path.last.rentalPeriods;
+    final unit = allowed.contains(state.unit)
+        ? state.unit
+        : (allowed.contains(RentalPeriodUnit.day)
+              ? RentalPeriodUnit.day
+              : allowed.first);
     state = state.copyWith(
       categoryPath: path,
+      unit: unit,
       answers: const {},
       fields: const AsyncLoading(),
     );
@@ -326,6 +350,8 @@ class CreateListingController extends Notifier<CreateListingState> {
           price: state.price,
           unit: state.unit,
           fields: _fieldRequests(),
+          cityId: state.place.city!.id,
+          districtId: state.place.district?.id,
         );
         state = state.copyWith(draftId: id);
       }

@@ -25,6 +25,8 @@ import '../../messages/presentation/inbox_controller.dart';
 import '../../support/presentation/support_widgets.dart';
 import '../../report/domain/report_models.dart';
 import '../../report/presentation/report_sheet.dart';
+import '../../../shared/utils/share_gateway.dart';
+import '../../../shared/widgets/share_sheet.dart';
 import 'listing_formatting.dart';
 import 'listing_gallery.dart';
 import 'message_sheet.dart';
@@ -111,6 +113,25 @@ class _DetailsView extends ConsumerWidget {
     }
   }
 
+  /// Opens our share sheet with the title, the price and a link.
+  Future<void> _share(BuildContext context, ListingDetails details) {
+    final l10n = AppL10n.of(context);
+    final locale = Localizations.localeOf(context).toString();
+
+    final price = NumberFormat.decimalPattern(locale).format(details.price);
+    final unit = details.unit == RentalPeriodUnit.negotiable
+        ? ''
+        : ' / ${rentalUnitLabel(l10n, details.unit)}';
+    final url = listingShareUrl(details.id);
+
+    return showShareSheet(
+      context,
+      text: '${details.title}\n$price ${details.currency}$unit\n$url',
+      url: url,
+      subject: details.title,
+    );
+  }
+
   Future<void> _message(BuildContext context, WidgetRef ref) async {
     if (ref.read(authControllerProvider).value == null) {
       final from = GoRouterState.of(context).uri.toString();
@@ -145,7 +166,12 @@ class _DetailsView extends ConsumerWidget {
         .clamp(0.0, ListingDetailsPage._maxWidth);
     final galleryHeight = width * 0.95;
 
-    final specs = <(String, String)>[
+    // The information table: one row per filled-in field (condition, rooms,
+    // year...), label on the left and its value on the right.
+    final facts = <(String, String)>[
+      if (details.cityName != null) (l10n.cityRow, details.cityName!),
+      if (details.districtName != null)
+        (l10n.districtRow, details.districtName!),
       for (final f in details.fields)
         if (fieldDisplayValue(l10n, locale, f) case final value?)
           (f.label, value),
@@ -261,19 +287,19 @@ class _DetailsView extends ConsumerWidget {
                             ),
                           ],
                         ),
+                        if (facts.isNotEmpty) ...[
+                          const SizedBox(height: AppSpacing.lg),
+                          _InfoTable(rows: facts),
+                        ],
                         if (details.description.trim().isNotEmpty) ...[
                           _SectionTitle(l10n.descriptionTitle),
-                          Text(
-                            details.description.trim(),
+                          _ExpandableText(
+                            text: details.description.trim(),
                             style: theme.textTheme.bodyLarge?.copyWith(
                               height: 1.5,
                               color: scheme.onSurface.withValues(alpha: 0.88),
                             ),
                           ),
-                        ],
-                        if (specs.isNotEmpty) ...[
-                          _SectionTitle(l10n.specsTitle),
-                          _SpecsCard(specs: specs),
                         ],
                         _SectionTitle(l10n.ownerTitle),
                         _OwnerCard(owner: details.owner),
@@ -330,6 +356,12 @@ class _DetailsView extends ConsumerWidget {
                           onPressed: () => _goBack(context),
                         ),
                         const Spacer(),
+                        GlassIconButton(
+                          onPhoto: true,
+                          icon: AppIcons.share,
+                          semanticLabel: l10n.shareAction,
+                          onPressed: () => _share(context, details),
+                        ),
                         FavoriteButton(
                           listingId: details.id,
                           isFavorite: details.isFavorite,
@@ -438,50 +470,111 @@ class _SectionTitle extends StatelessWidget {
   );
 }
 
-class _SpecsCard extends StatelessWidget {
-  const _SpecsCard({required this.specs});
+/// The listing's information as rows: a quiet label and its value.
+class _InfoTable extends StatelessWidget {
+  const _InfoTable({required this.rows});
 
-  final List<(String, String)> specs;
+  final List<(String, String)> rows;
 
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.lg,
-          vertical: AppSpacing.xs,
-        ),
-        child: Column(
+    return Column(
+      children: [
+        for (final (label, value) in rows)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 7),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  flex: 5,
+                  child: Text(
+                    label,
+                    style: TextStyle(
+                      color: scheme.onSurfaceVariant,
+                      fontSize: 15,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.md),
+                Expanded(
+                  flex: 6,
+                  child: Text(
+                    value,
+                    style: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+/// Long text cut after a few lines with a "read more" link; short text is
+/// shown whole with no link.
+class _ExpandableText extends StatefulWidget {
+  const _ExpandableText({required this.text, this.style});
+
+  final String text;
+  final TextStyle? style;
+
+  static const collapsedLines = 6;
+
+  @override
+  State<_ExpandableText> createState() => _ExpandableTextState();
+}
+
+class _ExpandableTextState extends State<_ExpandableText> {
+  bool _expanded = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppL10n.of(context);
+    final scheme = Theme.of(context).colorScheme;
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final painter = TextPainter(
+          text: TextSpan(text: widget.text, style: widget.style),
+          maxLines: _ExpandableText.collapsedLines,
+          textDirection: Directionality.of(context),
+          textScaler: MediaQuery.textScalerOf(context),
+        )..layout(maxWidth: constraints.maxWidth);
+        final overflows = painter.didExceedMaxLines;
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            for (var i = 0; i < specs.length; i++) ...[
-              if (i > 0) const Divider(),
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      child: Text(
-                        specs[i].$1,
-                        style: TextStyle(color: scheme.onSurfaceVariant),
-                      ),
+            Text(
+              widget.text,
+              style: widget.style,
+              maxLines: _expanded ? null : _ExpandableText.collapsedLines,
+              overflow: _expanded ? TextOverflow.clip : TextOverflow.ellipsis,
+            ),
+            if (overflows)
+              GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: () => setState(() => _expanded = !_expanded),
+                child: Padding(
+                  padding: const EdgeInsets.only(top: AppSpacing.sm),
+                  child: Text(
+                    _expanded ? l10n.readLess : l10n.readMore,
+                    style: TextStyle(
+                      color: scheme.primary,
+                      fontWeight: FontWeight.w600,
                     ),
-                    const SizedBox(width: AppSpacing.lg),
-                    Flexible(
-                      child: Text(
-                        specs[i].$2,
-                        textAlign: TextAlign.end,
-                        style: const TextStyle(fontWeight: FontWeight.w700),
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
               ),
-            ],
           ],
-        ),
-      ),
+        );
+      },
     );
   }
 }
@@ -505,7 +598,7 @@ class _OwnerCard extends StatelessWidget {
           children: [
             CircleAvatar(
               radius: 24,
-              backgroundColor: AppColors.primarySoft,
+              backgroundColor: context.primarySoft,
               child: Text(
                 initial,
                 style: const TextStyle(
@@ -658,33 +751,40 @@ class _ActionBar extends StatelessWidget {
             )
           : Row(
               children: [
-                Padding(
-                  padding: const EdgeInsets.only(left: 10, right: 12),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        priceText,
-                        style: TextStyle(
-                          fontWeight: FontWeight.w900,
-                          fontSize: 18,
-                          color: scheme.primary,
+                // The price takes what the buttons leave and shortens
+                // instead of overflowing on narrow phones.
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.only(left: 10, right: 12),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          priceText,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontWeight: FontWeight.w900,
+                            fontSize: 18,
+                            color: scheme.primary,
+                          ),
                         ),
-                      ),
-                      Text(
-                        details.unit == RentalPeriodUnit.negotiable
-                            ? details.currency
-                            : '${details.currency} / ${rentalUnitLabel(l10n, details.unit)}',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: scheme.onSurfaceVariant,
+                        Text(
+                          details.unit == RentalPeriodUnit.negotiable
+                              ? details.currency
+                              : '${details.currency} / ${rentalUnitLabel(l10n, details.unit)}',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: scheme.onSurfaceVariant,
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
-                const Spacer(),
                 if (onCall != null) ...[
                   Semantics(
                     button: true,
@@ -695,7 +795,7 @@ class _ActionBar extends StatelessWidget {
                         width: 52,
                         height: 52,
                         decoration: BoxDecoration(
-                          color: AppColors.primarySoft,
+                          color: context.primarySoft,
                           borderRadius: BorderRadius.circular(AppRadius.lg),
                         ),
                         child: const Icon(
@@ -712,7 +812,7 @@ class _ActionBar extends StatelessWidget {
                   onPressed: onMessage,
                   style: FilledButton.styleFrom(
                     minimumSize: const Size(0, 52),
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(AppRadius.lg),
                     ),
