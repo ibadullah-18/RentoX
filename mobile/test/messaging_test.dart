@@ -1,3 +1,5 @@
+import 'dart:convert';
+import 'dart:typed_data';
 import 'dart:async';
 
 import 'package:dio/dio.dart';
@@ -14,6 +16,8 @@ import 'package:rentox/features/messages/data/messaging_repository.dart';
 import 'package:rentox/features/messages/data/realtime_service.dart';
 import 'package:rentox/features/messages/domain/message_models.dart';
 import 'package:rentox/features/messages/presentation/chat_controller.dart';
+import 'package:rentox/features/messages/presentation/chat_page.dart';
+import 'package:rentox/features/messages/presentation/message_widgets.dart';
 import 'package:rentox/features/messages/presentation/inbox_controller.dart';
 import 'package:rentox/features/messages/presentation/messages_page.dart';
 
@@ -550,5 +554,83 @@ void main() {
     await tester.pump();
     expect(find.text('Toyota Camry'), findsOneWidget);
     expect(find.text('Menzil Nizami'), findsNothing);
+  });
+
+  testWidgets('a photo sent with words is one card as wide as the photo', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1080, 2000); // 360 dp wide
+    tester.view.devicePixelRatio = 3;
+    addTearDown(tester.view.reset);
+
+    // 1x1 transparent PNG.
+    final png = Uint8List.fromList(
+      base64Decode(
+        'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==',
+      ),
+    );
+    ChatMessage message(String body, int photos) => ChatMessage(
+      id: 'm$photos',
+      conversationId: cid,
+      senderId: other,
+      body: body,
+      sentAt: DateTime.now().toUtc(),
+      localImages: [for (var i = 0; i < photos; i++) png],
+    );
+
+    const words = 'Salam, məhsulun əlavə şəkillərini göndərirəm.';
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          authHeadersProvider.overrideWith((ref) async => <String, String>{}),
+        ],
+        child: MaterialApp(
+          locale: const Locale('az'),
+          localizationsDelegates: AppL10n.localizationsDelegates,
+          supportedLocales: AppL10n.supportedLocales,
+          home: Scaffold(
+            body: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                ChatBubble(
+                  message: message(words, 1),
+                  mine: false,
+                  showTime: false,
+                  onRetry: () {},
+                  onDiscard: () {},
+                ),
+                ChatBubble(
+                  message: message('', 2),
+                  mine: false,
+                  showTime: false,
+                  onRetry: () {},
+                  onDiscard: () {},
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+    expect(tester.takeException(), isNull);
+
+    final photos = find.byType(Image);
+    expect(photos, findsNWidgets(3));
+
+    // Photo + words: the photo is the full width of the card, the words are
+    // inside the same card and directly under it.
+    final photo = tester.getRect(photos.first);
+    final text = tester.getRect(find.text(words));
+    expect(photo.width, lessThanOrEqualTo(360 * 0.78 + 0.5));
+    expect(text.left, greaterThan(photo.left));
+    expect(text.right, lessThanOrEqualTo(photo.right));
+    expect(text.top, greaterThanOrEqualTo(photo.bottom));
+    expect(text.top - photo.bottom, lessThan(16));
+
+    // Two photos alone: two columns inside the same width.
+    final a = tester.getRect(photos.at(1));
+    final b = tester.getRect(photos.at(2));
+    expect(b.right - a.left, lessThanOrEqualTo(360 * 0.78 + 0.5));
   });
 }

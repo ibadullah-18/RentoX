@@ -33,9 +33,8 @@ void main() {
               localizationsDelegates: AppL10n.localizationsDelegates,
               supportedLocales: AppL10n.supportedLocales,
               builder: (context, child) => MediaQuery(
-                data: MediaQuery.of(
-                  context,
-                ).copyWith(textScaler: TextScaler.linear(scale)),
+                data: MediaQuery.of(context)
+                    .copyWith(textScaler: TextScaler.linear(scale)),
                 child: child!,
               ),
               routerConfig: GoRouter(

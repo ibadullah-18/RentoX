@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -451,7 +453,7 @@ class _MessageList extends StatelessWidget {
               _DaySeparator(label: daySeparatorLabel(context, m.sentAt)),
             Padding(
               padding: EdgeInsets.only(top: sameSenderAsOlder ? 3 : 10),
-              child: _Bubble(
+              child: ChatBubble(
                 message: m,
                 mine: m.senderId == me,
                 showTime: lastOfGroup || m.sendState != SendState.sent,
@@ -497,8 +499,15 @@ class _DaySeparator extends StatelessWidget {
   }
 }
 
-class _Bubble extends ConsumerWidget {
-  const _Bubble({
+/// Width of a photo message: at most 240, and never more than a bubble may
+/// take (78% of the screen), so it can never stick out.
+double _imageWidth(BuildContext context) =>
+    math.min(240, MediaQuery.sizeOf(context).width * 0.78);
+
+/// One message. Public only so its layout can be tested.
+@visibleForTesting
+class ChatBubble extends ConsumerWidget {
+  const ChatBubble({
     required this.message,
     required this.mine,
     required this.showTime,
@@ -549,8 +558,14 @@ class _Bubble extends ConsumerWidget {
             Opacity(
               opacity: sending ? 0.7 : 1,
               child: Container(
-                // Like WhatsApp on iPhone: a photo alone has no frame at all;
-                // a photo with words is one bubble, the words right under it.
+                // A photo sent alone has no frame at all. A photo sent
+                // together with words is one card, like a listing card: the
+                // photo runs to the top and the sides, the words sit right
+                // under it, and the card is exactly as wide as the photo.
+                width: hasImages ? _imageWidth(context) : null,
+                clipBehavior: hasImages && !hasText
+                    ? Clip.none
+                    : Clip.antiAlias,
                 decoration: hasImages && !hasText
                     ? null
                     : BoxDecoration(
@@ -560,10 +575,8 @@ class _Bubble extends ConsumerWidget {
                             ? null
                             : Border.all(color: scheme.outlineVariant),
                       ),
-                padding: hasImages && !hasText
+                padding: hasImages
                     ? EdgeInsets.zero
-                    : hasImages
-                    ? const EdgeInsets.fromLTRB(4, 4, 4, 8)
                     : const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -573,13 +586,13 @@ class _Bubble extends ConsumerWidget {
                       _ImageGrid(
                         message: message,
                         headers: headers,
-                        radius: hasText ? AppRadius.lg : AppRadius.xl,
+                        width: _imageWidth(context),
+                        radius: hasText ? 0 : AppRadius.xl,
                       ),
-                    if (hasImages && hasText) const SizedBox(height: 6),
                     if (hasText)
                       Padding(
                         padding: hasImages
-                            ? const EdgeInsets.symmetric(horizontal: 8)
+                            ? const EdgeInsets.fromLTRB(12, 8, 12, 10)
                             : EdgeInsets.zero,
                         child: SelectableText(
                           message.body,
@@ -681,11 +694,13 @@ class _ImageGrid extends StatelessWidget {
   const _ImageGrid({
     required this.message,
     required this.headers,
+    required this.width,
     required this.radius,
   });
 
   final ChatMessage message;
   final Map<String, String>? headers;
+  final double width;
   final double radius;
 
   @override
@@ -725,25 +740,17 @@ class _ImageGrid extends StatelessWidget {
       );
     }
 
-    // The photos are sized from the room the bubble really has, and clipped
-    // to it: nothing can ever stick out of the bubble.
-    return LayoutBuilder(
-      builder: (context, c) {
-        final room = c.maxWidth.isFinite ? c.maxWidth : 220.0;
-        final side = single
-            ? room.clamp(0.0, 220.0)
-            : ((room - 4) / 2).clamp(0.0, 108.0);
-        return ClipRect(
-          child: SizedBox(
-            width: single ? side : room,
-            child: Wrap(
-              spacing: 4,
-              runSpacing: 4,
-              children: [for (var i = 0; i < count; i++) tile(i, side)],
-            ),
-          ),
-        );
-      },
+    // One photo fills the width; several make two columns. Sized from the
+    // width the message really has, so nothing can stick out.
+    const gap = 2.0;
+    final side = single ? width : (width - gap) / 2;
+    return SizedBox(
+      width: width,
+      child: Wrap(
+        spacing: gap,
+        runSpacing: gap,
+        children: [for (var i = 0; i < count; i++) tile(i, side)],
+      ),
     );
   }
 }
