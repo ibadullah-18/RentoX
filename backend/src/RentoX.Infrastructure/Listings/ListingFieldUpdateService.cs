@@ -74,13 +74,17 @@ public sealed class ListingFieldUpdateService(
         List<ListingFieldValue> existingValues =
             listing.FieldValues.ToList();
 
+        // The new values (and their selections) must be tracked as new
+        // before anything touches the listing: otherwise EF finds them
+        // through the listing's collection, sees client-made keys and treats
+        // them as already saved, so it UPDATEs rows that do not exist.
+        dbContext.Set<ListingFieldValue>()
+            .AddRange(newValues);
+
         listing.ReplaceFieldValues(newValues);
 
         dbContext.Set<ListingFieldValue>()
             .RemoveRange(existingValues);
-
-        dbContext.Set<ListingFieldValue>()
-            .AddRange(newValues);
 
         await dbContext.SaveChangesAsync(
             cancellationToken);
