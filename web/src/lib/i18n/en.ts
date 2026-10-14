@@ -1,6 +1,6 @@
 // English. Keys are the Azerbaijani texts used in the code.
 export const en: Record<string, string> = {
-  "1 AZN ödə və aktiv et": "Pay 1 AZN and activate",
+  "{fee} AZN ödə və aktiv et": "Pay {fee} AZN and activate",
   "30 gün yenilə": "Renew for 30 days",
   "6 rəqəmli kodu yazın.": "Enter the 6-digit code.",
   "AZN": "AZN",
@@ -209,10 +209,9 @@ export const en: Record<string, string> = {
   "Pul kisəsi": "Wallet",
   "Pul kisəsini artırın": "Top up your wallet",
   "Pulsuz elan limiti dolub. Dərc üçün aktivləşdirmə haqqı lazımdır.": "The free listing limit is used up. An activation fee is needed to publish.",
-  "Pulsuz elan limitiniz dolub. Bu elanı dərc etmək üçün 1 AZN pul kisənizdən çıxılacaq.": "Your free listing limit is used up. 1 AZN will be taken from your wallet to publish this listing.",
+  "Pulsuz elan limitiniz dolub. Bu elanı dərc etmək üçün {fee} AZN pul kisənizdən çıxılacaq.": "Your free listing limit is used up. {fee} AZN will be taken from your wallet to publish this listing.",
   "Qalıq:": "Balance:",
   "Qaralama": "Draft",
-  "Qeyd (ixtiyari)": "Note (optional)",
   "Qeydiyyatdan keç": "Sign up",
   "Qiymət": "Price",
   "Qiymət (AZN)": "Price (AZN)",
@@ -373,4 +372,5 @@ export const en: Record<string, string> = {
   "Hesab silinsin?": "Delete the account?",
   "Hesabınız, elanlarınız və mesajlarınız silinəcək. Bunu geri qaytarmaq olmaz.": "Your account, listings and messages will be deleted. This cannot be undone.",
   "Haqqınızda ən çoxu {n} simvol yazın.": "Write up to {n} characters about yourself.",
+  "Hesabınız bloklanıb. Ətraflı məlumat üçün dəstəyə yazın.": "Your account has been blocked. Contact support for details.",
 };

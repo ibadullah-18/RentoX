@@ -21,6 +21,7 @@ async function get<T>(
   path: string,
   query: Record<string, string | number | undefined> = {},
   revalidate = 60,
+  tags: string[] = [],
 ): Promise<T | null> {
   const url = new URL(path, API_BASE);
   for (const [key, value] of Object.entries(query)) {
@@ -30,7 +31,7 @@ async function get<T>(
   }
 
   try {
-    const res = await fetch(url, { next: { revalidate } });
+    const res = await fetch(url, { next: { revalidate, tags } });
     if (!res.ok) return null;
     return (await res.json()) as T;
   } catch {
@@ -41,7 +42,7 @@ async function get<T>(
 
 export async function getCategories(): Promise<Category[]> {
   return (
-    (await get<Category[]>("/api/categories", { language: await lang() }, 300)) ??
+    (await get<Category[]>("/api/categories", { language: await lang() }, 300, ["catalog"])) ??
     []
   );
 }
@@ -93,6 +94,7 @@ export async function getFilterFields(categoryId: string): Promise<FieldDefiniti
     `/api/categories/${encodeURIComponent(categoryId)}/fields`,
     { language: await lang() },
     300,
+    ["catalog"],
   );
   return (list ?? []).filter((f) => f.isFilterable).sort((a, b) => a.displayOrder - b.displayOrder);
 }

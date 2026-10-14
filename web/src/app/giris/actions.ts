@@ -109,9 +109,12 @@ export async function verifyCode(input: {
         });
 
     if (!res.ok) {
-      return res.status === 429
-        ? { ok: false, message: await sorry(429, "") }
-        : { ok: false, message: await tr("Kod səhvdir və ya vaxtı bitib.") };
+      if (res.status === 429) return { ok: false, message: await sorry(429, "") };
+      // An admin blocked the account: say so, instead of "wrong code".
+      if (res.status === 400 && /blocked/i.test(await problem(res.clone()))) {
+        return { ok: false, message: await tr("Hesabınız bloklanıb. Ətraflı məlumat üçün dəstəyə yazın.") };
+      }
+      return { ok: false, message: await tr("Kod səhvdir və ya vaxtı bitib.") };
     }
 
     const data = (await res.json()) as AuthTokens & {

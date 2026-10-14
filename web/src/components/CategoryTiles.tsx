@@ -1,7 +1,8 @@
 import { getT } from "@/lib/i18n/server";
 import Link from "next/link";
 import { LayoutGrid } from "lucide-react";
-import { categoryIcon, tints } from "@/lib/category-icon";
+import { tints } from "@/lib/category-icon";
+import { CategoryIcon } from "./CategoryIcon";
 import type { Category } from "@/lib/types";
 import { BackButton } from "./BackButton";
 
@@ -40,8 +41,7 @@ export async function CategoryTiles({
         </Link>
       )}
       {categories.map((c, i) => {
-        const Icon = categoryIcon(c.slug);
-        const selected = c.id === selectedId;
+                const selected = c.id === selectedId;
         return (
           <Link
             key={c.id}
@@ -50,7 +50,7 @@ export async function CategoryTiles({
               tints[i % tints.length]
             } ${selected ? "border-primary text-primary" : "border-transparent"}`}
           >
-            <Icon className="size-[18px] shrink-0" aria-hidden />
+            <CategoryIcon slug={c.slug} iconUrl={c.iconUrl} className="size-[18px] shrink-0" />
             <span className="truncate">{c.name}</span>
           </Link>
         );

@@ -16,7 +16,7 @@ import {
   submit,
   type Done,
 } from "@/app/elanlarim/actions";
-import { PRICES } from "@/lib/status";
+import type { Prices } from "@/lib/tariffs";
 import { formatNumber } from "@/lib/format";
 import { Status } from "@/lib/types";
 import { ConfirmDialog } from "./ConfirmDialog";
@@ -33,11 +33,14 @@ export function ManageActions({
   id,
   status,
   balance,
+  prices,
 }: {
   id: string;
   /** The effective status (an unrenewed old listing is "expired"). */
   status: number;
   balance: number;
+  /** The prices in force (an admin can change them). */
+  prices: Prices;
 }) {
   const t = useT();
   const locale = useLocale();
@@ -101,37 +104,37 @@ export function ManageActions({
       {status === Status.paymentRequired && (
         <button
           type="button"
-          disabled={disabled || lacking(PRICES.activation)}
+          disabled={disabled || lacking(prices.activation)}
           onClick={() => run("pay", () => payAndActivate(id), t("Elan aktivləşdirildi."))}
           className={solid}
         >
           {spin("pay") || <Wallet className="size-5" aria-hidden />}
-          {PRICES.activation} {t("AZN ödə və aktiv et")}</button>
+          {prices.activation} {t("AZN ödə və aktiv et")}</button>
       )}
 
       {canPromote && (
         <>
           <button
             type="button"
-            disabled={disabled || lacking(PRICES.vip)}
+            disabled={disabled || lacking(prices.vip)}
             onClick={() =>
-              run("vip", () => promote(id, 2, key()), t("Elan {n} gün VIP olaraq irəli çəkildi.", { n: PRICES.vipDays }))
+              run("vip", () => promote(id, 2, key()), t("Elan {n} gün VIP olaraq irəli çəkildi.", { n: prices.vipDays }))
             }
             className={solid}
           >
             {spin("vip") || <Crown className="size-5" aria-hidden />}
-            {t("VIP et — {price} AZN / {days} gün", { price: PRICES.vip, days: PRICES.vipDays })}
+            {t("VIP et — {price} AZN / {days} gün", { price: prices.vip, days: prices.vipDays })}
           </button>
           <button
             type="button"
-            disabled={disabled || lacking(PRICES.bump)}
+            disabled={disabled || lacking(prices.bump)}
             onClick={() => run("bump", () => promote(id, 1, key()), t("Elan siyahıda yuxarı qaldırıldı."))}
             className={outline}
           >
             {spin("bump") || <Rocket className="size-5" aria-hidden />}
-            {t("Yuxarı qaldır — {price} AZN", { price: PRICES.bump })}
+            {t("Yuxarı qaldır — {price} AZN", { price: prices.bump })}
           </button>
-          {(lacking(PRICES.bump) || lacking(PRICES.vip)) && (
+          {(lacking(prices.bump) || lacking(prices.vip)) && (
             <p className="text-sm text-ink-2">
               {t("Balansınız {balance} AZN.", { balance: formatNumber(balance, locale) })}{" "}
               <Link href="/pul-kisesi" className="font-bold text-primary hover:underline">

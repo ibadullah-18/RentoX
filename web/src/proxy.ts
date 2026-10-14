@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { ADMIN_SEGMENT } from "@/lib/admin-path";
 
 // Renews the access token before the page renders. Server components cannot
 // set cookies, so this is the one place a short-lived token is swapped for a
@@ -54,23 +55,52 @@ function refreshOnce(refresh: string): Promise<Outcome> {
   return call;
 }
 
+/**
+ * The admin panel: its secret address is answered with the pages of the
+ * folder app/admin, and the plain /admin is "not found". `area` tells the
+ * root layout to leave out the site's own header and footer.
+ */
+function adminRoute(pathname: string): { rewriteTo: string } | "hidden" | null {
+  const secret = `/${ADMIN_SEGMENT}`;
+  if (ADMIN_SEGMENT !== "admin" && (pathname === "/admin" || pathname.startsWith("/admin/"))) return "hidden";
+  if (pathname === secret || pathname.startsWith(`${secret}/`)) {
+    return { rewriteTo: `/admin${pathname.slice(secret.length)}` };
+  }
+  return null;
+}
+
 export async function proxy(request: NextRequest) {
+  const route = adminRoute(request.nextUrl.pathname);
+  if (route === "hidden") {
+    return NextResponse.rewrite(new URL("/not-found-hidden", request.url), { status: 404 });
+  }
+
+  // The answer for this request, with the admin rewrite when it is one.
+  const answer = () => {
+    if (!route) return NextResponse.next({ request: { headers: request.headers } });
+    const headers = new Headers(request.headers);
+    headers.set("x-rx-area", "admin");
+    const url = request.nextUrl.clone();
+    url.pathname = route.rewriteTo;
+    return NextResponse.rewrite(url, { request: { headers } });
+  };
+
   const refresh = request.cookies.get(RT)?.value;
-  if (!refresh) return NextResponse.next();
+  if (!refresh) return answer();
 
   const expires = Number(request.cookies.get(EXP)?.value ?? 0);
   const stillGood = request.cookies.get(AT)?.value && expires - Date.now() > 30_000;
-  if (stillGood) return NextResponse.next();
+  if (stillGood) return answer();
 
   const outcome = await refreshOnce(refresh);
 
   if ("rejected" in outcome) {
     // The refresh token is finished: sign the person out.
-    const out = NextResponse.next();
+    const out = answer();
     for (const name of [AT, RT, EXP, USER]) out.cookies.delete(name);
     return out;
   }
-  if ("failed" in outcome) return NextResponse.next(); // API trouble: keep the session
+  if ("failed" in outcome) return answer(); // API trouble: keep the session
 
   const { tokens } = outcome;
   const refreshEnds = new Date(tokens.refreshTokenExpiresAtUtc);
@@ -80,7 +110,7 @@ export async function proxy(request: NextRequest) {
   request.cookies.set(AT, tokens.accessToken);
   request.cookies.set(RT, tokens.refreshToken);
   request.cookies.set(EXP, accessEnds);
-  const response = NextResponse.next({ request: { headers: request.headers } });
+  const response = answer();
 
   response.cookies.set(AT, tokens.accessToken, options(refreshEnds));
   response.cookies.set(RT, tokens.refreshToken, options(refreshEnds));

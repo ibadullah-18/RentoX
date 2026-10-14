@@ -1,3 +1,4 @@
+import { adminHref } from "@/lib/admin-path";
 import { getLocale, getT } from "@/lib/i18n/server";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { UserAvatar } from "@/components/messages/UserAvatar";
@@ -88,7 +89,7 @@ export default async function CabinetPage() {
           <ChevronRight className="size-5 text-ink-2" aria-hidden />
         </Link>
         {admin && (
-          <Link href="/admin" className={row}>
+          <Link href={adminHref()} className={row}>
             <ShieldCheck className="size-5 text-primary" aria-hidden />
             <span className="flex-1 font-semibold">{t("Admin paneli")}</span>
             <ChevronRight className="size-5 text-ink-2" aria-hidden />

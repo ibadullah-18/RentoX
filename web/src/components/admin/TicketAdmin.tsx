@@ -5,7 +5,7 @@ import { useT } from "@/lib/i18n/client";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Loader2, Send } from "lucide-react";
-import { replyAsAdmin, reviewReport, setTicketPriority, setTicketStatus, type Done } from "@/app/admin/actions";
+import { replyAsAdmin, reviewChatReport, reviewReport, setTicketPriority, setTicketStatus, type Done } from "@/app/admin/(panel)/actions";
 import { priorityLabel, reportStatus } from "@/lib/admin-labels";
 import { ticketStatus } from "@/lib/support";
 
@@ -98,51 +98,72 @@ export function TicketAdmin({ id, status, priority }: { id: string; status: numb
   );
 }
 
-/** Mark a content report as under review, resolved or rejected, with a note. */
-export function ReportReview({ id, status }: { id: string; status: number }) {
-  const t = useT();
+/** Mark a report as under review, resolved or rejected. Closing it needs a note; a closed report is final. */
+export function ReportReview({ id, status, kind = "content" }: { id: string; status: number; kind?: "content" | "chat" }) {
   const { busy, error, run } = useRun();
   const [note, setNote] = useState("");
+  const [problem, setProblem] = useState<string | null>(null);
 
+  const closed = status === 3 || status === 4;
   const options: [number, string][] = [
     [2, reportStatus[2]],
     [3, reportStatus[3]],
     [4, reportStatus[4]],
   ];
 
+  if (closed) {
+    return (
+      <p className="rounded-lg bg-line px-3 py-2.5 text-sm font-semibold text-ink-2">
+        Şikayət bağlanıb ({reportStatus[status]}). Bağlanmış şikayəti dəyişmək olmaz.
+      </p>
+    );
+  }
+
+  function choose(value: number) {
+    if ((value === 3 || value === 4) && !note.trim()) {
+      setProblem("Şikayəti bağlamaq üçün qərar qeydi yazın.");
+      return;
+    }
+    setProblem(null);
+    void run(() => (kind === "chat" ? reviewChatReport(id, value, note) : reviewReport(id, value, note)));
+  }
+
   return (
     <div className="space-y-3">
       <textarea
         value={note}
-        onChange={(e) => setNote(e.target.value)}
+        onChange={(e) => {
+          setNote(e.target.value);
+          setProblem(null);
+        }}
         rows={3}
         maxLength={1000}
         disabled={busy}
-        placeholder={t("Qeyd (ixtiyari)")}
-        className="w-full rounded-xl border border-line bg-surface px-4 py-3 text-[16px] outline-none focus:border-primary"
+        placeholder="Qərar qeydi (həll və ya rədd üçün məcburidir)"
+        className="w-full rounded-lg border border-line bg-surface px-3.5 py-2.5 text-[15px] outline-none focus:border-primary"
       />
       <div className="flex flex-wrap gap-2">
         {options.map(([value, label]) => (
           <button
             key={value}
             type="button"
-            disabled={busy}
-            onClick={() => void run(() => reviewReport(id, value, note))}
-            className={`h-11 rounded-xl border px-5 font-bold disabled:opacity-60 ${
+            disabled={busy || status === value}
+            onClick={() => choose(value)}
+            className={`h-10 rounded-lg border px-4 text-sm font-bold disabled:opacity-50 ${
               value === 3
                 ? "border-success text-success hover:bg-success-soft"
                 : value === 4
                   ? "border-danger text-danger hover:bg-danger/10"
                   : "border-line hover:border-primary"
-            } ${status === value ? "ring-2 ring-primary" : ""}`}
+            }`}
           >
             {label}
           </button>
         ))}
       </div>
-      {error && (
+      {(problem || error) && (
         <p role="alert" className="text-sm font-semibold text-danger">
-          {error}
+          {problem ?? error}
         </p>
       )}
     </div>

@@ -76,8 +76,7 @@ const ROLE_CLAIM = "http://schemas.microsoft.com/ws/2008/06/identity/claims/role
  * The roles in the access token. Only for deciding what to show: the API
  * checks the real token on every admin call, so a forged cookie gets nothing.
  */
-export async function getRoles(): Promise<string[]> {
-  const token = await getAccessToken();
+export function rolesOf(token: string | null | undefined): string[] {
   if (!token) return [];
   try {
     const payload = JSON.parse(Buffer.from(token.split(".")[1], "base64url").toString("utf8")) as Record<
@@ -88,6 +87,31 @@ export async function getRoles(): Promise<string[]> {
     return Array.isArray(raw) ? raw.map(String) : raw ? [String(raw)] : [];
   } catch {
     return [];
+  }
+}
+
+export async function getRoles(): Promise<string[]> {
+  return rolesOf(await getAccessToken());
+}
+
+/**
+ * The sections of the admin panel this person may use: null means all of them
+ * (a SuperAdmin, or an Admin nobody limited). Only for deciding what to show;
+ * the API checks every call.
+ */
+export async function getSections(): Promise<string[] | null> {
+  const roles = await getRoles();
+  if (roles.includes("SuperAdmin")) return null;
+
+  const token = await getAccessToken();
+  if (!token) return [];
+  try {
+    const payload = JSON.parse(Buffer.from(token.split(".")[1], "base64url").toString("utf8")) as Record<string, unknown>;
+    const raw = payload["rx_section"];
+    const list = Array.isArray(raw) ? raw.map(String) : raw ? [String(raw)] : [];
+    return list.length === 0 ? null : list;
+  } catch {
+    return null;
   }
 }
 

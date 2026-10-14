@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { BackButton } from "@/components/BackButton";
 import { getCategories } from "@/lib/api";
-import { categoryIcon, tints } from "@/lib/category-icon";
+import { CategoryIcon } from "@/components/CategoryIcon";
+import { tints } from "@/lib/category-icon";
 import { getT } from "@/lib/i18n/server";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -22,14 +23,13 @@ export default async function CategoriesPage() {
       </div>
       <ul className="grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-8">
         {categories.map((c, i) => {
-          const Icon = categoryIcon(c.slug);
-          return (
+                    return (
             <li key={c.id}>
               <Link
                 href={`/search?category=${c.id}`}
                 className={`flex aspect-square flex-col items-center justify-center gap-2 rounded-xl p-2 text-center transition-transform hover:-translate-y-0.5 ${tints[i % tints.length]}`}
               >
-                <Icon className="size-8" aria-hidden />
+                <CategoryIcon slug={c.slug} iconUrl={c.iconUrl} className="size-8" />
                 <span className="line-clamp-2 text-[13px] font-bold leading-tight">{c.name}</span>
               </Link>
             </li>

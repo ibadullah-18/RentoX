@@ -7,6 +7,7 @@ import { FavoritesProvider } from "@/components/FavoritesProvider";
 import { Header } from "@/components/Header";
 import { getFavoriteIds, getUnreadMessages, getUnreadNotifications } from "@/lib/personal";
 import { getSession } from "@/lib/session";
+import { headers } from "next/headers";
 import { siteUrl } from "@/lib/format";
 import { I18nProvider } from "@/lib/i18n/client";
 import { intlTag } from "@/lib/i18n/locales";
@@ -40,8 +41,10 @@ export const viewport: Viewport = {
 export default async function RootLayout({ children }: LayoutProps<"/">) {
   const locale = await getLocale();
   const theme = await getTheme();
+  // The admin panel has its own frame: no site header, footer or bottom bar.
+  const admin = (await headers()).get("x-rx-area") === "admin";
   const session = await getSession();
-  const [favoriteIds, unreadMessages, unreadNotifications] = session
+  const [favoriteIds, unreadMessages, unreadNotifications] = session && !admin
     ? await Promise.all([getFavoriteIds(), getUnreadMessages(), getUnreadNotifications()])
     : [[], 0, 0];
 
@@ -49,14 +52,16 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
     <html lang={locale} data-theme={theme === "auto" ? undefined : theme} className={`${inter.variable} h-full antialiased`}>
       <body className="flex min-h-full flex-col">
         <I18nProvider locale={locale}>
-        <FavoritesProvider initialIds={favoriteIds} signedIn={session !== null}>
-          <Header unreadMessages={unreadMessages} unreadNotifications={unreadNotifications} />
-          <main className="mx-auto w-full max-w-[1240px] flex-1 px-4 py-5 md:px-6 md:py-8">
-            {children}
-          </main>
-          <Footer />
-          <BottomNav unreadMessages={unreadMessages} />
-        </FavoritesProvider>
+        {admin ? (
+          children
+        ) : (
+          <FavoritesProvider initialIds={favoriteIds} signedIn={session !== null}>
+            <Header unreadMessages={unreadMessages} unreadNotifications={unreadNotifications} />
+            <main className="mx-auto w-full max-w-[1240px] flex-1 px-4 py-5 md:px-6 md:py-8">{children}</main>
+            <Footer />
+            <BottomNav unreadMessages={unreadMessages} />
+          </FavoritesProvider>
+        )}
         </I18nProvider>
       </body>
     </html>

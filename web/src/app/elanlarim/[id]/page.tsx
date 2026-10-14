@@ -5,6 +5,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { ChevronLeft, ImageIcon } from "lucide-react";
 import { ManageActions } from "@/components/ManageActions";
+import { getPrices } from "@/lib/tariffs";
 import { StatusChip } from "@/components/StatusChip";
 import { fieldValue, formatPrice, ownerImage, formatNumber } from "@/lib/format";
 import { getMyListing, getWallet } from "@/lib/personal";
@@ -113,7 +114,7 @@ export default async function MyListingPage({ params }: PageProps<"/elanlarim/[i
             <p className="text-sm text-ink-2">{t("Pul kisəsi")}</p>
             <p className="text-xl font-extrabold">{formatNumber(balance, locale)} {t("AZN")}</p>
           </div>
-          <ManageActions id={l.id} status={status} balance={balance} />
+          <ManageActions id={l.id} status={status} balance={balance} prices={await getPrices()} />
         </aside>
       </div>
     </div>

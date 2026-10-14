@@ -68,9 +68,12 @@ function Problem({ children }: { children?: React.ReactNode }) {
 export function NewListingForm({
   categories,
   cities,
+  activationFee,
 }: {
   categories: Category[];
   cities: City[];
+  /** What activating one more listing costs once the free ones are used. */
+  activationFee: number;
 }) {
   const t = useT();
   const locale = useLocale();
@@ -274,7 +277,7 @@ export function NewListingForm({
 
   // ---- the result ---------------------------------------------------------
   if (phase.name === "done") {
-    return <Result id={phase.id} status={phase.status} />;
+    return <Result id={phase.id} status={phase.status} activationFee={activationFee} />;
   }
 
   const first = (key: keyof typeof errors) =>
@@ -460,7 +463,7 @@ export function NewListingForm({
 }
 
 /** What happened to the listing after it was sent. */
-function Result({ id, status }: { id: string; status: number }) {
+function Result({ id, status, activationFee }: { id: string; status: number; activationFee: number }) {
   const t = useT();
   const router = useRouter();
   const [paying, setPaying] = useState(false);
@@ -521,7 +524,7 @@ function Result({ id, status }: { id: string; status: number }) {
         <Wallet className="size-14 text-primary" aria-hidden />
         <h1 className="text-2xl font-extrabold">{t("Aktivləşdirmə haqqı")}</h1>
         <p className="text-ink-2">
-          {t("Pulsuz elan limitiniz dolub. Bu elanı dərc etmək üçün 1 AZN pul kisənizdən çıxılacaq.")}</p>
+          {t("Pulsuz elan limitiniz dolub. Bu elanı dərc etmək üçün {fee} AZN pul kisənizdən çıxılacaq.", { fee: activationFee })}</p>
         {message && (
           <p role="alert" className="text-sm font-semibold text-danger">
             {message}
@@ -529,7 +532,7 @@ function Result({ id, status }: { id: string; status: number }) {
         )}
         <button type="button" onClick={pay} disabled={paying} className={primary}>
           {paying && <Loader2 className="size-5 animate-spin" aria-hidden />}
-          {t("1 AZN ödə və aktiv et")}</button>
+          {t("{fee} AZN ödə və aktiv et", { fee: activationFee })}</button>
         <Link href="/" className="text-sm font-bold text-primary hover:underline">
           {t("Sonra ödəyəcəyəm")}</Link>
       </div>

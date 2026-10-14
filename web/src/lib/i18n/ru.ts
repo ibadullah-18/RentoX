@@ -1,6 +1,6 @@
 // Russian. Keys are the Azerbaijani texts used in the code.
 export const ru: Record<string, string> = {
-  "1 AZN ödə və aktiv et": "Оплатить 1 AZN и активировать",
+  "{fee} AZN ödə və aktiv et": "Оплатить {fee} AZN и активировать",
   "30 gün yenilə": "Продлить на 30 дней",
   "6 rəqəmli kodu yazın.": "Введите 6-значный код.",
   "AZN": "AZN",
@@ -209,10 +209,9 @@ export const ru: Record<string, string> = {
   "Pul kisəsi": "Кошелёк",
   "Pul kisəsini artırın": "Пополните кошелёк",
   "Pulsuz elan limiti dolub. Dərc üçün aktivləşdirmə haqqı lazımdır.": "Лимит бесплатных объявлений исчерпан. Для публикации нужна плата за активацию.",
-  "Pulsuz elan limitiniz dolub. Bu elanı dərc etmək üçün 1 AZN pul kisənizdən çıxılacaq.": "Ваш лимит бесплатных объявлений исчерпан. Для публикации этого объявления с кошелька будет списан 1 AZN.",
+  "Pulsuz elan limitiniz dolub. Bu elanı dərc etmək üçün {fee} AZN pul kisənizdən çıxılacaq.": "Ваш лимит бесплатных объявлений исчерпан. Для публикации этого объявления с кошелька будет списан {fee} AZN.",
   "Qalıq:": "Остаток:",
   "Qaralama": "Черновик",
-  "Qeyd (ixtiyari)": "Примечание (необязательно)",
   "Qeydiyyatdan keç": "Зарегистрироваться",
   "Qiymət": "Цена",
   "Qiymət (AZN)": "Цена (AZN)",
@@ -373,4 +372,5 @@ export const ru: Record<string, string> = {
   "Hesab silinsin?": "Удалить аккаунт?",
   "Hesabınız, elanlarınız və mesajlarınız silinəcək. Bunu geri qaytarmaq olmaz.": "Ваш аккаунт, объявления и сообщения будут удалены. Это нельзя отменить.",
   "Haqqınızda ən çoxu {n} simvol yazın.": "Напишите о себе не более {n} символов.",
+  "Hesabınız bloklanıb. Ətraflı məlumat üçün dəstəyə yazın.": "Ваш аккаунт заблокирован. Подробности — в службе поддержки.",
 };

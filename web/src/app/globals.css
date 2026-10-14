@@ -119,3 +119,16 @@ body {
     display: none;
   }
 }
+
+/* Printing (or "save as PDF"): the admin menu and buttons are left out. */
+@media print {
+  .no-print,
+  aside,
+  header {
+    display: none !important;
+  }
+  body {
+    background: #fff !important;
+    color: #000 !important;
+  }
+}

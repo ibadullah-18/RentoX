@@ -37,4 +37,3 @@ export const statusTone: Record<number, string> = {
 
 export const money = new Intl.NumberFormat("az", { maximumFractionDigits: 2 });
 
-export const PRICES = { vip: 10, bump: 5, activation: 1, vipDays: 7 } as const;
