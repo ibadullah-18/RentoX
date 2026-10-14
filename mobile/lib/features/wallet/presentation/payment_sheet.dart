@@ -88,6 +88,7 @@ class _PaymentSheetState extends ConsumerState<_PaymentSheet> {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
     final locale = Localizations.localeOf(context).toString();
+    ref.watch(tariffsProvider);
     final wallet = ref.watch(walletBalanceProvider);
     final balance = wallet.value?.balance;
     final enough = balance != null && balance >= _amount;

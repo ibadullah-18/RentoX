@@ -14,6 +14,7 @@
   "otpSubtitle": "Type the 6-digit code sent to {phone}.",
   "otpResendIn": "Resend in {seconds}s",
   "otpResend": "Resend code",
+  "accountBlocked": "Your account has been blocked. Contact support for details.",
   "otpWrong": "The code is incorrect or has expired",
 
   "registerTitle": "Create account",

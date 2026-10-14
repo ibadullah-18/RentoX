@@ -79,7 +79,43 @@ abstract final class AppIcons {
   static const IconData event = Symbols.festival_rounded;
   static const IconData tools = Symbols.build_rounded;
 
-  static IconData categoryIcon(String slug) {
+  /// The icons an admin can give a category (the web panel stores the key in
+  /// the category's iconUrl). The same keys exist on the website.
+  static const Map<String, IconData> byKey = {
+    'car': Symbols.directions_car_rounded,
+    'bike': Symbols.two_wheeler_rounded,
+    'bus': Symbols.directions_bus_rounded,
+    'truck': Symbols.local_shipping_rounded,
+    'boat': Symbols.directions_boat_rounded,
+    'plane': Symbols.flight_rounded,
+    'building': Symbols.apartment_rounded,
+    'home': Symbols.home_rounded,
+    'key': Symbols.key_rounded,
+    'furniture': Symbols.chair_rounded,
+    'garden': Symbols.yard_rounded,
+    'tools': Symbols.handyman_rounded,
+    'repair': Symbols.build_rounded,
+    'event': Symbols.festival_rounded,
+    'camera': Symbols.photo_camera_rounded,
+    'laptop': Symbols.laptop_mac_rounded,
+    'phone': Symbols.smartphone_rounded,
+    'tv': Symbols.tv_rounded,
+    'music': Symbols.music_note_rounded,
+    'games': Symbols.sports_esports_rounded,
+    'sport': Symbols.fitness_center_rounded,
+    'clothes': Symbols.checkroom_rounded,
+    'baby': Symbols.child_care_rounded,
+    'pets': Symbols.pets_rounded,
+    'books': Symbols.menu_book_rounded,
+    'luggage': Symbols.luggage_rounded,
+  };
+
+  /// The icon of a category: the one the admin chose ([iconKey]), else a
+  /// guess from the slug.
+  static IconData categoryIcon(String slug, {String? iconKey}) {
+    final chosen = iconKey == null ? null : byKey[iconKey.trim()];
+    if (chosen != null) return chosen;
+
     final s = slug.toLowerCase();
     bool has(List<String> keys) => keys.any(s.contains);
 

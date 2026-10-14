@@ -51,6 +51,10 @@ class AppL10nAz extends AppL10n {
   String get otpResend => 'Kodu yenidən göndər';
 
   @override
+  String get accountBlocked =>
+      'Hesabınız bloklanıb. Ətraflı məlumat üçün dəstəyə yazın.';
+
+  @override
   String get otpWrong => 'Kod yanlışdır və ya vaxtı bitib';
 
   @override

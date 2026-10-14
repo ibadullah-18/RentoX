@@ -16,6 +16,7 @@
   "otpResendIn": "Yenidən göndər: {seconds} san",
   "@otpResendIn": { "placeholders": { "seconds": { "type": "int" } } },
   "otpResend": "Kodu yenidən göndər",
+  "accountBlocked": "Hesabınız bloklanıb. Ətraflı məlumat üçün dəstəyə yazın.",
   "otpWrong": "Kod yanlışdır və ya vaxtı bitib",
 
   "registerTitle": "Hesab yarat",

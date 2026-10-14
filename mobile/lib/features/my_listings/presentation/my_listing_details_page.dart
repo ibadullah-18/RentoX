@@ -38,6 +38,8 @@ class MyListingDetailsPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppL10n.of(context);
     final details = ref.watch(myListingDetailsProvider(listingId));
+    // The prices shown on the buttons: redrawn once the server has told them.
+    ref.watch(tariffsProvider);
 
     Widget shell(Widget child) => Scaffold(
       body: SafeArea(

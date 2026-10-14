@@ -109,7 +109,10 @@ class _VerifyPageState extends ConsumerState<VerifyPage> {
       context.go(widget.redirectTo ?? '/');
     } catch (e) {
       if (!mounted) return;
-      if (e is ApiException &&
+      if (e is ApiException && e.isBlocked) {
+        setState(() => _codeError = AppL10n.of(context).accountBlocked);
+        _code.clear();
+      } else if (e is ApiException &&
           e.statusCode != null &&
           e.statusCode! < 500 &&
           !e.isNetwork) {

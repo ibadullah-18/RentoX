@@ -1,3 +1,4 @@
+import '../../../shared/widgets/category_icon.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -99,8 +100,9 @@ class _CategoryPickerSheetState extends ConsumerState<_CategoryPickerSheet> {
                     final hasChildren = c.children.isNotEmpty;
                     return ListTile(
                       contentPadding: EdgeInsets.zero,
-                      leading: Icon(
-                        AppIcons.categoryIcon(c.slug),
+                      leading: CategoryIcon(
+                        slug: c.slug,
+                        iconUrl: c.iconUrl,
                         color: theme.colorScheme.primary,
                       ),
                       title: Text(

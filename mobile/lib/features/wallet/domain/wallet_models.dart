@@ -3,14 +3,24 @@ import 'dart:math';
 /// Prices charged by the backend (`ListingActivationPricingService`,
 /// `ListingPromotionPricingService`). Shown to the user *before* paying;
 /// the server remains the source of truth for the actual charge.
+///
+/// An admin can change the prices, so these are the last ones the server
+/// told us ([apply], from `GET /api/tariffs`); until then, the starting ones.
 abstract final class Pricing {
-  static const activationFee = 1.0;
-  static const vipPrice = 10.0;
-  static const bumpPrice = 5.0;
+  static double activationFee = 1.0;
+  static double vipPrice = 10.0;
+  static double bumpPrice = 5.0;
   // Renewing costs the same as activating (free while the monthly free quota lasts).
-  static const renewalFee = activationFee;
-  static const vipDays = 7;
+  static double get renewalFee => activationFee;
+  static int vipDays = 7;
   static const currency = 'AZN';
+
+  static void apply(Map<String, dynamic> json) {
+    activationFee = (json['activationFee'] as num?)?.toDouble() ?? activationFee;
+    vipPrice = (json['vipPrice'] as num?)?.toDouble() ?? vipPrice;
+    bumpPrice = (json['bumpPrice'] as num?)?.toDouble() ?? bumpPrice;
+    vipDays = (json['vipDurationDays'] as num?)?.toInt() ?? vipDays;
+  }
 }
 
 /// Mirrors the backend `ListingPromotionType` enum.

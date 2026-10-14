@@ -1,3 +1,4 @@
+import '../../../shared/widgets/category_icon.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -406,7 +407,8 @@ class _CategoryStrip extends ConsumerWidget {
               final tint = _tints[i % _tints.length];
               return _CategoryTile(
                 label: category.name,
-                icon: AppIcons.categoryIcon(category.slug),
+                slug: category.slug,
+                iconUrl: category.iconUrl,
                 color: dark ? tint.withValues(alpha: 0.16) : tint,
                 iconColor: dark ? scheme.onSurface : AppColors.ink,
                 selected: category.id == selectedId,
@@ -454,7 +456,8 @@ class _BackTile extends StatelessWidget {
 class _CategoryTile extends StatelessWidget {
   const _CategoryTile({
     required this.label,
-    required this.icon,
+    required this.slug,
+    this.iconUrl,
     required this.color,
     required this.iconColor,
     required this.onTap,
@@ -462,7 +465,8 @@ class _CategoryTile extends StatelessWidget {
   });
 
   final String label;
-  final IconData icon;
+  final String slug;
+  final String? iconUrl;
   final Color color;
   final Color iconColor;
   final bool selected;
@@ -500,7 +504,11 @@ class _CategoryTile extends StatelessWidget {
                   color: scheme.surface.withValues(alpha: 0.65),
                   borderRadius: BorderRadius.circular(AppRadius.md),
                 ),
-                child: Icon(icon, size: 24, color: iconColor),
+                child: CategoryIcon(
+                  slug: slug,
+                  iconUrl: iconUrl,
+                  color: iconColor,
+                ),
               ),
               const SizedBox(width: 10),
               Flexible(

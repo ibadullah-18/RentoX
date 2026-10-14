@@ -10,6 +10,10 @@ class ApiException implements Exception {
 
   bool get isUnauthorized => statusCode == 401;
 
+  /// The backend refused a sign-in because an admin blocked the account.
+  bool get isBlocked =>
+      statusCode == 400 && message.toLowerCase().contains('blocked');
+
   /// HTTP 429, or the backend's business-rule "please wait" (400) for OTP resends.
   bool get isRateLimited =>
       statusCode == 429 ||

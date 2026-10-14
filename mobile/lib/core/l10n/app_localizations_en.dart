@@ -51,6 +51,10 @@ class AppL10nEn extends AppL10n {
   String get otpResend => 'Resend code';
 
   @override
+  String get accountBlocked =>
+      'Your account has been blocked. Contact support for details.';
+
+  @override
   String get otpWrong => 'The code is incorrect or has expired';
 
   @override

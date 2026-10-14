@@ -51,6 +51,10 @@ class AppL10nRu extends AppL10n {
   String get otpResend => 'Отправить код снова';
 
   @override
+  String get accountBlocked =>
+      'Ваш аккаунт заблокирован. Подробности — в службе поддержки.';
+
+  @override
   String get otpWrong => 'Код неверный или истёк';
 
   @override

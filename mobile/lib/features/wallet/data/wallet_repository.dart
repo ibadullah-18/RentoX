@@ -12,6 +12,12 @@ class WalletRepository {
 
   final Dio _dio;
 
+  /// The current prices of the paid services (an admin can change them).
+  Future<void> loadTariffs() => guardApi(() async {
+    final res = await _dio.get<Map<String, dynamic>>('/api/tariffs');
+    Pricing.apply(res.data!);
+  });
+
   Future<WalletBalance> balance() => guardApi(() async {
     final res = await _dio.get<Map<String, dynamic>>('/api/wallet');
     return WalletBalance.fromJson(res.data!);
@@ -51,6 +57,16 @@ class WalletRepository {
     );
   });
 }
+
+/// Loads the prices once; screens that show them watch this, so they redraw
+/// with the real numbers.
+final tariffsProvider = FutureProvider<void>((ref) async {
+  try {
+    await ref.watch(walletRepositoryProvider).loadTariffs();
+  } catch (_) {
+    // The starting prices stay; the server charges the real ones anyway.
+  }
+});
 
 final walletRepositoryProvider = Provider<WalletRepository>(
   (ref) => WalletRepository(ref.watch(dioProvider)),

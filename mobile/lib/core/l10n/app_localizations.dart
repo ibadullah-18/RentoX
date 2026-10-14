@@ -171,6 +171,12 @@ abstract class AppL10n {
   /// **'Kodu yenidən göndər'**
   String get otpResend;
 
+  /// No description provided for @accountBlocked.
+  ///
+  /// In az, this message translates to:
+  /// **'Hesabınız bloklanıb. Ətraflı məlumat üçün dəstəyə yazın.'**
+  String get accountBlocked;
+
   /// No description provided for @otpWrong.
   ///
   /// In az, this message translates to:
