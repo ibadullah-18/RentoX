@@ -1,0 +1,121 @@
+@import "tailwindcss";
+
+/* RentoX "Indigo" palette — the same values as the mobile app (AppColors). */
+:root {
+  --bg: #f6f5ff;
+  --surface: #ffffff;
+  --line: #e6e4f5;
+  --ink: #1b1740;
+  --ink-2: #6b6890;
+  --muted: #9a98b5;
+  --primary: #5b4bff;
+  --primary-press: #4638e0;
+  --primary-soft: #ebe9ff;
+  --accent: #ff4d8d;
+  --accent-soft: #ffe0ec;
+  --success: #22c58b;
+  --success-soft: #ddf7ec;
+  --warning: #f5a524;
+  --warning-soft: #fff3dc;
+  --danger: #e5484d;
+  color-scheme: light;
+}
+
+/* Night: chosen on purpose, or "auto" (no choice) while the device is dark. */
+:root[data-theme="dark"] {
+  --bg: #0f0d24;
+  --surface: #1a1736;
+  --line: #2c2954;
+  --ink: #f1f0ff;
+  --ink-2: #a9a6cf;
+  --muted: #7d7aa6;
+  --primary: #6a5cff;
+  --primary-soft: rgba(106, 92, 255, 0.2);
+  --accent-soft: rgba(255, 77, 141, 0.18);
+  --success-soft: rgba(34, 197, 139, 0.16);
+  --warning-soft: rgba(245, 165, 36, 0.16);
+  color-scheme: dark;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]):not([data-theme="dark"]) {
+    --bg: #0f0d24;
+    --surface: #1a1736;
+    --line: #2c2954;
+    --ink: #f1f0ff;
+    --ink-2: #a9a6cf;
+    --muted: #7d7aa6;
+    --primary: #6a5cff;
+    --primary-soft: rgba(106, 92, 255, 0.2);
+    --accent-soft: rgba(255, 77, 141, 0.18);
+    --success-soft: rgba(34, 197, 139, 0.16);
+    --warning-soft: rgba(245, 165, 36, 0.16);
+    color-scheme: dark;
+  }
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-line: var(--line);
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-muted: var(--muted);
+  --color-primary: var(--primary);
+  --color-primary-press: var(--primary-press);
+  --color-primary-soft: var(--primary-soft);
+  --color-accent: var(--accent);
+  --color-accent-soft: var(--accent-soft);
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+  --color-danger: var(--danger);
+  --font-sans: var(--font-inter), system-ui, sans-serif;
+  /* One calm set of corners for the whole site: soft, not sharp, not round. */
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 10px;
+  --radius-2xl: 12px;
+  --radius-3xl: 14px;
+}
+
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-sans);
+}
+
+/* Room for the floating bottom bar on phones. */
+@media (max-width: 767px) {
+  body {
+    padding-bottom: 88px;
+  }
+}
+
+/* Horizontal strips: swipe on touch, no visible scrollbar. In a layer, so
+   utilities such as lg:hidden still win over it. */
+@layer components {
+  .strip {
+    display: flex;
+    gap: 10px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    scroll-snap-type: x proximity;
+  }
+  .strip::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* A sideways track that swipes with snapping and shows no scrollbar. */
+@layer components {
+  .snap-track {
+    scrollbar-width: none;
+    overscroll-behavior-x: contain;
+  }
+  .snap-track::-webkit-scrollbar {
+    display: none;
+  }
+}

@@ -1,0 +1,97 @@
+import "server-only";
+import { cookies } from "next/headers";
+
+// The tokens live in httpOnly cookies: the browser sends them back, but no
+// script on the page (and so no injected script) can ever read them.
+export const COOKIE = {
+  access: "rx_at",
+  refresh: "rx_rt",
+  /** When the access token ends (epoch milliseconds), for the refresh check. */
+  accessExpires: "rx_exp",
+  /** Who is signed in, as JSON, for showing the name and phone. */
+  user: "rx_user",
+} as const;
+
+export type AuthTokens = {
+  accessToken: string;
+  refreshToken: string;
+  accessTokenExpiresAtUtc: string;
+  refreshTokenExpiresAtUtc: string;
+};
+
+export type Session = { userId: string; phone: string };
+
+const base = {
+  httpOnly: true,
+  sameSite: "lax" as const,
+  secure: process.env.NODE_ENV === "production",
+  path: "/",
+};
+
+/** Only from a server action or route handler: cookies cannot be set while rendering. */
+export async function saveSession(tokens: AuthTokens, session: Session) {
+  const jar = await cookies();
+  const accessEnds = new Date(tokens.accessTokenExpiresAtUtc);
+  const refreshEnds = new Date(tokens.refreshTokenExpiresAtUtc);
+
+  jar.set(COOKIE.access, tokens.accessToken, { ...base, expires: refreshEnds });
+  jar.set(COOKIE.accessExpires, String(accessEnds.getTime()), {
+    ...base,
+    expires: refreshEnds,
+  });
+  jar.set(COOKIE.refresh, tokens.refreshToken, { ...base, expires: refreshEnds });
+  jar.set(COOKIE.user, JSON.stringify(session), { ...base, expires: refreshEnds });
+}
+
+export async function clearSession() {
+  const jar = await cookies();
+  for (const name of Object.values(COOKIE)) jar.delete(name);
+}
+
+/** The signed-in person, or null. Cheap: reads a cookie, calls nothing. */
+export async function getSession(): Promise<Session | null> {
+  const jar = await cookies();
+  if (!jar.get(COOKIE.refresh)?.value) return null;
+  try {
+    const parsed = JSON.parse(jar.get(COOKIE.user)?.value ?? "") as Session;
+    return parsed.userId ? parsed : null;
+  } catch {
+    return null;
+  }
+}
+
+export async function getAccessToken(): Promise<string | null> {
+  const jar = await cookies();
+  return jar.get(COOKIE.access)?.value ?? null;
+}
+
+export async function getRefreshToken(): Promise<string | null> {
+  const jar = await cookies();
+  return jar.get(COOKIE.refresh)?.value ?? null;
+}
+
+const ROLE_CLAIM = "http://schemas.microsoft.com/ws/2008/06/identity/claims/role";
+
+/**
+ * The roles in the access token. Only for deciding what to show: the API
+ * checks the real token on every admin call, so a forged cookie gets nothing.
+ */
+export async function getRoles(): Promise<string[]> {
+  const token = await getAccessToken();
+  if (!token) return [];
+  try {
+    const payload = JSON.parse(Buffer.from(token.split(".")[1], "base64url").toString("utf8")) as Record<
+      string,
+      unknown
+    >;
+    const raw = payload[ROLE_CLAIM] ?? payload.role;
+    return Array.isArray(raw) ? raw.map(String) : raw ? [String(raw)] : [];
+  } catch {
+    return [];
+  }
+}
+
+export async function isAdmin(): Promise<boolean> {
+  const roles = await getRoles();
+  return roles.includes("Admin") || roles.includes("SuperAdmin");
+}
