@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Loader2, LogOut, ShieldCheck, UserMinus, UserPlus } from "lucide-react";
@@ -7,6 +8,7 @@ import { endSessions, grantAdmin, revokeAdmin, setSections } from "@/app/admin/(
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { Pill } from "@/components/admin/ui";
 import { PANEL_SECTIONS, type StaffMember } from "@/lib/admin-catalog";
+import { adminHref } from "@/lib/admin-path";
 import { formatNational } from "@/lib/phone";
 
 const input =
@@ -125,6 +127,14 @@ export function StaffManager({ members, me }: { members: StaffMember[]; me: stri
                 )}
               </span>
               <Pill tone={m.role === "SuperAdmin" ? "primary" : "success"}>{m.role}</Pill>
+              {m.role === "Admin" && (
+                <Link
+                  href={adminHref(`/kadr/isciler/${m.userId}`)}
+                  className="flex h-9 items-center gap-1.5 rounded-lg border border-line px-3 text-sm font-semibold hover:border-primary hover:text-primary"
+                >
+                  Maaş, saatlar, giriş
+                </Link>
+              )}
               {m.role === "Admin" && (
                 <SectionsEditor
                   key={`${m.userId}-${m.sections.join(",")}`}

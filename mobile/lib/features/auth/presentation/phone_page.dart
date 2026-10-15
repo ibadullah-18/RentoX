@@ -1,8 +1,10 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../app/router.dart';
 import '../../../core/l10n/app_localizations.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../shared/widgets/async_states.dart';
@@ -166,6 +168,14 @@ class _PhonePageState extends ConsumerState<PhonePage> {
                             )
                           : Text(l10n.continueAction),
                     ),
+                    const SizedBox(height: AppSpacing.md),
+                    const _Consent(),
+                    Center(
+                      child: TextButton(
+                        onPressed: () => context.push(Routes.info),
+                        child: Text(l10n.infoTitle),
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -173,6 +183,63 @@ class _PhonePageState extends ConsumerState<PhonePage> {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// "By continuing you accept the terms and the privacy policy", with both as links.
+class _Consent extends StatefulWidget {
+  const _Consent();
+
+  @override
+  State<_Consent> createState() => _ConsentState();
+}
+
+class _ConsentState extends State<_Consent> {
+  late final TapGestureRecognizer _terms = TapGestureRecognizer()
+    ..onTap = () => context.push(Routes.infoPage('terms'));
+  late final TapGestureRecognizer _privacy = TapGestureRecognizer()
+    ..onTap = () => context.push(Routes.infoPage('privacy'));
+
+  @override
+  void dispose() {
+    _terms.dispose();
+    _privacy.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppL10n.of(context);
+    final scheme = Theme.of(context).colorScheme;
+    final link = TextStyle(
+      color: scheme.primary,
+      fontWeight: FontWeight.w700,
+      decoration: TextDecoration.underline,
+    );
+
+    // The sentence differs by language, so the two names are cut out of it and made links.
+    final parts = l10n
+        .consentText('\u0001', '\u0002')
+        .split(RegExp('(\u0001|\u0002)'));
+    return Text.rich(
+      TextSpan(
+        children: [
+          for (final part in parts)
+            if (part == '\u0001')
+              TextSpan(text: l10n.termsTitle, style: link, recognizer: _terms)
+            else if (part == '\u0002')
+              TextSpan(
+                text: l10n.privacyTitle,
+                style: link,
+                recognizer: _privacy,
+              )
+            else
+              TextSpan(text: part),
+        ],
+      ),
+      textAlign: TextAlign.center,
+      style: TextStyle(fontSize: 12, color: scheme.onSurfaceVariant),
     );
   }
 }

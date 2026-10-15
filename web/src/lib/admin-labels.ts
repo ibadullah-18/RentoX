@@ -57,11 +57,13 @@ export const storeStatusLabel: Record<number, string> = {
 };
 
 /** What each audit action is called, and how to read its before/after number. */
-const sectionNames = ["Elanlar", "Mağazalar", "Şikayətlər", "Dəstək", "Kataloq", "İstifadəçilər", "Maliyyə"];
+const sectionNames = ["Elanlar", "Mağazalar", "Şikayətlər", "Dəstək", "Kataloq", "İstifadəçilər", "Maliyyə", "Kadr"];
 
 /** A set of panel sections written as bits → "Dəstək, Şikayətlər" (all of them: "Hamısı"). */
 export function sectionsFromMask(mask: number): string {
-  if (mask === (1 << sectionNames.length) - 1) return "Hamısı";
+  // Every ordinary section (without the staff one) is what "no section chosen" means.
+  if (mask === (1 << (sectionNames.length - 1)) - 1) return "Hamısı";
+  if (mask === (1 << sectionNames.length) - 1) return "Hamısı və Kadr";
   return sectionNames.filter((_, i) => (mask & (1 << i)) !== 0).join(", ") || "—";
 }
 
@@ -80,4 +82,9 @@ export const auditAction: Record<
   10: { label: "İşçinin sessiyaları bağlandı", format: (n) => `${n} sessiya`, target: "İstifadəçi" },
   9: { label: "Bildiriş göndərildi", format: (n) => `${n} nəfər`, target: "Mesaj" },
   6: { label: "Admin icazəsi dəyişdi", value: { 0: "Yoxdur", 1: "Admin" }, target: "İstifadəçi" },
+  12: {
+    label: "İşçi ilə bağlı dəyişiklik",
+    value: { 1: "Profil və ya maaş", 2: "Panelə giriş icazəsi", 3: "Maaş sətri əlavə edildi", 4: "Maaş sətri ləğv edildi", 5: "İcazə üzrə qərar", 6: "Müraciət üzrə qərar" },
+    target: "İşçi",
+  },
 };

@@ -11,22 +11,24 @@ const input =
   "h-10 w-full rounded-lg border border-line bg-surface px-3 text-[15px] outline-none focus:border-primary disabled:opacity-60";
 
 /** The adjustable settings; saving puts them in force at once and keeps the old ones in the history. */
-export function SettingsForm({ current }: { current: { listingLifetimeDays: number } }) {
+export function SettingsForm({ current }: { current: { listingLifetimeDays: number; maxListingPhotos: number } }) {
   const router = useRouter();
   const [days, setDays] = useState(String(current.listingLifetimeDays));
+  const [photos, setPhotos] = useState(String(current.maxListingPhotos ?? 15));
   const [asking, setAsking] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
 
   const parsed = Number(days);
-  const changed = parsed !== current.listingLifetimeDays;
+  const parsedPhotos = Number(photos);
+  const changed = parsed !== current.listingLifetimeDays || parsedPhotos !== (current.maxListingPhotos ?? 15);
 
   async function save() {
     setBusy(true);
     setError(null);
     setDone(false);
-    const res = await saveSettings({ listingLifetimeDays: parsed });
+    const res = await saveSettings({ listingLifetimeDays: parsed, maxListingPhotos: parsedPhotos });
     setBusy(false);
     setAsking(false);
     if (res.ok) {
@@ -64,6 +66,26 @@ export function SettingsForm({ current }: { current: { listingLifetimeDays: numb
         </span>
       </label>
 
+      <label className="block max-w-sm">
+        <span className="mb-1 block text-sm font-bold">Elandakı şəkil sayı</span>
+        <div className="flex items-center gap-2">
+          <input
+            value={photos}
+            onChange={(e) => {
+              setPhotos(e.target.value);
+              setDone(false);
+            }}
+            inputMode="numeric"
+            disabled={busy}
+            className={input}
+          />
+          <span className="w-10 shrink-0 text-sm text-ink-2">şəkil</span>
+        </div>
+        <span className="mt-1 block text-xs text-ink-2">
+          Bir elana ən çoxu neçə şəkil yükləmək olar (1 ilə 30 arası). Sayt və mobil tətbiq bu rəqəmi özü götürür. Azaltsanız, artıq yüklənmiş şəkillər silinmir: sadəcə yenisini əlavə etmək olmur.
+        </span>
+      </label>
+
       <p className="rounded-lg bg-warning-soft px-3 py-2 text-xs text-ink">
         Yeni müddət yalnız bundan sonra dərc olunan və ya yenilənən elanlara tətbiq olunur. Artıq yayımda olan elanların bitmə tarixi dəyişmir.
       </p>
@@ -88,7 +110,7 @@ export function SettingsForm({ current }: { current: { listingLifetimeDays: numb
       <ConfirmDialog
         open={asking}
         title="Ayar dəyişdirilsin?"
-        message={`Elan müddəti ${parsed} gün olacaq. Bu, yeni dərc olunan və yenilənən elanlara tətbiq olunacaq.`}
+        message={`Elan müddəti ${parsed} gün, elandakı şəkil sayı ${parsedPhotos} olacaq. Müddət yeni dərc olunan və yenilənən elanlara, şəkil sayı isə yeni yüklənən şəkillərə tətbiq olunacaq.`}
         confirmLabel="Dəyişdir"
         busy={busy}
         onClose={() => setAsking(false)}

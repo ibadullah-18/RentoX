@@ -38,6 +38,39 @@ public sealed class AuditLogEntryTests
     }
 
     [Fact]
+    public void StaffRoleChangeRecordsGrantAndRevoke()
+    {
+        Guid actor = Guid.NewGuid();
+        Guid person = Guid.NewGuid();
+
+        AuditLogEntry granted = AuditLogEntry.ForStaffRoleChange(
+            Guid.NewGuid(), actor, person, true, OccurredAtUtc);
+        AuditLogEntry revoked = AuditLogEntry.ForStaffRoleChange(
+            Guid.NewGuid(), actor, person, false, OccurredAtUtc);
+
+        Assert.Equal(AuditAction.StaffRoleChanged, granted.Action);
+        Assert.Equal(person, granted.TargetId);
+        Assert.Equal(0, granted.PreviousValue);
+        Assert.Equal(1, granted.CurrentValue);
+        Assert.Equal(1, revoked.PreviousValue);
+        Assert.Equal(0, revoked.CurrentValue);
+    }
+
+    [Fact]
+    public void UserStatusChangeKeepsTheStatusValues()
+    {
+        AuditLogEntry entry = AuditLogEntry.ForUserStatusChange(
+            Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(),
+            RentoX.Domain.Users.Enums.UserStatus.Active,
+            RentoX.Domain.Users.Enums.UserStatus.Blocked,
+            OccurredAtUtc);
+
+        Assert.Equal(AuditAction.UserStatusChanged, entry.Action);
+        Assert.Equal(1, entry.PreviousValue);
+        Assert.Equal(3, entry.CurrentValue);
+    }
+
+    [Fact]
     public void StoreChangeShouldUseStoreAction()
     {
         AuditLogEntry entry = AuditLogEntry.ForStoreStatusChange(

@@ -5,6 +5,7 @@ import '../../../core/network/api_client.dart';
 import '../../../core/network/api_exception.dart';
 import '../../catalog/domain/catalog_models.dart' show Paged;
 import '../../auth/presentation/auth_controller.dart';
+import '../../listing_create/domain/photo.dart' show PhotoRules;
 import '../domain/wallet_models.dart';
 
 class WalletRepository {
@@ -16,6 +17,15 @@ class WalletRepository {
   Future<void> loadTariffs() => guardApi(() async {
     final res = await _dio.get<Map<String, dynamic>>('/api/tariffs');
     Pricing.apply(res.data!);
+    try {
+      final settings = await _dio.get<Map<String, dynamic>>('/api/settings');
+      final photos = (settings.data?['maxListingPhotos'] as num?)?.toInt();
+      if (photos != null && photos >= 1 && photos <= 30) {
+        PhotoRules.maxCount = photos;
+      }
+    } catch (_) {
+      // Keep the last known limit.
+    }
   });
 
   Future<WalletBalance> balance() => guardApi(() async {

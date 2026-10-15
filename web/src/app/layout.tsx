@@ -2,9 +2,11 @@ import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { BottomNav } from "@/components/BottomNav";
+import { FooterGate, MainFrame } from "@/components/ChromeGate";
 import { Footer } from "@/components/Footer";
 import { FavoritesProvider } from "@/components/FavoritesProvider";
 import { Header } from "@/components/Header";
+import { NotificationToasts } from "@/components/NotificationToasts";
 import { getFavoriteIds, getUnreadMessages, getUnreadNotifications } from "@/lib/personal";
 import { getSession } from "@/lib/session";
 import { headers } from "next/headers";
@@ -53,13 +55,19 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
       <body className="flex min-h-full flex-col">
         <I18nProvider locale={locale}>
         {admin ? (
-          children
+          <>
+            {children}
+            {session && <NotificationToasts />}
+          </>
         ) : (
           <FavoritesProvider initialIds={favoriteIds} signedIn={session !== null}>
             <Header unreadMessages={unreadMessages} unreadNotifications={unreadNotifications} />
-            <main className="mx-auto w-full max-w-[1240px] flex-1 px-4 py-5 md:px-6 md:py-8">{children}</main>
-            <Footer />
+            <MainFrame>{children}</MainFrame>
+            <FooterGate>
+              <Footer />
+            </FooterGate>
             <BottomNav unreadMessages={unreadMessages} />
+            {session && <NotificationToasts />}
           </FavoritesProvider>
         )}
         </I18nProvider>

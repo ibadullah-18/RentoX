@@ -31,7 +31,10 @@ public sealed record ConversationReportSummaryResponse(
     Guid OtherUserId,
     int Reason,
     int Status,
-    DateTimeOffset CreatedAtUtc);
+    DateTimeOffset CreatedAtUtc,
+    string? ReporterName = null,
+    string? OtherUserName = null,
+    int OpenOnConversation = 0);
 
 public sealed record ConversationReportMessageResponse(
     Guid Id,
@@ -47,4 +50,7 @@ public sealed record ConversationReportDetailsResponse(
     string ListingTitle,
     Guid BuyerId,
     Guid SellerId,
-    IReadOnlyList<ConversationReportMessageResponse> Messages);
+    IReadOnlyList<ConversationReportMessageResponse> Messages,
+    string? ReporterName = null,
+    string? BuyerName = null,
+    string? SellerName = null);

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -11,6 +13,7 @@ import '../../../shared/formatting/time_labels.dart';
 import '../../../shared/widgets/async_states.dart';
 import '../../../shared/widgets/glass.dart';
 import '../../../shared/widgets/sub_page.dart';
+import '../data/support_realtime.dart';
 import '../domain/support_models.dart';
 import 'support_controller.dart';
 import 'support_widgets.dart';
@@ -29,9 +32,74 @@ class _TicketPageState extends ConsumerState<TicketPage> {
   final _text = TextEditingController();
   final _scroll = ScrollController();
   bool _sending = false;
+  bool _teamTyping = false;
+  Timer? _teamTypingTimer;
+  DateTime? _typingSentAt;
+  StreamSubscription<SupportEvent>? _liveSub;
+  SupportRealtime? _live;
+
+  @override
+  void initState() {
+    super.initState();
+    _live = ref.read(supportRealtimeProvider);
+    _liveSub = _live?.events.listen(_onLive);
+  }
+
+  void _onLive(SupportEvent e) {
+    if (!mounted) return;
+    if (e is SupportTypingChanged &&
+        e.ticketId == widget.ticketId &&
+        e.isStaff) {
+      _teamTypingTimer?.cancel();
+      setState(() => _teamTyping = e.typing);
+      // The line is added at the end of the list: bring it fully into view.
+      if (e.typing) _toEnd();
+      // A "typing" that never gets its "stopped" must not stay forever.
+      if (e.typing) {
+        _teamTypingTimer = Timer(const Duration(seconds: 6), () {
+          if (mounted) setState(() => _teamTyping = false);
+        });
+      }
+    } else if (e is SupportMessageArrived &&
+        e.ticketId == widget.ticketId &&
+        e.message.isAdmin) {
+      _teamTypingTimer?.cancel();
+      setState(() => _teamTyping = false);
+      _toEnd();
+    }
+  }
+
+  void _toEnd() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_scroll.hasClients) {
+        _scroll.animateTo(
+          _scroll.position.maxScrollExtent + 200,
+          duration: const Duration(milliseconds: 250),
+          curve: Curves.easeOut,
+        );
+      }
+    });
+  }
+
+  /// Tells the team we are writing (once in 3 seconds) and when we stopped.
+  void _typed(String value) {
+    final now = DateTime.now();
+    if (value.isNotEmpty &&
+        (_typingSentAt == null ||
+            now.difference(_typingSentAt!) > const Duration(seconds: 3))) {
+      _typingSentAt = now;
+      _live?.startTyping(widget.ticketId);
+    } else if (value.isEmpty && _typingSentAt != null) {
+      _typingSentAt = null;
+      _live?.stopTyping(widget.ticketId);
+    }
+  }
 
   @override
   void dispose() {
+    if (_typingSentAt != null) _live?.stopTyping(widget.ticketId);
+    _teamTypingTimer?.cancel();
+    _liveSub?.cancel();
     _text.dispose();
     _scroll.dispose();
     super.dispose();
@@ -48,6 +116,10 @@ class _TicketPageState extends ConsumerState<TicketPage> {
       return;
     }
     setState(() => _sending = true);
+    if (_typingSentAt != null) {
+      _typingSentAt = null;
+      _live?.stopTyping(widget.ticketId);
+    }
     try {
       await ref.read(ticketProvider(widget.ticketId).notifier).reply(body);
       _text.clear();
@@ -130,6 +202,16 @@ class _TicketPageState extends ConsumerState<TicketPage> {
                     ),
                     const SizedBox(height: AppSpacing.lg),
                     for (final m in t.messages) _Bubble(message: m),
+                    if (_teamTyping)
+                      Padding(
+                        padding: const EdgeInsets.only(
+                          bottom: AppSpacing.lg,
+                          left: 4,
+                        ),
+                        child: _TeamTyping(
+                          label: '${l10n.supportTeam} ${l10n.chatTyping}',
+                        ),
+                      ),
                   ],
                 ),
               ),
@@ -138,7 +220,10 @@ class _TicketPageState extends ConsumerState<TicketPage> {
               ticket: t,
               controller: _text,
               sending: _sending,
-              onChanged: (_) => setState(() {}),
+              onChanged: (value) {
+                setState(() {});
+                _typed(value);
+              },
               onSend: _send,
             ),
           ],
@@ -352,6 +437,82 @@ class _Footer extends StatelessWidget {
                   ),
                 ),
               ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// "Support is typing…": three bouncing dots and the words, in a line that is always shown whole.
+class _TeamTyping extends StatefulWidget {
+  const _TeamTyping({required this.label});
+
+  final String label;
+
+  @override
+  State<_TeamTyping> createState() => _TeamTypingState();
+}
+
+class _TeamTypingState extends State<_TeamTyping>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _c = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 1100),
+  )..repeat();
+
+  @override
+  void dispose() {
+    _c.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final color = Theme.of(context).colorScheme.primary;
+    return SizedBox(
+      height: 24,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          AnimatedBuilder(
+            animation: _c,
+            builder: (_, _) => Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                for (var i = 0; i < 3; i++)
+                  Container(
+                    width: 6,
+                    height: 6,
+                    margin: const EdgeInsets.only(right: 3),
+                    decoration: BoxDecoration(
+                      color: color.withValues(
+                        alpha:
+                            0.35 +
+                            0.65 *
+                                (((_c.value * 3 - i) % 3) < 1
+                                    ? 1 - ((_c.value * 3 - i) % 3)
+                                    : 0),
+                      ),
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 6),
+          Flexible(
+            child: Text(
+              widget.label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 13,
+                height: 1.3,
+                fontWeight: FontWeight.w600,
+                color: color,
+              ),
             ),
           ),
         ],

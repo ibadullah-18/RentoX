@@ -35,6 +35,12 @@ public sealed class UserProfile : AuditableEntity
 
     public UserStatus Status { get; private set; }
 
+    /// <summary>Why an admin blocked the account (shown to admins only).</summary>
+    public string? StatusReason { get; private set; }
+
+    /// <summary>Whether messages the staff send to groups (not to this person alone) reach them.</summary>
+    public bool AnnouncementsEnabled { get; private set; } = true;
+
     public DateTimeOffset? LastSeenAtUtc { get; private set; }
 
     public static UserProfile Create(
@@ -85,6 +91,11 @@ public sealed class UserProfile : AuditableEntity
             new UserProfileUpdatedDomainEvent(Id));
     }
 
+    public void SetAnnouncementsEnabled(bool enabled)
+    {
+        AnnouncementsEnabled = enabled;
+    }
+
     /// <summary>
     /// Erases the personal details when the account is deleted. The row
     /// stays (conversations still refer to it) but shows a neutral name.
@@ -122,6 +133,46 @@ public sealed class UserProfile : AuditableEntity
 
         RaiseDomainEvent(
             new UserStatusChangedDomainEvent(Id, status));
+    }
+
+    /// <summary>An admin blocks the account: no sign-in, no use of the API.</summary>
+    public void Block(string reason)
+    {
+        if (Status is not (UserStatus.Active or UserStatus.Suspended))
+        {
+            throw new DomainException(
+                "Only active or suspended accounts can be blocked.");
+        }
+
+        if (string.IsNullOrWhiteSpace(reason))
+        {
+            throw new DomainException(
+                "A reason is required to block an account.");
+        }
+
+        string normalized = reason.Trim();
+
+        if (normalized.Length > 1000)
+        {
+            throw new DomainException(
+                "The block reason cannot exceed 1000 characters.");
+        }
+
+        ChangeStatus(UserStatus.Blocked);
+        StatusReason = normalized;
+    }
+
+    /// <summary>Lets a blocked or suspended account in again.</summary>
+    public void Unblock()
+    {
+        if (Status is not (UserStatus.Blocked or UserStatus.Suspended))
+        {
+            throw new DomainException(
+                "Only blocked or suspended accounts can be unblocked.");
+        }
+
+        ChangeStatus(UserStatus.Active);
+        StatusReason = null;
     }
 
     public void UpdateLastSeen(DateTimeOffset occurredAtUtc)

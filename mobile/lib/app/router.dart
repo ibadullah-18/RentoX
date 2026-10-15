@@ -8,6 +8,8 @@ import '../features/auth/presentation/phone_page.dart';
 import '../features/auth/presentation/verify_page.dart';
 import '../features/favorites/presentation/favorites_page.dart';
 import '../features/home/presentation/home_page.dart';
+import '../features/info/presentation/info_content_page.dart';
+import '../features/info/presentation/info_page.dart';
 import '../features/listing_create/presentation/create_listing_page.dart';
 import '../features/listing_details/presentation/listing_details_page.dart';
 import '../features/my_listings/presentation/edit_listing_page.dart';
@@ -42,6 +44,12 @@ abstract final class Routes {
   static const profileEdit = '/profile/edit';
   static const support = '/support';
   static const wallet = '/wallet';
+
+  /// Terms, privacy, about, contact: open to everyone.
+  static const info = '/info';
+
+  /// One fixed page: `/info/terms`.
+  static String infoPage(String slug) => '/info/$slug';
 
   /// A support request: `/support/<id>`.
   static String ticket(String id) => '/support/$id';
@@ -142,6 +150,17 @@ final routerProvider = Provider<GoRouter>((ref) {
       return null;
     },
     routes: [
+      GoRoute(
+        path: Routes.info,
+        builder: (_, _) => const InfoPage(),
+        routes: [
+          GoRoute(
+            path: ':slug',
+            builder: (_, state) =>
+                InfoContentPage(slug: state.pathParameters['slug']!),
+          ),
+        ],
+      ),
       GoRoute(
         path: Routes.phone,
         builder: (_, state) =>

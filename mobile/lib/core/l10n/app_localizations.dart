@@ -2774,6 +2774,60 @@ abstract class AppL10n {
   /// In az, this message translates to:
   /// **'Yeniliklər və hamıya göndərilən məlumatlar. Sizə yazılan şəxsi mesajlar və elanlarınız barədə bildirişlər həmişə gəlir.'**
   String get announcementsHint;
+
+  /// No description provided for @infoTitle.
+  ///
+  /// In az, this message translates to:
+  /// **'Məlumat və əlaqə'**
+  String get infoTitle;
+
+  /// No description provided for @contactTitle.
+  ///
+  /// In az, this message translates to:
+  /// **'Əlaqə'**
+  String get contactTitle;
+
+  /// No description provided for @contactPhone.
+  ///
+  /// In az, this message translates to:
+  /// **'Telefon'**
+  String get contactPhone;
+
+  /// No description provided for @contactHotline.
+  ///
+  /// In az, this message translates to:
+  /// **'Qaynar xətt'**
+  String get contactHotline;
+
+  /// No description provided for @contactEmail.
+  ///
+  /// In az, this message translates to:
+  /// **'E-poçt'**
+  String get contactEmail;
+
+  /// No description provided for @termsTitle.
+  ///
+  /// In az, this message translates to:
+  /// **'İstifadə şərtləri'**
+  String get termsTitle;
+
+  /// No description provided for @privacyTitle.
+  ///
+  /// In az, this message translates to:
+  /// **'Məxfilik siyasəti'**
+  String get privacyTitle;
+
+  /// No description provided for @consentText.
+  ///
+  /// In az, this message translates to:
+  /// **'Davam etməklə {terms} və {privacy} ilə razılaşırsınız.'**
+  String consentText(String terms, String privacy);
+
+  /// No description provided for @infoUpdated.
+  ///
+  /// In az, this message translates to:
+  /// **'Son yenilənmə: {date}'**
+  String infoUpdated(String date);
 }
 
 class _AppL10nDelegate extends LocalizationsDelegate<AppL10n> {

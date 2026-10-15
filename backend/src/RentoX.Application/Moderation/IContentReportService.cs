@@ -19,7 +19,13 @@ public sealed record ContentReportSummaryResult(
     Guid ReporterId,
     int Reason,
     int Status,
-    DateTimeOffset CreatedAtUtc);
+    DateTimeOffset CreatedAtUtc,
+    string? ReporterName = null,
+    Guid? OwnerId = null,
+    string? OwnerName = null,
+    int OpenOnTarget = 0,
+    int? TargetStatus = null,
+    Guid? CoverImageId = null);
 
 public sealed record ContentReportDetailsResult(
     Guid Id,
@@ -35,7 +41,11 @@ public sealed record ContentReportDetailsResult(
     Guid? ReviewedByUserId,
     DateTimeOffset? ReviewedAtUtc,
     string? ResolutionNote,
-    int OpenReportsOnTarget);
+    int OpenReportsOnTarget,
+    string? ReporterName = null,
+    string? OwnerName = null,
+    int? TargetStatus = null,
+    Guid? CoverImageId = null);
 
 public interface IContentReportService
 {
@@ -56,6 +66,7 @@ public interface IContentReportService
         int? targetType,
         int page,
         int pageSize,
+        Guid? targetId = null,
         CancellationToken cancellationToken = default);
 
     Task<ContentReportDetailsResult?> GetDetailsAsync(

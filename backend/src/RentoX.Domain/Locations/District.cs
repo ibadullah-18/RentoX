@@ -61,6 +61,14 @@ public sealed class District : Entity
             _ => NameAz
         };
 
+    public void Update(string nameAz, string nameRu, string nameEn, int displayOrder)
+    {
+        NameAz = City.Require(nameAz);
+        NameRu = City.Require(nameRu);
+        NameEn = City.Require(nameEn);
+        DisplayOrder = displayOrder;
+    }
+
     public void Deactivate() => IsActive = false;
 
     public void Activate() => IsActive = true;

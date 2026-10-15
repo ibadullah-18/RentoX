@@ -5,6 +5,9 @@ import type {
   PublicStore,
   StoreCard,
   Banner,
+  PageContent,
+  PageSummary,
+  SiteInfo,
   City,
   ListingDetails,
   ListingSummary,
@@ -46,6 +49,20 @@ export async function getCategories(): Promise<Category[]> {
     (await get<Category[]>("/api/categories", { language: await lang() }, 300, ["catalog"])) ??
     []
   );
+}
+
+/** The fixed pages (terms, privacy, …) with their titles in the visitor's language. */
+export async function getPageList(): Promise<PageSummary[]> {
+  return (await get<PageSummary[]>("/api/pages", { language: await lang() }, 60, ["pages"])) ?? [];
+}
+
+export async function getPage(slug: string): Promise<PageContent | null> {
+  return get<PageContent>(`/api/pages/${encodeURIComponent(slug)}`, { language: await lang() }, 60, ["pages"]);
+}
+
+/** Who runs the site and how to reach them (nothing if the API cannot say). */
+export async function getSiteInfo(): Promise<SiteInfo> {
+  return (await get<SiteInfo>("/api/site-info", {}, 60, ["pages"])) ?? {};
 }
 
 /** The banners on show on the home page (none if the API cannot say). */

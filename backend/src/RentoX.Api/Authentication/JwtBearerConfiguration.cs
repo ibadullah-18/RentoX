@@ -2,6 +2,7 @@ using System.Security.Claims;
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
+using RentoX.Application.Admin;
 using RentoX.Infrastructure.Authentication;
 
 namespace RentoX.Api.Authentication;
@@ -53,7 +54,9 @@ public static class JwtBearerConfiguration
                     context.Request.Path.StartsWithSegments(
                         "/hubs/conversations") ||
                     context.Request.Path.StartsWithSegments(
-                        "/hubs/notifications");
+                        "/hubs/notifications") ||
+                    context.Request.Path.StartsWithSegments(
+                        "/hubs/support");
 
                 if (isHubRequest &&
                     !context.Request.Headers.ContainsKey("Authorization"))
@@ -70,14 +73,24 @@ public static class JwtBearerConfiguration
                 return Task.CompletedTask;
             },
 
-            OnTokenValidated = context =>
+            OnTokenValidated = async context =>
             {
-                if (!AuthenticatedUserId.Resolve(context.Principal).HasValue)
+                Guid? userId = AuthenticatedUserId.Resolve(context.Principal);
+                if (!userId.HasValue)
                 {
                     context.Fail("A valid user identity is required.");
+                    return;
                 }
 
-                return Task.CompletedTask;
+                // Where the status check is not wired in (a bare test host) the token stands on its own.
+                IUserStatusGuard? guard =
+                    context.HttpContext.RequestServices.GetService<IUserStatusGuard>();
+
+                if (guard is not null &&
+                    !await guard.IsAllowedAsync(userId.Value, context.HttpContext.RequestAborted))
+                {
+                    context.Fail("This account is not active.");
+                }
             }
         };
     }

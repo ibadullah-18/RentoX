@@ -43,8 +43,23 @@ public sealed record AdminDashboardResult(
     IReadOnlyList<AdminTopListingResult> MostViewedListings,
     IReadOnlyList<AdminTopListingResult> MostFavoritedListings);
 
+/// <summary>What happened on one day (UTC): new people and new listings.</summary>
+public sealed record AdminDailyPoint(DateOnly Date, int NewUsers, int NewListings);
+
+/// <summary>How many listings are on show in a category (only the category itself, not the ones below it).</summary>
+public sealed record AdminCategoryCount(Guid CategoryId, int ActiveListings);
+
 public interface IAdminAnalyticsService
 {
+    /// <summary>One point per day for the last <paramref name="days"/> days (7 to 90), oldest first, empty days included.</summary>
+    /// <summary>Active listings per category, most first; categories without any are left out.</summary>
+    Task<IReadOnlyList<AdminCategoryCount>> GetCategoryCountsAsync(
+        CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<AdminDailyPoint>> GetDailyAsync(
+        int days,
+        CancellationToken cancellationToken = default);
+
     Task<AdminDashboardResult> GetDashboardAsync(
         CancellationToken cancellationToken = default);
 }

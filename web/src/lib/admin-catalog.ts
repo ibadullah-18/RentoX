@@ -204,4 +204,5 @@ export const PANEL_SECTIONS: { id: string; label: string }[] = [
   { id: "catalog", label: "Kateqoriyalar və sahələr" },
   { id: "users", label: "İstifadəçilər (blok daxil)" },
   { id: "finance", label: "Maliyyə rəqəmləri" },
+  { id: "hr", label: "Kadr (işçilərin gəlişi, icazələri, müraciətləri)" },
 ];

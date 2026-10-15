@@ -28,7 +28,9 @@ public sealed record AuditLogItemResponse(
     int? PreviousValue,
     int? CurrentValue,
     Guid? RelatedEntityId,
-    DateTimeOffset OccurredAtUtc);
+    DateTimeOffset OccurredAtUtc,
+    string? ActorName = null,
+    string? TargetName = null);
 
 public sealed record AuditLogPageResponse(
     IReadOnlyList<AuditLogItemResponse> Items,

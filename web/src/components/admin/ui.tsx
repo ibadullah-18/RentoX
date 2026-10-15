@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ChevronLeft } from "lucide-react";
+import { BackLink } from "./BackLink";
 import type { LucideIcon } from "lucide-react";
 
 /** The title of an admin page, with an optional line under it and a way back. */
@@ -17,10 +17,7 @@ export function PageHead({
   return (
     <div className="space-y-2">
       {back && (
-        <Link href={back.href} className="no-print flex w-fit items-center gap-1 text-sm font-semibold text-ink-2 hover:text-primary">
-          <ChevronLeft className="size-4" aria-hidden />
-          {back.label}
-        </Link>
+        <BackLink href={back.href} title={back.label} />
       )}
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>

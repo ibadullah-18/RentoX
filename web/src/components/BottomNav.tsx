@@ -5,6 +5,7 @@ import { tx } from "@/lib/i18n/locales";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Heart, Home, MessageCircle, Plus, User } from "lucide-react";
+import { isChatOpen } from "./ChromeGate";
 
 const items = [
   { href: "/", label: tx("Ana səhifə"), Icon: Home },
@@ -18,6 +19,8 @@ const items = [
 export function BottomNav({ unreadMessages = 0 }: { unreadMessages?: number }) {
   const t = useT();
   const pathname = usePathname();
+  // Inside a conversation the composer is at the bottom: the bar steps aside, as in a messenger.
+  if (isChatOpen(pathname)) return null;
 
   return (
     <nav

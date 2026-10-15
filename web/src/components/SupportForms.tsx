@@ -5,7 +5,7 @@ import { useT } from "@/lib/i18n/client";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Loader2, Send } from "lucide-react";
-import { createTicket, replyTicket } from "@/app/destek/actions";
+import { createTicket } from "@/app/destek/actions";
 import { ticketCategory } from "@/lib/support";
 
 const input =
@@ -88,60 +88,6 @@ export function NewTicketForm({ initialCategory = 1 }: { initialCategory?: numbe
         type="submit"
         disabled={busy}
         className="flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-primary font-bold text-white hover:bg-primary-press disabled:opacity-60"
-      >
-        {busy ? <Loader2 className="size-5 animate-spin" aria-hidden /> : <Send className="size-5" aria-hidden />}
-        {t("Göndər")}</button>
-    </form>
-  );
-}
-
-/** The answer box under a request. */
-export function ReplyForm({ ticketId }: { ticketId: string }) {
-  const t = useT();
-  const router = useRouter();
-  const [text, setText] = useState("");
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  async function send() {
-    if (busy || !text.trim()) return;
-    setBusy(true);
-    setError(null);
-    const result = await replyTicket(ticketId, text);
-    setBusy(false);
-    if (result.ok) {
-      setText("");
-      router.refresh();
-    } else if (result.unauthorized) router.push(`/giris?next=/destek/${ticketId}`);
-    else setError(result.message);
-  }
-
-  return (
-    <form
-      onSubmit={(e) => {
-        e.preventDefault();
-        void send();
-      }}
-      className="space-y-3"
-    >
-      <textarea
-        value={text}
-        onChange={(e) => setText(e.target.value)}
-        maxLength={4000}
-        rows={3}
-        disabled={busy}
-        placeholder={t("Cavabınızı yazın")}
-        className={`${input} py-3`}
-      />
-      {error && (
-        <p role="alert" className="text-sm font-semibold text-danger">
-          {error}
-        </p>
-      )}
-      <button
-        type="submit"
-        disabled={busy || !text.trim()}
-        className="flex h-11 items-center gap-2 rounded-xl bg-primary px-6 font-bold text-white hover:bg-primary-press disabled:opacity-60"
       >
         {busy ? <Loader2 className="size-5 animate-spin" aria-hidden /> : <Send className="size-5" aria-hidden />}
         {t("Göndər")}</button>

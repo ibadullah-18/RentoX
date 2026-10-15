@@ -9,7 +9,8 @@ namespace RentoX.Infrastructure.Listings;
 
 public sealed class ListingImageService(
     RentoXDbContext dbContext,
-    IFileStorage fileStorage)
+    IFileStorage fileStorage,
+    RentoX.Application.Settings.ISystemSettingsService? settings = null)
     : IListingImageService
 {
     private const long MaximumFileSizeBytes =
@@ -47,11 +48,15 @@ public sealed class ListingImageService(
             ?? throw new DomainException(
                 "Listing was not found.");
 
-        if (listing.Images.Count >=
-            Listing.MaximumImageCount)
+        // The limit is an admin setting (15 until it is changed).
+        int maximumImages = settings is null
+            ? Listing.MaximumImageCount
+            : (await settings.GetCurrentAsync(cancellationToken)).MaxListingPhotos;
+
+        if (listing.Images.Count >= maximumImages)
         {
             throw new DomainException(
-                "A listing can contain a maximum of 15 images.");
+                $"A listing can contain a maximum of {maximumImages} images.");
         }
 
         string extension =
@@ -93,7 +98,8 @@ public sealed class ListingImageService(
             ListingImage image = listing.AddImage(
                 storedFile.StorageKey,
                 storedFile.ContentType,
-                storedFile.SizeBytes);
+                storedFile.SizeBytes,
+                maximumImages);
 
             dbContext.Set<ListingImage>().Add(image);
 

@@ -12,6 +12,7 @@ namespace RentoX.Api.Controllers.Admin;
 [ApiController]
 [Route("api/admin/conversation-reports")]
 [Authorize(Policy = PolicyNames.AdminAccess)]
+[Authorize(Policy = AdminSections.ReportsPolicy)]
 public sealed class AdminConversationReportsController(
     IConversationReportService reportService)
     : ControllerBase
@@ -29,7 +30,8 @@ public sealed class AdminConversationReportsController(
             result.Items.Select(item => new ConversationReportSummaryResponse(
                 item.Id, item.ConversationId, item.ListingId, item.ListingTitle,
                 item.ReporterId, item.OtherUserId, item.Reason,
-                item.Status, item.CreatedAtUtc)).ToArray(),
+                item.Status, item.CreatedAtUtc,
+                item.ReporterName, item.OtherUserName, item.OpenOnConversation)).ToArray(),
             result.Page, result.PageSize, result.TotalCount, result.TotalPages));
     }
 
@@ -93,7 +95,10 @@ public sealed class AdminConversationReportsController(
                 message.SentAtUtc, message.ReadAtUtc,
                 message.Images.Select(image => new MessageImageResponse(
                     image.Id, image.Url, image.ContentType,
-                    image.SizeBytes, image.DisplayOrder)).ToArray())).ToArray());
+                    image.SizeBytes, image.DisplayOrder)).ToArray())).ToArray(),
+            result.ReporterName,
+            result.BuyerName,
+            result.SellerName);
     }
 
     private static ConversationReportResponse MapReport(ConversationReportResult result)

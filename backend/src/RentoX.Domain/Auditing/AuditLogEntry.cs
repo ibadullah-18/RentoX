@@ -1,6 +1,7 @@
 using System.Globalization;
 using RentoX.Domain.Common;
 using RentoX.Domain.Common.Exceptions;
+using RentoX.Domain.Users.Enums;
 using RentoX.Domain.Listings.Enums;
 using RentoX.Domain.Stores.Enums;
 using RentoX.Domain.Support;
@@ -134,6 +135,164 @@ public sealed class AuditLogEntry : Entity
             null,
             null,
             messageId,
+            occurredAtUtc);
+    }
+
+    public static AuditLogEntry ForUserStatusChange(
+        Guid operationId,
+        Guid actorUserId,
+        Guid userId,
+        UserStatus previousStatus,
+        UserStatus currentStatus,
+        DateTimeOffset occurredAtUtc)
+    {
+        return CreateChange(
+            operationId, actorUserId, userId,
+            AuditAction.UserStatusChanged,
+            previousStatus, currentStatus, occurredAtUtc);
+    }
+
+    /// <summary>The sections of the panel an Admin may use changed; both values are sets written as bits.</summary>
+    public static AuditLogEntry ForStaffSectionsChange(
+        Guid operationId,
+        Guid actorUserId,
+        Guid targetUserId,
+        int previousMask,
+        int currentMask,
+        DateTimeOffset occurredAtUtc)
+    {
+        return new AuditLogEntry(
+            operationId,
+            actorUserId,
+            targetUserId,
+            AuditAction.StaffSectionsChanged,
+            previousMask,
+            currentMask,
+            null,
+            occurredAtUtc);
+    }
+
+    /// <summary>A message was sent to people from the panel; the target is the single recipient or, for everyone, the operation.</summary>
+    public static AuditLogEntry ForAnnouncement(
+        Guid operationId,
+        Guid actorUserId,
+        Guid targetId,
+        int recipientCount,
+        DateTimeOffset occurredAtUtc)
+    {
+        if (recipientCount < 1)
+        {
+            throw new DomainException("An announcement needs at least one recipient.");
+        }
+
+        return new AuditLogEntry(
+            operationId,
+            actorUserId,
+            targetId,
+            AuditAction.AnnouncementSent,
+            null,
+            recipientCount,
+            null,
+            occurredAtUtc);
+    }
+
+    /// <summary>A SuperAdmin ended every session of a staff member; the current value is how many there were.</summary>
+    public static AuditLogEntry ForStaffSessionsEnded(
+        Guid operationId,
+        Guid actorUserId,
+        Guid targetUserId,
+        int endedCount,
+        DateTimeOffset occurredAtUtc)
+    {
+        if (endedCount < 0)
+        {
+            throw new DomainException("The number of ended sessions cannot be negative.");
+        }
+
+        return new AuditLogEntry(
+            operationId,
+            actorUserId,
+            targetUserId,
+            AuditAction.StaffSessionsEnded,
+            null,
+            endedCount,
+            null,
+            occurredAtUtc);
+    }
+
+    /// <summary>
+    /// A staff member added money to (positive) or took money from (negative) a wallet by hand.
+    /// The current value is the amount in qəpik (1/100 AZN); the related id is the wallet transaction.
+    /// </summary>
+    public static AuditLogEntry ForWalletAdjustment(
+        Guid operationId,
+        Guid actorUserId,
+        Guid targetUserId,
+        int signedAmountInQepik,
+        Guid walletTransactionId,
+        DateTimeOffset occurredAtUtc)
+    {
+        if (signedAmountInQepik == 0)
+        {
+            throw new DomainException("A wallet adjustment cannot be zero.");
+        }
+
+        RequireId(walletTransactionId, "Audit wallet transaction id");
+
+        return new AuditLogEntry(
+            operationId,
+            actorUserId,
+            targetUserId,
+            AuditAction.WalletAdjusted,
+            null,
+            signedAmountInQepik,
+            walletTransactionId,
+            occurredAtUtc);
+    }
+
+    /// <summary>Something about a staff member's pay, access or days off was changed by the owner.</summary>
+    public static AuditLogEntry ForStaffHr(
+        Guid operationId,
+        Guid actorUserId,
+        Guid staffUserId,
+        int changeCode,
+        Guid relatedEntityId,
+        DateTimeOffset occurredAtUtc)
+    {
+        if (changeCode is < 1 or > 20)
+        {
+            throw new DomainException("The kind of staff change is not valid.");
+        }
+
+        RequireId(relatedEntityId, "Audit staff record id");
+
+        return new AuditLogEntry(
+            operationId,
+            actorUserId,
+            staffUserId,
+            AuditAction.StaffHrChanged,
+            null,
+            changeCode,
+            relatedEntityId,
+            occurredAtUtc);
+    }
+
+    /// <summary>An admin role was given (1) or taken away (0) from a person.</summary>
+    public static AuditLogEntry ForStaffRoleChange(
+        Guid operationId,
+        Guid actorUserId,
+        Guid targetUserId,
+        bool granted,
+        DateTimeOffset occurredAtUtc)
+    {
+        return new AuditLogEntry(
+            operationId,
+            actorUserId,
+            targetUserId,
+            AuditAction.StaffRoleChanged,
+            granted ? 0 : 1,
+            granted ? 1 : 0,
+            null,
             occurredAtUtc);
     }
 

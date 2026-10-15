@@ -284,3 +284,22 @@ export type Banner = {
   imageUrl: string;
   linkUrl?: string | null;
 };
+
+/** A fixed page (terms, privacy, about …) in the visitor's language. */
+export type PageSummary = { slug: string; title: string };
+
+export type PageContent = { slug: string; title: string; body: string; updatedAtUtc: string };
+
+/** The operator's details and contact channels. An empty one is never shown. */
+export type SiteInfo = {
+  operatorName?: string | null;
+  voen?: string | null;
+  address?: string | null;
+  email?: string | null;
+  phone?: string | null;
+  hotline?: string | null;
+  whatsApp?: string | null;
+  instagram?: string | null;
+  tikTok?: string | null;
+  facebook?: string | null;
+};

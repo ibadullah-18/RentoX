@@ -8,6 +8,7 @@ using RentoX.Application.Notifications;
 using RentoX.Domain.Common.Exceptions;
 using RentoX.Domain.Messaging;
 using RentoX.Domain.Notifications;
+using RentoX.Domain.Users;
 using RentoX.Infrastructure.Persistence;
 
 namespace RentoX.Infrastructure.Messaging;
@@ -16,7 +17,8 @@ public sealed class ConversationReportService(
     RentoXDbContext dbContext,
     IClock clock,
     IFileStorage fileStorage,
-    INotificationService notificationService)
+    INotificationService notificationService,
+    RentoX.Application.Support.ISupportEventPublisher? live = null)
     : IConversationReportService
 {
     public async Task<ConversationReportResult?> CreateAsync(
@@ -87,6 +89,11 @@ public sealed class ConversationReportService(
                 "An open report already exists for this conversation.");
         }
 
+        if (live is not null)
+        {
+            await live.ReportCreatedAsync("chat", report.Id, cancellationToken);
+        }
+
         return Map(report);
     }
 
@@ -132,9 +139,16 @@ public sealed class ConversationReportService(
         }
 
         int totalCount = await query.CountAsync(cancellationToken);
-        var rows = await query
-            .OrderByDescending(report => report.CreatedAtUtc)
-            .ThenByDescending(report => report.Id)
+
+        // The queue is worked from the oldest: those have waited the longest. A closed list is read from the
+        // newest. With no status chosen, the open ones come first, oldest first.
+        bool closed = parsedStatus is ConversationReportStatus.Resolved or ConversationReportStatus.Rejected;
+        IOrderedQueryable<ConversationReport> ordered = closed
+            ? query.OrderByDescending(report => report.CreatedAtUtc)
+            : query.OrderBy(report => report.Status).ThenBy(report => report.CreatedAtUtc);
+
+        var rows = await ordered
+            .ThenBy(report => report.Id)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .Join(dbContext.Conversations.AsNoTracking(),
@@ -158,8 +172,31 @@ public sealed class ConversationReportService(
                     row.report.CreatedAtUtc))
             .ToArrayAsync(cancellationToken);
 
+        Guid[] conversationIds = rows.Select(row => row.ConversationId).Distinct().ToArray();
+        Dictionary<Guid, int> openByConversation = await dbContext.Set<ConversationReport>()
+            .AsNoTracking()
+            .Where(report =>
+                conversationIds.Contains(report.ConversationId) &&
+                (report.Status == ConversationReportStatus.Pending ||
+                 report.Status == ConversationReportStatus.Reviewing))
+            .GroupBy(report => report.ConversationId)
+            .Select(group => new { group.Key, Count = group.Count() })
+            .ToDictionaryAsync(row => row.Key, row => row.Count, cancellationToken);
+        Dictionary<Guid, string> names = await NamesAsync(
+            rows.SelectMany(row => new[] { row.ReporterId, row.OtherUserId }).Distinct().ToArray(),
+            cancellationToken);
+
+        ConversationReportSummaryResult[] named = rows
+            .Select(row => row with
+            {
+                ReporterName = names.GetValueOrDefault(row.ReporterId),
+                OtherUserName = names.GetValueOrDefault(row.OtherUserId),
+                OpenOnConversation = openByConversation.GetValueOrDefault(row.ConversationId)
+            })
+            .ToArray();
+
         return new PagedResult<ConversationReportSummaryResult>(
-            rows, page, pageSize, totalCount,
+            named, page, pageSize, totalCount,
             (int)Math.Ceiling(totalCount / (double)pageSize));
     }
 
@@ -214,13 +251,20 @@ public sealed class ConversationReportService(
                     .ToArray()))
             .ToArray();
 
+        Dictionary<Guid, string> names = await NamesAsync(
+            [header.Report.ReporterId, header.Conversation.BuyerId, header.Conversation.SellerId],
+            cancellationToken);
+
         return new ConversationReportDetailsResult(
             Map(header.Report),
             header.ListingId,
             header.ListingTitle,
             header.Conversation.BuyerId,
             header.Conversation.SellerId,
-            evidence);
+            evidence,
+            names.GetValueOrDefault(header.Report.ReporterId),
+            names.GetValueOrDefault(header.Conversation.BuyerId),
+            names.GetValueOrDefault(header.Conversation.SellerId));
     }
 
     public async Task<ConversationReportResult?> ReviewAsync(
@@ -310,6 +354,14 @@ public sealed class ConversationReportService(
             (int)report.Status, report.CreatedAtUtc,
             report.ReviewedByUserId, report.ReviewedAtUtc,
             report.ResolutionNote);
+    }
+
+    private async Task<Dictionary<Guid, string>> NamesAsync(Guid[] userIds, CancellationToken cancellationToken)
+    {
+        return await dbContext.Set<UserProfile>()
+            .AsNoTracking()
+            .Where(profile => userIds.Contains(profile.Id))
+            .ToDictionaryAsync(profile => profile.Id, profile => profile.FullName, cancellationToken);
     }
 
     private static ConversationReportStatus? ParseStatus(int? status)

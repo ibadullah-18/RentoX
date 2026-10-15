@@ -1,37 +1,35 @@
-﻿using RentoX.Application.Listings.Promotions;
+using RentoX.Application.Listings.Billing;
+using RentoX.Application.Listings.Promotions;
 using RentoX.Domain.Common.Exceptions;
 using RentoX.Domain.Listings.Promotions.Enums;
 using RentoX.Domain.Wallets;
 
 namespace RentoX.Infrastructure.Listings.Promotions;
 
-public sealed class ListingPromotionPricingService
+public sealed class ListingPromotionPricingService(ITariffService tariffService)
     : IListingPromotionPricingService
 {
-    public const decimal BumpPrice = 5m;
-
-    public const decimal VipPrice = 10m;
-
-    public const int VipDurationDays = 7;
-
-    public ListingPromotionPricingResult GetPricing(
-        ListingPromotionType type)
+    public async Task<ListingPromotionPricingResult> GetPricingAsync(
+        ListingPromotionType type,
+        CancellationToken cancellationToken = default)
     {
+        TariffValues tariff = await tariffService.GetCurrentAsync(cancellationToken);
+
         return type switch
         {
             ListingPromotionType.Bump =>
                 new ListingPromotionPricingResult(
                     type,
-                    BumpPrice,
+                    tariff.BumpPrice,
                     Wallet.SupportedCurrency,
                     null),
 
             ListingPromotionType.Vip =>
                 new ListingPromotionPricingResult(
                     type,
-                    VipPrice,
+                    tariff.VipPrice,
                     Wallet.SupportedCurrency,
-                    VipDurationDays),
+                    tariff.VipDurationDays),
 
             _ => throw new DomainException(
                 "Listing promotion type is invalid.")

@@ -58,6 +58,10 @@ abstract final class AppIcons {
   static const IconData following = Symbols.how_to_reg_rounded;
   static const IconData support = Symbols.support_agent_rounded;
   static const IconData info = Symbols.info_rounded;
+  static const IconData phone = Symbols.call_rounded;
+  static const IconData hotline = Symbols.headset_mic_rounded;
+  static const IconData music = Symbols.music_note_rounded;
+  static const IconData group = Symbols.group_rounded;
   static const IconData bellOff = Symbols.notifications_off_rounded;
   static const IconData chatEmpty = Symbols.forum_rounded;
 

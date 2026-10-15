@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Identity;
+﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using RentoX.Application.Abstractions.Persistence;
@@ -166,6 +166,76 @@ public static class DependencyInjection
             RentoX.Infrastructure.Accounts.ProfileImageService>();
 
         services.AddScoped<
+            RentoX.Application.Admin.IAdminCatalogReadService,
+            RentoX.Infrastructure.Admin.AdminCatalogReadService>();
+
+        services.AddScoped<
+            RentoX.Application.Admin.IAdminStoreSearchService,
+            RentoX.Infrastructure.Admin.AdminStoreSearchService>();
+
+        services.AddScoped<
+            RentoX.Application.Admin.IStaffManagementService,
+            RentoX.Infrastructure.Admin.StaffManagementService>();
+
+        services.AddScoped<
+            RentoX.Application.Hr.IStaffHrService,
+            RentoX.Infrastructure.Hr.StaffHrService>();
+
+        services.AddMemoryCache();
+
+        services.AddScoped<
+            RentoX.Application.Admin.IUserStatusGuard,
+            RentoX.Infrastructure.Admin.UserStatusGuard>();
+
+        services.AddScoped<
+            RentoX.Application.Accounts.IAccountNotificationSettingsService,
+            RentoX.Infrastructure.Accounts.AccountNotificationSettingsService>();
+
+        services.AddScoped<
+            RentoX.Application.Locations.IAdminLocationService,
+            RentoX.Infrastructure.Locations.AdminLocationService>();
+
+        services.AddScoped<
+            RentoX.Application.Settings.ISystemSettingsService,
+            RentoX.Infrastructure.Settings.SystemSettingsService>();
+
+        services.AddScoped<
+            RentoX.Application.Admin.IWalletAdjustmentService,
+            RentoX.Infrastructure.Admin.WalletAdjustmentService>();
+
+        services.AddScoped<
+            RentoX.Application.Admin.IBannedWordService,
+            RentoX.Infrastructure.Admin.BannedWordService>();
+
+        services.AddScoped<
+            RentoX.Application.Content.IHomeBannerService,
+            RentoX.Infrastructure.Content.HomeBannerService>();
+
+        services.AddScoped<
+            RentoX.Application.Content.IContentPageService,
+            RentoX.Infrastructure.Content.ContentPageService>();
+
+        services.AddScoped<
+            RentoX.Application.Content.ISiteInfoService,
+            RentoX.Infrastructure.Content.SiteInfoService>();
+
+        services.AddScoped<
+            RentoX.Application.Admin.IAnnouncementService,
+            RentoX.Infrastructure.Admin.AnnouncementService>();
+
+        services.AddScoped<
+            RentoX.Application.Admin.IUserModerationService,
+            RentoX.Infrastructure.Admin.UserModerationService>();
+
+        services.AddScoped<
+            RentoX.Application.Admin.IAdminUserService,
+            RentoX.Infrastructure.Admin.AdminUserService>();
+
+        services.AddScoped<
+            RentoX.Application.Admin.IAdminListingSearchService,
+            RentoX.Infrastructure.Admin.AdminListingSearchService>();
+
+        services.AddScoped<
             ICategoryQueryService,
             CategoryQueryService>();
 
@@ -300,6 +370,10 @@ public static class DependencyInjection
         services.AddScoped<
             IListingActivationPaymentService,
             ListingActivationPaymentService>();
+        services.AddScoped<
+            RentoX.Application.Listings.Billing.ITariffService,
+            RentoX.Infrastructure.Listings.Billing.TariffService>();
+
         services.AddScoped<
             IListingPromotionPricingService,
             ListingPromotionPricingService>();

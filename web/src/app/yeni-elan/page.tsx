@@ -15,7 +15,7 @@ export default async function NewListingPage() {
   const t = await getT();
   if (!(await getSession())) redirect("/giris?next=/yeni-elan");
 
-  const [categories, cities] = await Promise.all([getCategories(), getCities()]);
+  const [categories, cities, prices] = await Promise.all([getCategories(), getCities(), getPrices()]);
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
@@ -23,7 +23,7 @@ export default async function NewListingPage() {
         <h1 className="text-2xl font-extrabold">{t("Yeni elan")}</h1>
         <p className="mt-1 text-ink-2">{t("Doldurun, şəkillər əlavə edin və göndərin.")}</p>
       </div>
-      <NewListingForm categories={categories} cities={cities} activationFee={(await getPrices()).activation} />
+      <NewListingForm categories={categories} cities={cities} activationFee={prices.activation} maxPhotos={prices.maxPhotos} />
     </div>
   );
 }

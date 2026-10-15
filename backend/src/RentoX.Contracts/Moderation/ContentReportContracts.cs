@@ -26,7 +26,13 @@ public sealed record ContentReportSummaryResponse(
     Guid ReporterId,
     int Reason,
     int Status,
-    DateTimeOffset CreatedAtUtc);
+    DateTimeOffset CreatedAtUtc,
+    string? ReporterName = null,
+    Guid? OwnerId = null,
+    string? OwnerName = null,
+    int OpenOnTarget = 0,
+    int? TargetStatus = null,
+    Guid? CoverImageId = null);
 
 public sealed record ContentReportDetailsResponse(
     Guid Id,
@@ -42,7 +48,11 @@ public sealed record ContentReportDetailsResponse(
     Guid? ReviewedByUserId,
     DateTimeOffset? ReviewedAtUtc,
     string? ResolutionNote,
-    int OpenReportsOnTarget);
+    int OpenReportsOnTarget,
+    string? ReporterName = null,
+    string? OwnerName = null,
+    int? TargetStatus = null,
+    Guid? CoverImageId = null);
 
 public sealed record ReviewContentReportRequest(
     int Status,

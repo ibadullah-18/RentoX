@@ -85,6 +85,10 @@ void _open(Ref ref, Map<String, String> data) {
   }
 }
 
+Timer? _bannerTimer;
+
+/// A banner at the top of the screen, like a phone notification: title and text, "View" and an X.
+/// It stays 8 seconds. (While the app is closed or in the background the phone shows the push itself.)
 void _toast(Ref ref, NotificationArrived event) {
   final messenger = ref.read(scaffoldMessengerKeyProvider).currentState;
   final context = messenger?.context;
@@ -96,32 +100,60 @@ void _toast(Ref ref, NotificationArrived event) {
   if (router.state.uri.path == Routes.notifications) return;
 
   final l10n = AppL10n.of(context);
+  final scheme = Theme.of(context).colorScheme;
+  _bannerTimer?.cancel();
   messenger
-    ..hideCurrentSnackBar()
-    ..showSnackBar(
-      SnackBar(
-        duration: const Duration(seconds: 5),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              n.title,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(fontWeight: FontWeight.w800),
-            ),
-            if (n.body.isNotEmpty)
-              Text(n.body, maxLines: 2, overflow: TextOverflow.ellipsis),
-          ],
+    ..hideCurrentMaterialBanner()
+    ..showMaterialBanner(
+      MaterialBanner(
+        backgroundColor: scheme.surface,
+        elevation: 6,
+        leading: Icon(Icons.notifications_active_rounded, color: scheme.primary),
+        content: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: () {
+            messenger.hideCurrentMaterialBanner();
+            _open(ref, {
+              'notificationId': n.id,
+              'actionUrl': n.actionUrl ?? '',
+            });
+          },
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                n.title,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(fontWeight: FontWeight.w800),
+              ),
+              if (n.body.isNotEmpty)
+                Text(n.body, maxLines: 2, overflow: TextOverflow.ellipsis),
+            ],
+          ),
         ),
-        action: SnackBarAction(
-          label: l10n.notificationView,
-          onPressed: () => _open(ref, {
-            'notificationId': n.id,
-            'actionUrl': n.actionUrl ?? '',
-          }),
-        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              messenger.hideCurrentMaterialBanner();
+              _open(ref, {
+                'notificationId': n.id,
+                'actionUrl': n.actionUrl ?? '',
+              });
+            },
+            child: Text(l10n.notificationView),
+          ),
+          IconButton(
+            tooltip: MaterialLocalizations.of(context).closeButtonTooltip,
+            icon: const Icon(Icons.close_rounded),
+            onPressed: messenger.hideCurrentMaterialBanner,
+          ),
+        ],
       ),
     );
+  _bannerTimer = Timer(
+    const Duration(seconds: 8),
+    messenger.hideCurrentMaterialBanner,
+  );
 }

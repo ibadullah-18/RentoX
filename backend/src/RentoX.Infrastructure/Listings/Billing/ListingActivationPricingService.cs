@@ -9,13 +9,10 @@ namespace RentoX.Infrastructure.Listings.Billing;
 
 public sealed class ListingActivationPricingService(
     RentoXDbContext dbContext,
-    IClock clock)
+    IClock clock,
+    ITariffService tariffService)
     : IListingActivationPricingService
 {
-    public const int FreeActiveListingLimit = 5;
-
-    public const decimal PaidActivationFee = 1m;
-
     public async Task<ListingActivationPricingResult>
         GetAsync(
             Guid ownerId,
@@ -52,6 +49,7 @@ public sealed class ListingActivationPricingService(
         }
 
         DateTimeOffset now = clock.UtcNow;
+        TariffValues tariff = await tariffService.GetCurrentAsync(cancellationToken);
 
         int otherActiveListingCount =
             await dbContext.Listings
@@ -68,18 +66,18 @@ public sealed class ListingActivationPricingService(
 
         bool requiresPayment =
             otherActiveListingCount >=
-            FreeActiveListingLimit;
+            tariff.FreeActiveListingLimit;
 
         decimal activationFee =
             requiresPayment
-                ? PaidActivationFee
+                ? tariff.ActivationFee
                 : 0;
 
         return new ListingActivationPricingResult(
             listingId,
             ownerId,
             otherActiveListingCount,
-            FreeActiveListingLimit,
+            tariff.FreeActiveListingLimit,
             requiresPayment,
             activationFee,
             "AZN");

@@ -1466,4 +1466,35 @@ class AppL10nRu extends AppL10n {
   @override
   String get announcementsHint =>
       'Новости и сообщения для всех. Личные сообщения вам и уведомления о ваших объявлениях приходят всегда.';
+
+  @override
+  String get infoTitle => 'Информация и контакты';
+
+  @override
+  String get contactTitle => 'Контакты';
+
+  @override
+  String get contactPhone => 'Телефон';
+
+  @override
+  String get contactHotline => 'Горячая линия';
+
+  @override
+  String get contactEmail => 'E-mail';
+
+  @override
+  String get termsTitle => 'Условия использования';
+
+  @override
+  String get privacyTitle => 'Политика конфиденциальности';
+
+  @override
+  String consentText(String terms, String privacy) {
+    return 'Продолжая, вы принимаете документы: $terms и $privacy.';
+  }
+
+  @override
+  String infoUpdated(String date) {
+    return 'Последнее обновление: $date';
+  }
 }

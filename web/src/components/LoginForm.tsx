@@ -5,6 +5,7 @@ import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import { requestCode, verifyCode } from "@/app/giris/actions";
+import Link from "next/link";
 import { formatNational } from "@/lib/phone";
 
 type Step =
@@ -105,6 +106,23 @@ export function LoginForm({ next }: { next: string }) {
           {t("Kodu göndər")}</button>
         <p className="text-center text-xs text-ink-2">
           {t("Nömrənizə təsdiq kodu SMS ilə göndəriləcək. Hesabınız yoxdursa, avtomatik yaradılacaq.")}</p>
+        <p className="text-center text-xs text-ink-2">
+          {t("Davam etməklə {terms} və {privacy} ilə razılaşırsınız.", { terms: "\u0001", privacy: "\u0002" })
+            .split(/(\u0001|\u0002)/)
+            .map((part, i) =>
+              part === "\u0001" ? (
+                <Link key={i} href="/sertler" className="font-semibold text-primary hover:underline">
+                  {t("İstifadə şərtləri")}
+                </Link>
+              ) : part === "\u0002" ? (
+                <Link key={i} href="/mexfilik" className="font-semibold text-primary hover:underline">
+                  {t("Məxfilik siyasəti")}
+                </Link>
+              ) : (
+                part
+              ),
+            )}
+        </p>
       </form>
     );
   }

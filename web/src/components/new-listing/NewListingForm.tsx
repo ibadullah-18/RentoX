@@ -69,11 +69,14 @@ export function NewListingForm({
   categories,
   cities,
   activationFee,
+  maxPhotos,
 }: {
   categories: Category[];
   cities: City[];
   /** What activating one more listing costs once the free ones are used. */
   activationFee: number;
+  /** The most photos one listing may have. */
+  maxPhotos: number;
 }) {
   const t = useT();
   const locale = useLocale();
@@ -433,7 +436,7 @@ export function NewListingForm({
 
           <Section number={4} title={t("Şəkillər")}>
             <div {...first("photos")}>
-              <PhotoPicker photos={photos} disabled={busy} onChange={setPhotos} />
+              <PhotoPicker photos={photos} disabled={busy} onChange={setPhotos} max={maxPhotos} />
               {showErrors && <Problem>{errors.photos}</Problem>}
             </div>
           </Section>

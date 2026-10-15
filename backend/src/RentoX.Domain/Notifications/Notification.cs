@@ -12,7 +12,15 @@ public enum NotificationType
     StoreRejected = 5,
     ConversationReportUpdated = 6,
     SupportReply = 7,
-    SupportStatusChanged = 8
+    SupportStatusChanged = 8,
+    Announcement = 9,
+    ListingExpiring = 10,
+    StaffAbsent = 11,
+    StaffLeaveRequested = 12,
+    StaffLeaveDecided = 13,
+    StaffRequestReceived = 14,
+    StaffRequestAnswered = 15,
+    StaffPayrollChanged = 16
 }
 
 public sealed class Notification : Entity

@@ -57,6 +57,17 @@ builder.Services.AddSingleton<
     RentoX.Api.Messaging.ConversationRateLimitFilter>();
 
 builder.Services.AddSignalR()
+    .AddHubOptions<RentoX.Api.Support.SupportHub>(options =>
+    {
+        options.MaximumReceiveMessageSize = 4 * 1024;
+        options.MaximumParallelInvocationsPerClient = 1;
+        options.EnableDetailedErrors = false;
+
+        Microsoft.AspNetCore.SignalR.HubOptionsExtensions
+            .AddFilter<
+                RentoX.Api.Messaging.ConversationRateLimitFilter>(
+                options);
+    })
     .AddHubOptions<ConversationsHub>(options =>
     {
         options.MaximumReceiveMessageSize = 8 * 1024;
@@ -82,6 +93,16 @@ builder.Services.AddSingleton<
     INotificationEventPublisher,
     SignalRNotificationEventPublisher>();
 
+builder.Services.AddSingleton<
+    RentoX.Application.Support.ISupportEventPublisher,
+    RentoX.Api.Support.SignalRSupportEventPublisher>();
+
+builder.Services.AddScoped<
+    Microsoft.AspNetCore.Authorization.IAuthorizationHandler,
+    RentoX.Api.Authentication.StaffAccessHandler>();
+
+builder.Services.AddHostedService<RentoX.Api.Hr.AttendanceMonitor>();
+
 builder.Services.AddControllers();
 
 builder.Services
@@ -94,9 +115,21 @@ builder.Services.AddAuthorization(options =>
 {
     options.AddPolicy(
         PolicyNames.AdminAccess,
-        policy => policy.RequireRole(
-            RoleNames.Admin,
-            RoleNames.SuperAdmin));
+        policy => policy
+            .RequireRole(
+                RoleNames.Admin,
+                RoleNames.SuperAdmin)
+            // The owner can close an Admin's access to the panel.
+            .AddRequirements(new RentoX.Api.Authentication.StaffAccessRequirement()));
+
+    // One policy per section of the panel: an Admin sees only the sections chosen for them.
+    foreach (string section in AdminSections.All)
+    {
+        options.AddPolicy(
+            AdminSections.Policy(section),
+            policy => policy.RequireAssertion(
+                context => AdminSections.Allows(context.User, section)));
+    }
 
     options.AddPolicy(
         PolicyNames.SuperAdminOnly,
@@ -246,6 +279,12 @@ app.UseRateLimiter();
 
 app.MapHub<ConversationsHub>(
     "/hubs/conversations",
+    options =>
+        options.CloseOnAuthenticationExpiration = true)
+    .RequireAuthorization();
+
+app.MapHub<RentoX.Api.Support.SupportHub>(
+    "/hubs/support",
     options =>
         options.CloseOnAuthenticationExpiration = true)
     .RequireAuthorization();

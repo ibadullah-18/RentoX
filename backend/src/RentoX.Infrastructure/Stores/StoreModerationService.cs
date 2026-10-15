@@ -174,6 +174,91 @@ public sealed class StoreModerationService(
         return MapStatus(store);
     }
 
+    public async Task<StoreStatusResult> SuspendAsync(
+        Guid storeId,
+        string reason,
+        CancellationToken cancellationToken = default)
+    {
+        Guid actorUserId = RequireAuditActor();
+        Guid operationId = Guid.NewGuid();
+
+        await using var auditTransaction =
+            await dbContext.Database.BeginTransactionAsync(
+                IsolationLevel.Serializable,
+                cancellationToken);
+
+        StoreProfile store =
+            await GetRequiredStoreAsync(
+                storeId,
+                cancellationToken);
+
+        StoreStatus previousStatus = store.Status;
+
+        store.Suspend(reason);
+
+        RecordStoreStatusChange(
+            store, previousStatus, actorUserId, operationId);
+
+        await dbContext.SaveChangesAsync(
+            cancellationToken);
+
+        await auditTransaction.CommitAsync(cancellationToken);
+
+        await notificationService.CreateAsync(
+            new CreateNotificationCommand(
+                store.OwnerId,
+                (int)NotificationType.StoreRejected,
+                "Mağaza dayandırıldı",
+                $"\"{store.Name}\" mağazası idarəetmə tərəfindən dayandırıldı. Səbəb: {reason.Trim()}",
+                store.Id,
+                $"/profile/store"),
+            cancellationToken);
+
+        return MapStatus(store);
+    }
+
+    public async Task<StoreStatusResult> ReinstateAsync(
+        Guid storeId,
+        CancellationToken cancellationToken = default)
+    {
+        Guid actorUserId = RequireAuditActor();
+        Guid operationId = Guid.NewGuid();
+
+        await using var auditTransaction =
+            await dbContext.Database.BeginTransactionAsync(
+                IsolationLevel.Serializable,
+                cancellationToken);
+
+        StoreProfile store =
+            await GetRequiredStoreAsync(
+                storeId,
+                cancellationToken);
+
+        StoreStatus previousStatus = store.Status;
+
+        store.Reinstate();
+
+        RecordStoreStatusChange(
+            store, previousStatus, actorUserId, operationId);
+
+        await dbContext.SaveChangesAsync(
+            cancellationToken);
+
+        await auditTransaction.CommitAsync(cancellationToken);
+
+        await notificationService.CreateAsync(
+            new CreateNotificationCommand(
+                store.OwnerId,
+                (int)NotificationType.StoreApproved,
+                "Mağaza bərpa edildi",
+                $"\"{store.Name}\" mağazası yenidən aktivdir.",
+                store.Id,
+                $"/stores/{store.Slug}"),
+            cancellationToken);
+
+        return MapStatus(store);
+    }
+
     private Guid RequireAuditActor()
     {
         Guid? userId = currentUserContext.UserId;

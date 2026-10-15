@@ -10,7 +10,8 @@ namespace RentoX.Api.Controllers;
 [Authorize]
 public sealed class AccountController(
     IAccountProfileService accountProfileService,
-    IAccountDeletionService accountDeletionService)
+    IAccountDeletionService accountDeletionService,
+    IAccountNotificationSettingsService notificationSettingsService)
     : ControllerBase
 {
     [HttpGet("me")]
@@ -100,6 +101,40 @@ public sealed class AccountController(
         }
 
         return Ok(CreateResponse(result));
+    }
+
+    [HttpGet("notification-settings")]
+    [ProducesResponseType<NotificationSettingsResponse>(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<NotificationSettingsResponse>> GetNotificationSettingsAsync(
+        CancellationToken cancellationToken)
+    {
+        if (!TryGetUserId(out Guid userId))
+        {
+            return Unauthorized();
+        }
+
+        bool? enabled = await notificationSettingsService.GetAnnouncementsEnabledAsync(userId, cancellationToken);
+        return enabled is null ? NotFound() : Ok(new NotificationSettingsResponse(enabled.Value));
+    }
+
+    [HttpPut("notification-settings")]
+    [ProducesResponseType<NotificationSettingsResponse>(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<NotificationSettingsResponse>> UpdateNotificationSettingsAsync(
+        NotificationSettingsResponse request,
+        CancellationToken cancellationToken)
+    {
+        if (!TryGetUserId(out Guid userId))
+        {
+            return Unauthorized();
+        }
+
+        bool found = await notificationSettingsService.SetAnnouncementsEnabledAsync(
+            userId, request.AnnouncementsEnabled, cancellationToken);
+        return found ? Ok(request) : NotFound();
     }
 
     private bool TryGetUserId(out Guid userId)

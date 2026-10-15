@@ -7,6 +7,7 @@ import { ExpandableText } from "@/components/ExpandableText";
 import { Gallery } from "@/components/Gallery";
 import { ListingGrid } from "@/components/ListingGrid";
 import { MessageButton } from "@/components/MessageButton";
+import { ReportDialog } from "@/components/ReportDialog";
 import { PhoneButton } from "@/components/PhoneButton";
 import { categoryChain, getCategories, getListing, getSimilar } from "@/lib/api";
 import { fieldValue, formatNumber, formatPrice, formatPublished, siteUrl } from "@/lib/format";
@@ -181,6 +182,8 @@ export default async function ListingPage({ params }: PageProps<"/listing/[id]">
               )}
             </div>
           </div>
+
+          {session?.userId !== listing.owner.id && <ReportDialog kind="listing" targetId={listing.id} />}
         </aside>
       </div>
 

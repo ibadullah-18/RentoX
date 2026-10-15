@@ -70,7 +70,23 @@ export type AdminTicket = {
   status: number;
   createdAtUtc: string;
   updatedAtUtc: string;
-  messages?: { id: string; senderId: string; isAdmin: boolean; body: string; sentAtUtc: string }[];
+  messages?: { id: string; senderId: string; isAdmin: boolean; body: string; sentAtUtc: string; senderName?: string | null }[];
+  resolvedAtUtc?: string | null;
+  closedAtUtc?: string | null;
+  /** The person who wrote the request. */
+  userName?: string | null;
+  userPhone?: string | null;
+  /** How many other requests this person has. */
+  otherTickets?: number;
+  /** What the person was told about this request: when, whether they read it, how the push to the phone went. */
+  notifications?: { type: number; title: string; createdAtUtc: string; readAtUtc?: string | null; pushStatus?: number | null; body?: string | null; pushAttempts?: number; pushSentAtUtc?: string | null; pushError?: string | null }[];
+  /** Phones of the person that can get a push. */
+  userDevices?: number;
+  /** For the list: who spoke last and what was said. */
+  lastMessageAtUtc?: string | null;
+  lastMessageIsAdmin?: boolean | null;
+  lastMessagePreview?: string | null;
+  messageCount?: number;
 };
 
 export type ReportSummary = {
@@ -82,6 +98,14 @@ export type ReportSummary = {
   reason: number;
   status: number;
   createdAtUtc: string;
+  reporterName?: string | null;
+  ownerId?: string | null;
+  ownerName?: string | null;
+  /** How many open reports wait on the same listing or store. */
+  openOnTarget?: number;
+  /** The status of the reported listing / store itself. */
+  targetStatus?: number | null;
+  coverImageId?: string | null;
 };
 
 export type ReportDetails = ReportSummary & {
@@ -90,6 +114,10 @@ export type ReportDetails = ReportSummary & {
   reviewedAtUtc?: string | null;
   resolutionNote?: string | null;
   openReportsOnTarget: number;
+  reporterName?: string | null;
+  ownerName?: string | null;
+  targetStatus?: number | null;
+  coverImageId?: string | null;
 };
 
 export type ChatReportSummary = {
@@ -102,6 +130,9 @@ export type ChatReportSummary = {
   reason: number;
   status: number;
   createdAtUtc: string;
+  reporterName?: string | null;
+  otherUserName?: string | null;
+  openOnConversation?: number;
 };
 
 export type ChatReportDetails = {
@@ -130,6 +161,9 @@ export type ChatReportDetails = {
     readAtUtc?: string | null;
     images: { id: string; url?: string }[];
   }[];
+  reporterName?: string | null;
+  buyerName?: string | null;
+  sellerName?: string | null;
 };
 
 export type AuditItem = {

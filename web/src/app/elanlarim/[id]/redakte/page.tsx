@@ -6,6 +6,7 @@ import { ChevronLeft } from "lucide-react";
 import { EditListingForm } from "@/components/new-listing/EditListingForm";
 import { categoryChain, getCategories, getCities } from "@/lib/api";
 import { getMyListing } from "@/lib/personal";
+import { getPrices } from "@/lib/tariffs";
 import { getSession } from "@/lib/session";
 import type { FieldDefinition } from "@/lib/types";
 
@@ -61,7 +62,7 @@ export default async function EditListingPage({ params }: PageProps<"/elanlarim/
         <ChevronLeft className="size-4" aria-hidden />
         {t("Elana qayıt")}</Link>
       <h1 className="text-2xl font-extrabold">{t("Elanı redaktə et")}</h1>
-      <EditListingForm listing={listing} fieldDefs={fieldDefs} cities={cities} periods={periods} />
+      <EditListingForm listing={listing} fieldDefs={fieldDefs} cities={cities} periods={periods} maxPhotos={(await getPrices()).maxPhotos} />
     </div>
   );
 }

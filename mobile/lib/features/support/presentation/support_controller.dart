@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../auth/presentation/auth_controller.dart';
 import '../../notifications/data/notifications_realtime.dart';
 import '../../notifications/domain/notification_models.dart';
+import '../data/support_realtime.dart';
 import '../data/support_repository.dart';
 import '../domain/support_models.dart';
 
@@ -53,6 +54,14 @@ class SupportListController extends AsyncNotifier<SupportListState> {
       if (_isSupport(e) || e is NotificationsResync) unawaited(refresh());
     });
     ref.onDispose(() => sub?.cancel());
+    final live = ref.watch(supportRealtimeProvider)?.events.listen((e) {
+      if (e is SupportMessageArrived ||
+          e is SupportTicketChanged ||
+          e is SupportResync) {
+        unawaited(refresh());
+      }
+    });
+    ref.onDispose(() => live?.cancel());
 
     final first = await _repo.list();
     return SupportListState(
@@ -128,7 +137,36 @@ class TicketController extends AsyncNotifier<SupportTicket> {
       }
     });
     ref.onDispose(() => sub?.cancel());
+    final live = ref.watch(supportRealtimeProvider)?.events.listen((e) {
+      if (e is SupportMessageArrived && e.ticketId == id) {
+        _add(e.message);
+      } else if (e is SupportTicketChanged && e.ticketId == id) {
+        unawaited(refresh());
+      } else if (e is SupportResync) {
+        unawaited(refresh());
+      }
+    });
+    ref.onDispose(() => live?.cancel());
     return _repo.details(id);
+  }
+
+  /// A message that arrived live: shown at once (the saved copy joins it by id).
+  void _add(SupportMessage message) {
+    final current = state.value;
+    if (current == null || current.messages.any((m) => m.id == message.id)) {
+      return;
+    }
+    state = AsyncData(
+      SupportTicket(
+        id: current.id,
+        category: current.category,
+        subject: current.subject,
+        status: current.status,
+        createdAt: current.createdAt,
+        updatedAt: message.sentAt,
+        messages: [...current.messages, message],
+      ),
+    );
   }
 
   Future<void> refresh() async {

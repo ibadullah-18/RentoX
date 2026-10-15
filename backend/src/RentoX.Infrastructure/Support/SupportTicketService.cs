@@ -9,6 +9,7 @@ using RentoX.Application.Support;
 using RentoX.Domain.Common.Exceptions;
 using RentoX.Domain.Notifications;
 using RentoX.Domain.Support;
+using RentoX.Domain.Users;
 using RentoX.Infrastructure.Persistence;
 
 namespace RentoX.Infrastructure.Support;
@@ -17,7 +18,8 @@ public sealed class SupportTicketService(
     RentoXDbContext dbContext,
     IClock clock,
     INotificationService notificationService,
-    ICurrentUserContext currentUserContext)
+    ICurrentUserContext currentUserContext,
+    ISupportEventPublisher? live = null)
     : ISupportTicketService
 {
     public async Task<SupportTicketDetailsResult> CreateAsync(
@@ -44,6 +46,13 @@ public sealed class SupportTicketService(
 
         dbContext.Set<SupportTicket>().Add(ticket);
         await dbContext.SaveChangesAsync(cancellationToken);
+
+        if (live is not null)
+        {
+            string? ownerName = await NameOfAsync(ticket.UserId, cancellationToken);
+            await live.TicketCreatedAsync(
+                ticket.Id, ticket.UserId, ticket.Subject, ownerName, cancellationToken);
+        }
 
         return MapDetails(ticket);
     }
@@ -123,7 +132,14 @@ public sealed class SupportTicketService(
         dbContext.Set<SupportTicketMessage>().Add(message);
 
         await dbContext.SaveChangesAsync(cancellationToken);
-        return MapMessage(message);
+
+        SupportTicketMessageResult result = await WithSenderNameAsync(message, cancellationToken);
+        if (live is not null)
+        {
+            await live.MessageAddedAsync(ticket.Id, ticket.UserId, result, cancellationToken);
+        }
+
+        return result;
     }
 
     public async Task<PagedResult<SupportTicketSummaryResult>> GetForAdminAsync(
@@ -132,6 +148,7 @@ public sealed class SupportTicketService(
         int? category,
         int page,
         int pageSize,
+        bool openOnly = false,
         CancellationToken cancellationToken = default)
     {
         ValidateOptionalEnum<SupportTicketStatus>(
@@ -177,11 +194,89 @@ public sealed class SupportTicketService(
                 ticket.Category == value);
         }
 
-        return await CreatePageAsync(
-            query,
+        if (openOnly)
+        {
+            query = query.Where(ticket =>
+                ticket.Status == SupportTicketStatus.Open ||
+                ticket.Status == SupportTicketStatus.InProgress);
+        }
+
+        ValidatePagination(page, pageSize);
+
+        int totalCount = await query.CountAsync(cancellationToken);
+
+        var rows = query.Select(ticket => new
+        {
+            Ticket = ticket,
+            LastIsAdmin = ticket.Messages
+                .OrderByDescending(message => message.SentAtUtc)
+                .Select(message => (bool?)message.IsAdmin)
+                .FirstOrDefault(),
+            LastAt = ticket.Messages
+                .OrderByDescending(message => message.SentAtUtc)
+                .Select(message => (DateTimeOffset?)message.SentAtUtc)
+                .FirstOrDefault(),
+            LastBody = ticket.Messages
+                .OrderByDescending(message => message.SentAtUtc)
+                .Select(message => message.Body)
+                .FirstOrDefault(),
+            Count = ticket.Messages.Count
+        });
+
+        // The queue is worked like this: open ones first; of those, the ones waiting for an answer from us first
+        // (the last word is the user's); then the most urgent; then the longest waiting. A closed list is read from the newest.
+        bool closed = status is (int)SupportTicketStatus.Resolved or (int)SupportTicketStatus.Closed;
+
+        var ordered = closed
+            ? rows.OrderByDescending(row => row.Ticket.UpdatedAtUtc)
+            : rows
+                .OrderBy(row => row.Ticket.Status == SupportTicketStatus.Resolved ||
+                                row.Ticket.Status == SupportTicketStatus.Closed ? 1 : 0)
+                .ThenBy(row => row.LastIsAdmin == true ? 1 : 0)
+                .ThenByDescending(row => row.Ticket.Priority)
+                .ThenBy(row => row.Ticket.UpdatedAtUtc);
+
+        var page_ = await ordered
+            .ThenBy(row => row.Ticket.Id)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync(cancellationToken);
+
+        Guid[] userIds = page_.Select(row => row.Ticket.UserId).Distinct().ToArray();
+        Dictionary<Guid, string> names = await NamesAsync(userIds, cancellationToken);
+
+        SupportTicketSummaryResult[] items = page_
+            .Select(row => new SupportTicketSummaryResult(
+                row.Ticket.Id,
+                row.Ticket.UserId,
+                (int)row.Ticket.Category,
+                row.Ticket.Subject,
+                (int)row.Ticket.Priority,
+                (int)row.Ticket.Status,
+                row.Ticket.CreatedAtUtc,
+                row.Ticket.UpdatedAtUtc,
+                names.GetValueOrDefault(row.Ticket.UserId),
+                row.LastAt,
+                row.LastIsAdmin,
+                Preview(row.LastBody),
+                row.Count))
+            .ToArray();
+
+        return new PagedResult<SupportTicketSummaryResult>(
+            items,
             page,
             pageSize,
-            cancellationToken);
+            totalCount,
+            totalCount == 0 ? 0 : (int)Math.Ceiling(totalCount / (double)pageSize));
+    }
+
+    public async Task<Guid?> GetOwnerIdAsync(Guid ticketId, CancellationToken cancellationToken = default)
+    {
+        return await dbContext.Set<SupportTicket>()
+            .AsNoTracking()
+            .Where(ticket => ticket.Id == ticketId)
+            .Select(ticket => (Guid?)ticket.UserId)
+            .FirstOrDefaultAsync(cancellationToken);
     }
 
     public async Task<SupportTicketDetailsResult?> GetAdminDetailsAsync(
@@ -196,9 +291,81 @@ public sealed class SupportTicketService(
                     item => item.Id == ticketId,
                     cancellationToken);
 
-        return ticket is null
-            ? null
-            : MapDetails(ticket);
+        if (ticket is null)
+        {
+            return null;
+        }
+
+        // Names of everybody who wrote, the person's phone, and how many other requests they have.
+        Guid[] senderIds = ticket.Messages.Select(message => message.SenderId)
+            .Append(ticket.UserId)
+            .Distinct()
+            .ToArray();
+        Dictionary<Guid, string> names = await NamesAsync(senderIds, cancellationToken);
+        string? phone = await dbContext.Users
+            .AsNoTracking()
+            .Where(user => user.Id == ticket.UserId)
+            .Select(user => user.PhoneNumber)
+            .SingleOrDefaultAsync(cancellationToken);
+        int others = await dbContext.Set<SupportTicket>()
+            .AsNoTracking()
+            .CountAsync(
+                other => other.UserId == ticket.UserId && other.Id != ticket.Id,
+                cancellationToken);
+
+        // What the person was told about this request, and whether it reached them.
+        var sent = await dbContext.Set<RentoX.Domain.Notifications.Notification>()
+            .AsNoTracking()
+            .Where(n => n.RelatedEntityId == ticket.Id &&
+                        n.UserId == ticket.UserId &&
+                        (n.Type == NotificationType.SupportReply ||
+                         n.Type == NotificationType.SupportStatusChanged))
+            .OrderByDescending(n => n.CreatedAtUtc)
+            .Take(30)
+            .Select(n => new
+            {
+                n.Id,
+                Type = (int)n.Type,
+                n.Title,
+                n.Body,
+                n.CreatedAtUtc,
+                n.ReadAtUtc
+            })
+            .ToListAsync(cancellationToken);
+
+        Guid[] sentIds = sent.Select(n => n.Id).ToArray();
+        var pushes = await dbContext.Set<RentoX.Domain.Notifications.PushNotificationDelivery>()
+            .AsNoTracking()
+            .Where(p => sentIds.Contains(p.NotificationId))
+            .Select(p => new { p.NotificationId, Status = (int)p.Status, p.AttemptCount, p.SentAtUtc, p.LastError })
+            .ToListAsync(cancellationToken);
+        int devices = await dbContext.Set<RentoX.Domain.Notifications.PushDevice>()
+            .AsNoTracking()
+            .CountAsync(d => d.UserId == ticket.UserId && d.IsActive, cancellationToken);
+
+        SupportTicketDetailsResult details = MapDetails(ticket);
+        return details with
+        {
+            Notifications = sent
+                .Select(n => new SupportNotificationLog(
+                    n.Type,
+                    n.Title,
+                    n.CreatedAtUtc,
+                    n.ReadAtUtc,
+                    pushes.Where(p => p.NotificationId == n.Id).Select(p => (int?)p.Status).Max(),
+                    n.Body,
+                    pushes.Where(p => p.NotificationId == n.Id).Select(p => p.AttemptCount).DefaultIfEmpty(0).Max(),
+                    pushes.Where(p => p.NotificationId == n.Id).Select(p => p.SentAtUtc).FirstOrDefault(),
+                    pushes.Where(p => p.NotificationId == n.Id).Select(p => p.LastError).FirstOrDefault()))
+                .ToArray(),
+            UserDevices = devices,
+            Messages = details.Messages
+                .Select(message => message with { SenderName = names.GetValueOrDefault(message.SenderId) })
+                .ToArray(),
+            UserName = names.GetValueOrDefault(ticket.UserId),
+            UserPhone = phone,
+            OtherTickets = others
+        };
     }
 
     public async Task<SupportTicketMessageResult?> AddAdminMessageAsync(
@@ -270,7 +437,18 @@ public sealed class SupportTicketService(
                 $"/support/tickets/{ticket.Id:D}"),
             cancellationToken);
 
-        return MapMessage(message);
+        SupportTicketMessageResult result = await WithSenderNameAsync(message, cancellationToken);
+        if (live is not null)
+        {
+            await live.MessageAddedAsync(ticket.Id, ticket.UserId, result, cancellationToken);
+            if (ticket.Status != previousStatus)
+            {
+                await live.TicketChangedAsync(
+                    ticket.Id, ticket.UserId, (int)ticket.Status, (int)ticket.Priority, cancellationToken);
+            }
+        }
+
+        return result;
     }
 
     public async Task<SupportTicketDetailsResult?> ChangeStatusAsync(
@@ -340,6 +518,12 @@ public sealed class SupportTicketService(
                     ticket.Id,
                     $"/support/tickets/{ticket.Id:D}"),
                 cancellationToken);
+
+            if (live is not null)
+            {
+                await live.TicketChangedAsync(
+                    ticket.Id, ticket.UserId, (int)ticket.Status, (int)ticket.Priority, cancellationToken);
+            }
         }
 
         return MapDetails(ticket);
@@ -413,6 +597,12 @@ public sealed class SupportTicketService(
             cancellationToken);
 
         await auditTransaction.CommitAsync(cancellationToken);
+
+        if (live is not null)
+        {
+            await live.TicketChangedAsync(
+                ticket.Id, ticket.UserId, (int)ticket.Status, (int)ticket.Priority, cancellationToken);
+        }
 
         return MapDetails(ticket);
     }
@@ -508,6 +698,40 @@ public sealed class SupportTicketService(
             pageSize,
             totalCount,
             totalPages);
+    }
+
+    private async Task<string?> NameOfAsync(Guid userId, CancellationToken cancellationToken)
+    {
+        return await dbContext.Set<UserProfile>()
+            .AsNoTracking()
+            .Where(profile => profile.Id == userId)
+            .Select(profile => profile.FullName)
+            .FirstOrDefaultAsync(cancellationToken);
+    }
+
+    private async Task<SupportTicketMessageResult> WithSenderNameAsync(
+        SupportTicketMessage message, CancellationToken cancellationToken)
+    {
+        return MapMessage(message) with { SenderName = await NameOfAsync(message.SenderId, cancellationToken) };
+    }
+
+    private async Task<Dictionary<Guid, string>> NamesAsync(Guid[] userIds, CancellationToken cancellationToken)
+    {
+        return await dbContext.Set<UserProfile>()
+            .AsNoTracking()
+            .Where(profile => userIds.Contains(profile.Id))
+            .ToDictionaryAsync(profile => profile.Id, profile => profile.FullName, cancellationToken);
+    }
+
+    private static string? Preview(string? body)
+    {
+        if (string.IsNullOrWhiteSpace(body))
+        {
+            return null;
+        }
+
+        string flat = string.Join(' ', body.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries));
+        return flat.Length <= 140 ? flat : flat[..140] + "…";
     }
 
     private static SupportTicketDetailsResult MapDetails(

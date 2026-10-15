@@ -467,5 +467,14 @@
   "txAdjustment": "Adjustment",
   "loadMore": "Show more",
   "announcementsTitle": "General news from RentoX",
-  "announcementsHint": "Updates and notices sent to everyone. Personal messages to you and notifications about your listings always arrive."
+  "announcementsHint": "Updates and notices sent to everyone. Personal messages to you and notifications about your listings always arrive.",
+  "infoTitle": "Information and contact",
+  "contactTitle": "Contact",
+  "contactPhone": "Phone",
+  "contactHotline": "Hotline",
+  "contactEmail": "E-mail",
+  "termsTitle": "Terms of Use",
+  "privacyTitle": "Privacy Policy",
+  "consentText": "By continuing you accept the {terms} and the {privacy}.",
+  "infoUpdated": "Last updated: {date}"
 }

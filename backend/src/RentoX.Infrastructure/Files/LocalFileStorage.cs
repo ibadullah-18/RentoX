@@ -213,6 +213,9 @@ public sealed class LocalFileStorage(
             FileStorageArea.ChatAttachments =>
                 "chat-attachments",
 
+            FileStorageArea.Banners =>
+                "banners",
+
             _ => throw new DomainException(
                 "Storage area is invalid.")
         };

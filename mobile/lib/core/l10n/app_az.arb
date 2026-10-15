@@ -489,5 +489,16 @@
   "txAdjustment": "Düzəliş",
   "loadMore": "Daha çox göstər",
   "announcementsTitle": "Saytdan gələn ümumi xəbərlər",
-  "announcementsHint": "Yeniliklər və hamıya göndərilən məlumatlar. Sizə yazılan şəxsi mesajlar və elanlarınız barədə bildirişlər həmişə gəlir."
+  "announcementsHint": "Yeniliklər və hamıya göndərilən məlumatlar. Sizə yazılan şəxsi mesajlar və elanlarınız barədə bildirişlər həmişə gəlir.",
+  "infoTitle": "Məlumat və əlaqə",
+  "contactTitle": "Əlaqə",
+  "contactPhone": "Telefon",
+  "contactHotline": "Qaynar xətt",
+  "contactEmail": "E-poçt",
+  "termsTitle": "İstifadə şərtləri",
+  "privacyTitle": "Məxfilik siyasəti",
+  "consentText": "Davam etməklə {terms} və {privacy} ilə razılaşırsınız.",
+  "@consentText": { "placeholders": { "terms": { "type": "String" }, "privacy": { "type": "String" } } },
+  "infoUpdated": "Son yenilənmə: {date}",
+  "@infoUpdated": { "placeholders": { "date": { "type": "String" } } }
 }

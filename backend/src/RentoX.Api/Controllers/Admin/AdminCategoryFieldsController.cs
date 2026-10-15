@@ -9,6 +9,7 @@ namespace RentoX.Api.Controllers.Admin;
 [ApiController]
 [Route("api/admin/categories/{categoryId:guid}/fields")]
 [Authorize(Policy = PolicyNames.AdminAccess)]
+[Authorize(Policy = AdminSections.CatalogPolicy)]
 public sealed class AdminCategoryFieldsController(
     ICategoryFieldManagementService managementService,
     ICategoryFieldAdministrationService administrationService,

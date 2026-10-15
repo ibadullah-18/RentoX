@@ -18,4 +18,10 @@ public interface IListingModerationService
         Guid listingId,
         string reason,
         CancellationToken cancellationToken = default);
+
+    /// <summary>Takes a live, paused, pending or unpaid listing down with a reason the owner is told.</summary>
+    Task<ListingModerationResult> TakeDownAsync(
+        Guid listingId,
+        string reason,
+        CancellationToken cancellationToken = default);
 }

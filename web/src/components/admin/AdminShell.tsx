@@ -4,8 +4,9 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import {
+  Briefcase,
+  CalendarCheck,
   ClipboardCheck,
-  ExternalLink,
   FolderTree,
   LogOut,
   Flag,
@@ -14,7 +15,9 @@ import {
   Megaphone,
   Map as MapIcon,
   GalleryHorizontal,
+  FileText,
   Menu,
+  Contact,
   OctagonAlert,
   SlidersHorizontal,
   Search,
@@ -27,6 +30,9 @@ import {
   X,
 } from "lucide-react";
 import { adminLogout } from "@/app/admin/giris/actions";
+import { AdminLive, SoundToggle } from "@/components/admin/AdminLive";
+import { WorkDay } from "@/components/admin/HrForms";
+import type { MyDay } from "@/lib/admin-hr";
 import { ADMIN_SEGMENT, adminHref } from "@/lib/admin-path";
 import type { AdminNavGroup } from "@/lib/admin-nav";
 
@@ -47,6 +53,10 @@ const icons = {
   settings: SlidersHorizontal,
   banned: OctagonAlert,
   banners: GalleryHorizontal,
+  pages: FileText,
+  contact: Contact,
+  hr: CalendarCheck,
+  mywork: Briefcase,
 };
 
 /**
@@ -57,11 +67,14 @@ export function AdminShell({
   groups,
   badges,
   who,
+  workDay,
   children,
 }: {
   groups: AdminNavGroup[];
   badges: Record<string, number>;
   who: { name: string; role: string };
+  /** A staff member's day (start and finish); null for the owner. */
+  workDay?: MyDay | null;
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
@@ -161,17 +174,12 @@ export function AdminShell({
       </div>
 
       <div className="space-y-2 border-t border-line p-3">
+        {workDay?.isStaff && <WorkDay day={workDay} />}
         <div className="px-1">
           <p className="truncate text-sm font-bold">{who.name}</p>
           <p className="text-xs text-ink-2">{who.role}</p>
         </div>
-        <Link
-          href="/"
-          className="flex items-center gap-2 rounded-lg px-2.5 py-2 text-[13px] font-semibold text-ink-2 hover:bg-primary-soft hover:text-primary"
-        >
-          <ExternalLink className="size-4" aria-hidden />
-          Sayta keç
-        </Link>
+        <SoundToggle />
         <form action={adminLogout}>
           <button
             type="submit"
@@ -187,6 +195,7 @@ export function AdminShell({
 
   return (
     <div className="min-h-dvh bg-bg lg:grid lg:grid-cols-[256px_minmax(0,1fr)]">
+      <AdminLive />
       <aside className="no-print sticky top-0 hidden h-dvh border-r border-line bg-surface lg:block">{menu}</aside>
 
       <header className="sticky top-0 z-40 flex items-center gap-3 border-b border-line bg-surface px-3 py-2.5 lg:hidden">

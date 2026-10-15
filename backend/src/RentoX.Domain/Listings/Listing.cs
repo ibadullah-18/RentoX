@@ -159,12 +159,13 @@ public sealed class Listing : AuditableEntity
     public ListingImage AddImage(
         string storageKey,
         string contentType,
-        long sizeBytes)
+        long sizeBytes,
+        int maximumImages = MaximumImageCount)
     {
-        if (_images.Count >= MaximumImageCount)
+        if (_images.Count >= maximumImages)
         {
             throw new DomainException(
-                "A listing can contain a maximum of 15 images.");
+                $"A listing can contain a maximum of {maximumImages} images.");
         }
 
         int displayOrder = _images.Count;
@@ -279,6 +280,44 @@ public sealed class Listing : AuditableEntity
         {
             throw new DomainException(
                 "Only listings pending review can be rejected.");
+        }
+
+        if (string.IsNullOrWhiteSpace(reason))
+        {
+            throw new DomainException(
+                "Rejection reason is required.");
+        }
+
+        string normalizedReason = reason.Trim();
+
+        if (normalizedReason.Length > 1000)
+        {
+            throw new DomainException(
+                "Rejection reason cannot exceed 1000 characters.");
+        }
+
+        Status = ListingStatus.Rejected;
+        RejectionReason = normalizedReason;
+        PublishedAtUtc = null;
+        ExpiresAtUtc = null;
+    }
+
+    /// <summary>
+    /// An admin takes a listing down that is live, paused or waiting for
+    /// payment or review (spam, a ban, a complaint). It leaves the public
+    /// lists at once and, like a rejected one, its owner can fix it and send
+    /// it for review again.
+    /// </summary>
+    public void TakeDown(string reason)
+    {
+        if (Status is not
+            (ListingStatus.Active or
+             ListingStatus.Deactivated or
+             ListingStatus.PendingReview or
+             ListingStatus.PaymentRequired))
+        {
+            throw new DomainException(
+                "Only live, paused, pending or unpaid listings can be taken down.");
         }
 
         if (string.IsNullOrWhiteSpace(reason))

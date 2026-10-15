@@ -31,7 +31,10 @@ public sealed record ConversationReportSummaryResult(
     Guid OtherUserId,
     int Reason,
     int Status,
-    DateTimeOffset CreatedAtUtc);
+    DateTimeOffset CreatedAtUtc,
+    string? ReporterName = null,
+    string? OtherUserName = null,
+    int OpenOnConversation = 0);
 
 public sealed record ConversationReportMessageResult(
     Guid Id,
@@ -47,7 +50,10 @@ public sealed record ConversationReportDetailsResult(
     string ListingTitle,
     Guid BuyerId,
     Guid SellerId,
-    IReadOnlyList<ConversationReportMessageResult> Messages);
+    IReadOnlyList<ConversationReportMessageResult> Messages,
+    string? ReporterName = null,
+    string? BuyerName = null,
+    string? SellerName = null);
 
 public interface IConversationReportService
 {

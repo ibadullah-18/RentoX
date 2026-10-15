@@ -28,10 +28,8 @@ public sealed class ListingModerationQueryService(
                     .ThenInclude(value =>
                         value.Selections)
                 .SingleOrDefaultAsync(
-                    item =>
-                        item.Id == listingId &&
-                        item.Status ==
-                        ListingStatus.PendingReview,
+                    // Any state: a moderator also opens a listing that is live and was reported.
+                    item => item.Id == listingId,
                     cancellationToken);
 
         if (listing is null)

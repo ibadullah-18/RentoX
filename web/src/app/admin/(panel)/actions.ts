@@ -183,20 +183,3 @@ export async function setTicketPriority(ticketId: string, priority: number): Pro
   ]);
 }
 
-/** status: 2 reviewing, 3 resolved, 4 rejected. */
-export async function reviewReport(id: string, status: number, note: string): Promise<Done> {
-  if (!ID.test(id) || ![2, 3, 4].includes(status)) return bad;
-  return act(`/api/admin/content-reports/${id}`, "PUT", { status, resolutionNote: note.trim() || null }, [
-    `/admin/sikayetler/${id}`,
-    "/admin/sikayetler",
-  ]);
-}
-
-/** status: 2 reviewing, 3 resolved, 4 rejected. */
-export async function reviewChatReport(id: string, status: number, note: string): Promise<Done> {
-  if (!ID.test(id) || ![2, 3, 4].includes(status)) return bad;
-  return act(`/api/admin/conversation-reports/${id}`, "PUT", { status, resolutionNote: note.trim() || null }, [
-    `/admin/yazisma-sikayetleri/${id}`,
-    "/admin/yazisma-sikayetleri",
-  ]);
-}

@@ -4,7 +4,6 @@ import { useT } from "@/lib/i18n/client";
 import { useEffect, useRef, useState } from "react";
 import { ImagePlus, Star, X } from "lucide-react";
 
-export const MAX_PHOTOS = 15;
 export const MAX_BYTES = 10 * 1024 * 1024;
 const TYPES = ["image/jpeg", "image/png", "image/webp"];
 
@@ -15,13 +14,16 @@ export function PhotoPicker({
   photos,
   disabled,
   onChange,
-  max = MAX_PHOTOS,
+  max,
+  total,
 }: {
   photos: Photo[];
   disabled: boolean;
   onChange: (next: Photo[]) => void;
   /** How many photos may be added here (less when others are already saved). */
-  max?: number;
+  max: number;
+  /** The most photos one listing may have (for the message); the same as [max] when none are saved yet. */
+  total?: number;
 }) {
   const t = useT();
   const input = useRef<HTMLInputElement>(null);
@@ -44,7 +46,7 @@ export function PhotoPicker({
 
     for (const file of Array.from(files)) {
       if (photos.length + accepted.length >= max) {
-        skipped = t("Ən çoxu {n} şəkil olar.", { n: MAX_PHOTOS });
+        skipped = t("Ən çoxu {n} şəkil olar.", { n: total ?? max });
         break;
       }
       if (!TYPES.includes(file.type)) {

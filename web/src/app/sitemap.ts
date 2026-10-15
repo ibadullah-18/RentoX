@@ -20,6 +20,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const entries: MetadataRoute.Sitemap = [
     { url: base, lastModified: now, changeFrequency: "hourly", priority: 1 },
     { url: `${base}/magazalar`, lastModified: now, changeFrequency: "daily", priority: 0.6 },
+    ...["haqqimizda", "sertler", "mexfilik", "emekdasliq", "qaydalar", "suallar"].map((page) => ({
+      url: `${base}/${page}`,
+      lastModified: now,
+      changeFrequency: "monthly" as const,
+      priority: 0.3,
+    })),
     ...flatten(categories).map((c) => ({
       url: `${base}/search?category=${c.id}`,
       lastModified: now,

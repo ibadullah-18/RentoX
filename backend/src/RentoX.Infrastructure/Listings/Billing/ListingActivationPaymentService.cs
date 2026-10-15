@@ -10,6 +10,7 @@ using RentoX.Domain.Listings.Billing.Enums;
 using RentoX.Domain.Listings.Enums;
 using RentoX.Domain.Wallets;
 using RentoX.Domain.Wallets.Enums;
+using RentoX.Application.Settings;
 using RentoX.Infrastructure.Persistence;
 
 namespace RentoX.Infrastructure.Listings.Billing;
@@ -18,11 +19,10 @@ public sealed class ListingActivationPaymentService(
     RentoXDbContext dbContext,
     IClock clock,
     IListingActivationPricingService pricingService,
-    IWalletService walletService)
+    IWalletService walletService,
+    ISystemSettingsService systemSettings)
     : IListingActivationPaymentService
 {
-    private static readonly TimeSpan ListingLifetime =
-        TimeSpan.FromDays(30);
 
     public async Task<ListingActivationPaymentResult>
         PayAsync(
@@ -119,12 +119,14 @@ public sealed class ListingActivationPaymentService(
                 cancellationToken);
 
         DateTimeOffset now = clock.UtcNow;
+        TimeSpan listingLifetime = TimeSpan.FromDays(
+            (await systemSettings.GetCurrentAsync(cancellationToken)).ListingLifetimeDays);
         DateTimeOffset periodEndUtc =
-            now.Add(ListingLifetime);
+            now.Add(listingLifetime);
 
         listing.Publish(
             now,
-            ListingLifetime);
+            listingLifetime);
 
         ListingBillingCycle billingCycle =
             ListingBillingCycle.CreatePaid(

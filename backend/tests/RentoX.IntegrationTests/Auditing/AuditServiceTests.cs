@@ -78,7 +78,8 @@ public sealed class AuditServiceTests(
                 pricingService: new FreePricing(),
                 walletService: new UnusedWallet(),
                 notificationService: notifications,
-                currentUserContext: actor);
+                currentUserContext: actor,
+                systemSettings: new FixedSettings());
 
             Func<Task> operation = approve
                 ? () => service.ApproveAsync(listing.Id)
@@ -457,7 +458,8 @@ public sealed class AuditServiceTests(
                 pricingService: new PaidPricing(),
                 walletService: wallet,
                 notificationService: notifications,
-                currentUserContext: actor);
+                currentUserContext: actor,
+                systemSettings: new FixedSettings());
 
             await ExecuteAsync(
                 () => service.ApproveAsync(listing.Id),
@@ -760,6 +762,24 @@ public sealed class AuditServiceTests(
             return inner.GetTransactionsAsync(
                 userId, page, pageSize, cancellationToken);
         }
+    }
+
+    /// <summary>The settings as the site starts with them (30 days), without a database.</summary>
+    private sealed class FixedSettings : RentoX.Application.Settings.ISystemSettingsService
+    {
+        public Task<RentoX.Application.Settings.SystemSettingsValues> GetCurrentAsync(
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult(new RentoX.Application.Settings.SystemSettingsValues(30));
+
+        public Task<RentoX.Application.Settings.SystemSettingsValues> SetAsync(
+            RentoX.Application.Settings.SystemSettingsValues values,
+            CancellationToken cancellationToken = default) =>
+            throw new NotSupportedException();
+
+        public Task<IReadOnlyList<RentoX.Application.Settings.SystemSettingsHistoryItem>> GetHistoryAsync(
+            int take,
+            CancellationToken cancellationToken = default) =>
+            throw new NotSupportedException();
     }
 
     private sealed class FreePricing : IListingActivationPricingService

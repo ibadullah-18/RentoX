@@ -19,7 +19,9 @@ public sealed record AuditLogItemResult(
     int? PreviousValue,
     int? CurrentValue,
     Guid? RelatedEntityId,
-    DateTimeOffset OccurredAtUtc);
+    DateTimeOffset OccurredAtUtc,
+    string? ActorName = null,
+    string? TargetName = null);
 
 public sealed record AuditLogPageResult(
     IReadOnlyList<AuditLogItemResult> Items,

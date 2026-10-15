@@ -40,6 +40,10 @@ builder.Services.AddScoped<
     IListingMaintenanceService,
     ListingMaintenanceService>();
 
+builder.Services.AddScoped<
+    IListingExpiryReminderService,
+    ListingExpiryReminderService>();
+
 builder.Services.AddSingleton<
     IPushNotificationSender,
     FirebasePushNotificationSender>();

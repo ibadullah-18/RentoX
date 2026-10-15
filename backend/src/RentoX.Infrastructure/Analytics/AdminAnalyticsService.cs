@@ -19,6 +19,61 @@ public sealed class AdminAnalyticsService(
     IClock clock)
     : IAdminAnalyticsService
 {
+    public async Task<IReadOnlyList<AdminCategoryCount>> GetCategoryCountsAsync(
+        CancellationToken cancellationToken = default)
+    {
+        var rows = await dbContext.Set<Listing>()
+            .AsNoTracking()
+            .Where(listing => listing.Status == ListingStatus.Active)
+            .GroupBy(listing => listing.CategoryId)
+            .Select(group => new { CategoryId = group.Key, Count = group.Count() })
+            .ToListAsync(cancellationToken);
+
+        return rows
+            .OrderByDescending(row => row.Count)
+            .ThenBy(row => row.CategoryId)
+            .Select(row => new AdminCategoryCount(row.CategoryId, row.Count))
+            .ToArray();
+    }
+
+    public async Task<IReadOnlyList<AdminDailyPoint>> GetDailyAsync(
+        int days,
+        CancellationToken cancellationToken = default)
+    {
+        days = Math.Clamp(days, 7, 90);
+        DateOnly today = DateOnly.FromDateTime(clock.UtcNow.UtcDateTime);
+        DateOnly first = today.AddDays(-(days - 1));
+        DateTimeOffset from = new(first.ToDateTime(TimeOnly.MinValue), TimeSpan.Zero);
+
+        List<DateTimeOffset> users = await dbContext.Set<AppUser>()
+            .AsNoTracking()
+            .Where(user => user.RegisteredAtUtc >= from)
+            .Select(user => user.RegisteredAtUtc)
+            .ToListAsync(cancellationToken);
+
+        List<DateTimeOffset> listings = await dbContext.Set<Listing>()
+            .IgnoreQueryFilters()
+            .AsNoTracking()
+            .Where(listing => listing.CreatedAtUtc >= from)
+            .Select(listing => listing.CreatedAtUtc)
+            .ToListAsync(cancellationToken);
+
+        Dictionary<DateOnly, int> usersByDay = users
+            .GroupBy(t => DateOnly.FromDateTime(t.UtcDateTime))
+            .ToDictionary(g => g.Key, g => g.Count());
+        Dictionary<DateOnly, int> listingsByDay = listings
+            .GroupBy(t => DateOnly.FromDateTime(t.UtcDateTime))
+            .ToDictionary(g => g.Key, g => g.Count());
+
+        return Enumerable.Range(0, days)
+            .Select(offset => first.AddDays(offset))
+            .Select(day => new AdminDailyPoint(
+                day,
+                usersByDay.GetValueOrDefault(day),
+                listingsByDay.GetValueOrDefault(day)))
+            .ToArray();
+    }
+
     public async Task<AdminDashboardResult> GetDashboardAsync(
         CancellationToken cancellationToken = default)
     {

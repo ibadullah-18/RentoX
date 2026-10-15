@@ -4,6 +4,7 @@ namespace RentoX.Application.Listings.Promotions;
 
 public interface IListingPromotionPricingService
 {
-    ListingPromotionPricingResult GetPricing(
-        ListingPromotionType type);
+    Task<ListingPromotionPricingResult> GetPricingAsync(
+        ListingPromotionType type,
+        CancellationToken cancellationToken = default);
 }

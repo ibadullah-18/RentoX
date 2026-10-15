@@ -245,6 +245,50 @@ public sealed class StoreProfile : AuditableEntity
         RejectionReason = normalized;
     }
 
+    /// <summary>
+    /// An admin suspends a live store (a complaint, a ban). It leaves the
+    /// public lists at once; its owner sees the reason and can write to
+    /// support. Only an admin can bring it back.
+    /// </summary>
+    public void Suspend(string reason)
+    {
+        if (Status != StoreStatus.Active)
+        {
+            throw new DomainException(
+                "Only active stores can be suspended.");
+        }
+
+        if (string.IsNullOrWhiteSpace(reason))
+        {
+            throw new DomainException(
+                "Store suspension reason is required.");
+        }
+
+        string normalized = reason.Trim();
+
+        if (normalized.Length > 1000)
+        {
+            throw new DomainException(
+                "Store suspension reason cannot exceed 1000 characters.");
+        }
+
+        Status = StoreStatus.Suspended;
+        RejectionReason = normalized;
+    }
+
+    /// <summary>Brings a suspended store back to the public lists.</summary>
+    public void Reinstate()
+    {
+        if (Status != StoreStatus.Suspended)
+        {
+            throw new DomainException(
+                "Only suspended stores can be reinstated.");
+        }
+
+        Status = StoreStatus.Active;
+        RejectionReason = null;
+    }
+
     /// <summary>Takes the store out of view for good (owner left).</summary>
     public void MarkDeleted(DateTimeOffset deletedAtUtc)
     {

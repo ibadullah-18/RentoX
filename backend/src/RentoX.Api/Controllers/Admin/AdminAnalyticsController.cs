@@ -26,7 +26,7 @@ public sealed class AdminAnalyticsController(
             await analyticsService.GetDashboardAsync(
                 cancellationToken);
 
-        return Ok(new AdminDashboardResponse(
+        AdminDashboardResponse response = new(
             result.GeneratedAtUtc,
             result.Last7DaysFromUtc,
             result.Last30DaysFromUtc,
@@ -56,7 +56,32 @@ public sealed class AdminAnalyticsController(
                     item.Last7DaysAmount,
                     item.Last30DaysAmount)).ToArray(),
             result.MostViewedListings.Select(MapListing).ToArray(),
-            result.MostFavoritedListings.Select(MapListing).ToArray()));
+            result.MostFavoritedListings.Select(MapListing).ToArray());
+
+        // The money figures only go to those who may see finance.
+        if (!AdminSections.Allows(User, AdminSections.Finance))
+        {
+            response = response with { WalletBalances = [], WalletActivity = [] };
+        }
+
+        return Ok(response);
+    }
+
+    [HttpGet("categories")]
+    [ProducesResponseType<IReadOnlyList<AdminCategoryCount>>(StatusCodes.Status200OK)]
+    public async Task<ActionResult<IReadOnlyList<AdminCategoryCount>>> GetCategoryCountsAsync(
+        CancellationToken cancellationToken)
+    {
+        return Ok(await analyticsService.GetCategoryCountsAsync(cancellationToken));
+    }
+
+    [HttpGet("daily")]
+    [ProducesResponseType<IReadOnlyList<AdminDailyPoint>>(StatusCodes.Status200OK)]
+    public async Task<ActionResult<IReadOnlyList<AdminDailyPoint>>> GetDailyAsync(
+        [FromQuery] int days = 30,
+        CancellationToken cancellationToken = default)
+    {
+        return Ok(await analyticsService.GetDailyAsync(days, cancellationToken));
     }
 
     private static AdminTopListingResponse MapListing(

@@ -115,6 +115,16 @@ export async function getSections(): Promise<string[] | null> {
   }
 }
 
+/**
+ * May this person look after the staff (the table, the days off, the requests)? The owner, or an Admin who was
+ * given that section on purpose: "no section chosen" does not include it.
+ */
+export async function canSeeHr(): Promise<boolean> {
+  const sections = await getSections();
+  if ((await getRoles()).includes("SuperAdmin")) return true;
+  return sections?.includes("hr") ?? false;
+}
+
 export async function isAdmin(): Promise<boolean> {
   const roles = await getRoles();
   return roles.includes("Admin") || roles.includes("SuperAdmin");

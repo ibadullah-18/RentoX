@@ -121,7 +121,7 @@ function Shell({
 
   return (
     <InboxContext.Provider value={inbox}>
-      <div className="grid grid-cols-[minmax(0,1fr)] h-[calc(100dvh-13rem)] min-h-[460px] overflow-hidden rounded-2xl border border-line bg-surface md:h-[calc(100dvh-9.5rem)] md:grid-cols-[340px_minmax(0,1fr)]">
+      <div className="grid grid-cols-[minmax(0,1fr)] h-[calc(100dvh-var(--rx-header,4rem))] min-h-[420px] overflow-hidden border-line bg-surface max-md:border-t md:h-[calc(100dvh-var(--rx-header,4rem)-2.5rem)] md:rounded-2xl md:border md:grid-cols-[340px_minmax(0,1fr)]">
         <aside className={`${openId ? "hidden md:flex" : "flex"} min-h-0 flex-col border-line md:border-r`}>
           <h1 className="border-b border-line px-4 py-4 text-xl font-extrabold">{t("Mesajlar")}</h1>
           {conversations.length === 0 ? (

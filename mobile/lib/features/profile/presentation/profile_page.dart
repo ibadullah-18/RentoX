@@ -203,6 +203,12 @@ class ProfilePage extends ConsumerWidget {
                     ),
                     const Divider(indent: 56),
                     _MenuTile(
+                      icon: AppIcons.info,
+                      title: l10n.infoTitle,
+                      onTap: () => context.push(Routes.info),
+                    ),
+                    const Divider(indent: 56),
+                    _MenuTile(
                       icon: AppIcons.devices,
                       title: l10n.logoutAllTitle,
                       onTap: () => _signOutEverywhere(context, ref),

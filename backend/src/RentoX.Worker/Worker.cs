@@ -43,6 +43,18 @@ public sealed partial class Worker(
                         settings.CleanupBatchSize,
                         stoppingToken);
 
+                if (settings.ExpiryReminderDays > 0)
+                {
+                    int reminded = await scope.ServiceProvider
+                        .GetRequiredService<IListingExpiryReminderService>()
+                        .RemindAsync(
+                            TimeSpan.FromDays(settings.ExpiryReminderDays),
+                            settings.CleanupBatchSize,
+                            stoppingToken);
+
+                    LogRemindersWritten(logger, reminded);
+                }
+
                 LogMaintenanceCompleted(
                     logger,
                     result.ExpiredListingCount,
@@ -82,6 +94,12 @@ public sealed partial class Worker(
                 "Deleted image retention cannot be negative.");
         }
 
+        if (settings.ExpiryReminderDays < 0 || settings.ExpiryReminderDays > 30)
+        {
+            throw new InvalidOperationException(
+                "Expiry reminder days must be between 0 and 30.");
+        }
+
         if (settings.CleanupBatchSize <= 0 ||
             settings.CleanupBatchSize > 1000)
         {
@@ -100,6 +118,14 @@ public sealed partial class Worker(
         int expiredCount,
         int purgedCount,
         int failedCount);
+
+    [LoggerMessage(
+        EventId = 4003,
+        Level = LogLevel.Information,
+        Message = "Expiry reminders written: {Count}")]
+    private static partial void LogRemindersWritten(
+        ILogger logger,
+        int count);
 
     [LoggerMessage(
         EventId = 4002,

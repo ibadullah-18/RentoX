@@ -4,7 +4,7 @@ import { adminHref } from "./admin-path";
 import { notFound, redirect } from "next/navigation";
 import type { Dashboard } from "./admin-types";
 import { authed } from "./authed";
-import { getSections, getSession, isAdmin } from "./session";
+import { canSeeHr, getSections, getSession, isAdmin } from "./session";
 
 /** Signed out: to the login page. Signed in without admin rights: as if the page did not exist. */
 export async function requireAdmin(next: string): Promise<void> {
@@ -19,6 +19,11 @@ export const getDashboard = cache(() => authed<Dashboard>("/api/admin/analytics/
 export async function requireSection(section: string): Promise<void> {
   const allowed = await getSections();
   if (allowed !== null && !allowed.includes(section)) notFound();
+}
+
+/** The staff pages: the owner, or an Admin who was given the staff section on purpose. */
+export async function requireHr(): Promise<void> {
+  if (!(await canSeeHr())) notFound();
 }
 
 export * from "./admin-labels";

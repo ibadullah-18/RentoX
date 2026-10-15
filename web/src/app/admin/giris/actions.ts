@@ -60,6 +60,17 @@ export async function adminVerifyCode(input: { challengeId: string; code: string
     // Not an admin: nothing is saved, so this browser is not signed in at all.
     if (!roles.includes("Admin") && !roles.includes("SuperAdmin")) return { ok: false, message: refused };
 
+    // The owner can close an Admin's access to the panel: then nothing is saved and the person is told so.
+    if (!roles.includes("SuperAdmin")) {
+      const access = await fetch(`${API_BASE}/api/admin/hr/me/access`, {
+        headers: { Authorization: `Bearer ${data.accessToken}` },
+        cache: "no-store",
+      });
+      if (access.ok && ((await access.json()) as { allowed: boolean }).allowed === false) {
+        return { ok: false, message: "Admin panelə giriş icazəniz bağlıdır. Rəhbərlə əlaqə saxlayın." };
+      }
+    }
+
     await saveSession(data, { userId: data.userId, phone: data.phoneNumber });
     return { ok: true };
   } catch {

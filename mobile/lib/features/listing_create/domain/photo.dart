@@ -4,7 +4,9 @@ import 'dart:typed_data';
 /// `ListingImageService`). Checking them here gives instant feedback instead
 /// of failing halfway through an upload.
 abstract final class PhotoRules {
-  static const maxCount = 15;
+  /// How many photos a listing may have: an admin can change it, so this is the last value the
+  /// server told us (from `GET /api/settings`); until then, the starting one.
+  static int maxCount = 15;
   static const maxBytes = 10 * 1024 * 1024;
 }
 

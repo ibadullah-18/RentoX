@@ -12,6 +12,7 @@ namespace RentoX.Api.Controllers.Admin;
 [ApiController]
 [Route("api/admin/content-reports")]
 [Authorize(Policy = PolicyNames.AdminAccess)]
+[Authorize(Policy = AdminSections.ReportsPolicy)]
 public sealed class AdminContentReportsController(
     IContentReportService reportService)
     : ControllerBase
@@ -21,6 +22,7 @@ public sealed class AdminContentReportsController(
         GetAsync(
             [FromQuery] int? status = null,
             [FromQuery] int? targetType = null,
+            [FromQuery] Guid? targetId = null,
             [FromQuery] int page = 1,
             [FromQuery] int pageSize = 20,
             CancellationToken cancellationToken = default)
@@ -31,6 +33,7 @@ public sealed class AdminContentReportsController(
                 targetType,
                 page,
                 pageSize,
+                targetId,
                 cancellationToken);
 
         return Ok(new PagedResponse<ContentReportSummaryResponse>(
@@ -43,7 +46,13 @@ public sealed class AdminContentReportsController(
                     item.ReporterId,
                     item.Reason,
                     item.Status,
-                    item.CreatedAtUtc))
+                    item.CreatedAtUtc,
+                    item.ReporterName,
+                    item.OwnerId,
+                    item.OwnerName,
+                    item.OpenOnTarget,
+                    item.TargetStatus,
+                    item.CoverImageId))
                 .ToArray(),
             result.Page,
             result.PageSize,
@@ -80,7 +89,11 @@ public sealed class AdminContentReportsController(
             item.ReviewedByUserId,
             item.ReviewedAtUtc,
             item.ResolutionNote,
-            item.OpenReportsOnTarget));
+            item.OpenReportsOnTarget,
+            item.ReporterName,
+            item.OwnerName,
+            item.TargetStatus,
+            item.CoverImageId));
     }
 
     [HttpPut("{reportId:guid}")]

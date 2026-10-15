@@ -1429,4 +1429,35 @@ class AppL10nAz extends AppL10n {
   @override
   String get announcementsHint =>
       'Yeniliklər və hamıya göndərilən məlumatlar. Sizə yazılan şəxsi mesajlar və elanlarınız barədə bildirişlər həmişə gəlir.';
+
+  @override
+  String get infoTitle => 'Məlumat və əlaqə';
+
+  @override
+  String get contactTitle => 'Əlaqə';
+
+  @override
+  String get contactPhone => 'Telefon';
+
+  @override
+  String get contactHotline => 'Qaynar xətt';
+
+  @override
+  String get contactEmail => 'E-poçt';
+
+  @override
+  String get termsTitle => 'İstifadə şərtləri';
+
+  @override
+  String get privacyTitle => 'Məxfilik siyasəti';
+
+  @override
+  String consentText(String terms, String privacy) {
+    return 'Davam etməklə $terms və $privacy ilə razılaşırsınız.';
+  }
+
+  @override
+  String infoUpdated(String date) {
+    return 'Son yenilənmə: $date';
+  }
 }

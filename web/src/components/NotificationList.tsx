@@ -7,24 +7,29 @@ import { useState } from "react";
 import {
   AlertTriangle,
   Bell,
+  Briefcase,
+  CalendarCheck,
   Clock,
   CheckCheck,
   CheckCircle2,
   Flag,
   LifeBuoy,
   Megaphone,
+  MessageSquareText,
   Store,
+  UserX,
   Wallet,
   XCircle,
   type LucideIcon,
 } from "lucide-react";
+import { adminHref } from "@/lib/admin-path";
 import { markAllNotificationsRead, markNotificationRead } from "@/app/bildirisler/actions";
 import type { AppNotification } from "@/lib/types";
 
 const GUID = "[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}";
 
 /** What each kind looks like and where it leads. */
-function describe(n: AppNotification): { Icon: LucideIcon; tone: string; href: string | null } {
+export function describe(n: AppNotification): { Icon: LucideIcon; tone: string; href: string | null } {
   const listing =
     new RegExp(`/listings/(${GUID})`).exec(n.actionUrl ?? "")?.[1] ?? n.relatedEntityId ?? null;
 
@@ -47,6 +52,16 @@ function describe(n: AppNotification): { Icon: LucideIcon; tone: string; href: s
         new RegExp(`/support/tickets/(${GUID})`).exec(n.actionUrl ?? "")?.[1] ?? n.relatedEntityId ?? null;
       return { Icon: LifeBuoy, tone: "text-primary", href: ticket ? `/destek/${ticket}` : "/destek" };
     }
+    case 11:
+      return { Icon: UserX, tone: "text-danger", href: adminHref("/kadr") };
+    case 12:
+      return { Icon: CalendarCheck, tone: "text-warning", href: adminHref("/kadr/icazeler") };
+    case 14:
+      return { Icon: MessageSquareText, tone: "text-primary", href: adminHref("/kadr/muracietler") };
+    case 13:
+    case 15:
+    case 16:
+      return { Icon: Briefcase, tone: "text-primary", href: adminHref("/menim-isim") };
     case 10:
       return { Icon: Clock, tone: "text-warning", href: listing ? `/elanlarim/${listing}` : "/elanlarim" };
     case 9: {

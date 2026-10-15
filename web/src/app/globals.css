@@ -18,6 +18,8 @@
   --warning: #f5a524;
   --warning-soft: #fff3dc;
   --danger: #e5484d;
+  --silver-base: #7b818d;
+  --silver-shine: #d3d7de;
   color-scheme: light;
 }
 
@@ -34,6 +36,8 @@
   --accent-soft: rgba(255, 77, 141, 0.18);
   --success-soft: rgba(34, 197, 139, 0.16);
   --warning-soft: rgba(245, 165, 36, 0.16);
+  --silver-base: #9aa0ab;
+  --silver-shine: #ffffff;
   color-scheme: dark;
 }
 
@@ -50,6 +54,8 @@
     --accent-soft: rgba(255, 77, 141, 0.18);
     --success-soft: rgba(34, 197, 139, 0.16);
     --warning-soft: rgba(245, 165, 36, 0.16);
+    --silver-base: #9aa0ab;
+    --silver-shine: #ffffff;
     color-scheme: dark;
   }
 }
@@ -120,6 +126,43 @@ body {
   }
 }
 
+/* The signature at the very bottom: quiet grey that turns into a moving silver shine when pointed at. */
+.credit-link {
+  color: var(--muted);
+  transition: color 0.3s;
+}
+.credit-link:hover,
+.credit-link:focus-visible {
+  background-image: linear-gradient(
+    110deg,
+    var(--silver-base) 0%,
+    var(--silver-base) 36%,
+    var(--silver-shine) 50%,
+    var(--silver-base) 64%,
+    var(--silver-base) 100%
+  );
+  background-size: 260% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: silver-shine 1.5s linear infinite;
+}
+@keyframes silver-shine {
+  from {
+    background-position: 160% 0;
+  }
+  to {
+    background-position: -60% 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .credit-link:hover,
+  .credit-link:focus-visible {
+    animation: none;
+    background-position: 50% 0;
+  }
+}
+
 /* Printing (or "save as PDF"): the admin menu and buttons are left out. */
 @media print {
   .no-print,
@@ -132,3 +175,10 @@ body {
     color: #000 !important;
   }
 }
+
+@keyframes toast-in {
+  from { opacity: 0; transform: translateX(24px); }
+  to { opacity: 1; transform: none; }
+}
+.toast-in { animation: toast-in 220ms ease-out both; }
+@media (prefers-reduced-motion: reduce) { .toast-in { animation: none; } }

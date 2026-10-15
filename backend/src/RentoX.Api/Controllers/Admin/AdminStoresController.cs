@@ -11,6 +11,7 @@ namespace RentoX.Api.Controllers.Admin;
 [ApiController]
 [Route("api/admin/stores")]
 [Authorize(Policy = PolicyNames.AdminAccess)]
+[Authorize(Policy = AdminSections.StoresPolicy)]
 public sealed class AdminStoresController(
     IStoreModerationService moderationService)
     : ControllerBase
@@ -44,6 +45,31 @@ public sealed class AdminStoresController(
                 result.PageSize,
                 result.TotalCount,
                 result.TotalPages));
+    }
+
+    [HttpPost("{storeId:guid}/suspend")]
+    [ProducesResponseType<StoreStatusResponse>(StatusCodes.Status200OK)]
+    public async Task<ActionResult<StoreStatusResponse>> SuspendAsync(
+        Guid storeId,
+        RejectStoreRequest request,
+        CancellationToken cancellationToken)
+    {
+        StoreStatusResult result =
+            await moderationService.SuspendAsync(storeId, request.Reason, cancellationToken);
+
+        return Ok(MapStatus(result));
+    }
+
+    [HttpPost("{storeId:guid}/reinstate")]
+    [ProducesResponseType<StoreStatusResponse>(StatusCodes.Status200OK)]
+    public async Task<ActionResult<StoreStatusResponse>> ReinstateAsync(
+        Guid storeId,
+        CancellationToken cancellationToken)
+    {
+        StoreStatusResult result =
+            await moderationService.ReinstateAsync(storeId, cancellationToken);
+
+        return Ok(MapStatus(result));
     }
 
     [HttpGet("{storeId:guid}")]

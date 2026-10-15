@@ -13,6 +13,7 @@ namespace RentoX.Api.Controllers.Admin;
 [ApiController]
 [Route("api/admin/listings")]
 [Authorize(Policy = PolicyNames.AdminAccess)]
+[Authorize(Policy = AdminSections.ListingsPolicy)]
 public sealed class AdminListingsController(
     IListingModerationService moderationService,
     IListingModerationQueryService moderationQueryService)
@@ -92,6 +93,26 @@ public sealed class AdminListingsController(
     {
         ListingModerationResult result =
             await moderationService.RejectAsync(
+                listingId,
+                request.Reason,
+                cancellationToken);
+
+        return Ok(MapResponse(result));
+    }
+
+    /// <summary>Takes a listing down that is already live (or paused, pending or unpaid), with a reason.</summary>
+    [HttpPost("{listingId:guid}/take-down")]
+    [ProducesResponseType<ListingModerationResponse>(
+        StatusCodes.Status200OK)]
+    public async Task<ActionResult<
+        ListingModerationResponse>>
+        TakeDownAsync(
+            Guid listingId,
+            RejectListingRequest request,
+            CancellationToken cancellationToken)
+    {
+        ListingModerationResult result =
+            await moderationService.TakeDownAsync(
                 listingId,
                 request.Reason,
                 cancellationToken);

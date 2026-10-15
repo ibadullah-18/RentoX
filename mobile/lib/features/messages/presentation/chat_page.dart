@@ -331,8 +331,11 @@ class _ChatHeader extends StatelessWidget {
                   if (state != null)
                     Text(
                       status,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         fontSize: 12.5,
+                        height: 1.3,
                         fontWeight: FontWeight.w600,
                         color: statusColor,
                       ),

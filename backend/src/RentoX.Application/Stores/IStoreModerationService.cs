@@ -22,4 +22,15 @@ public interface IStoreModerationService
         Guid storeId,
         string reason,
         CancellationToken cancellationToken = default);
+
+    /// <summary>Suspends a live store with a reason its owner is told.</summary>
+    Task<StoreStatusResult> SuspendAsync(
+        Guid storeId,
+        string reason,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>Brings a suspended store back.</summary>
+    Task<StoreStatusResult> ReinstateAsync(
+        Guid storeId,
+        CancellationToken cancellationToken = default);
 }

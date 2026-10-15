@@ -51,6 +51,14 @@ public sealed class City : Entity
             _ => NameAz
         };
 
+    public void Update(string nameAz, string nameRu, string nameEn, int displayOrder)
+    {
+        NameAz = Require(nameAz);
+        NameRu = Require(nameRu);
+        NameEn = Require(nameEn);
+        DisplayOrder = displayOrder;
+    }
+
     public void Deactivate() => IsActive = false;
 
     public void Activate() => IsActive = true;

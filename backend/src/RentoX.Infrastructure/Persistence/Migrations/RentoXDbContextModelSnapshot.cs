@@ -168,11 +168,11 @@ namespace RentoX.Infrastructure.Persistence.Migrations
 
                     b.ToTable("entries", "audit", t =>
                         {
-                            t.HasCheckConstraint("CK_audit_entries_Action", "\"Action\" BETWEEN 1 AND 5");
+                            t.HasCheckConstraint("CK_audit_entries_Action", "\"Action\" BETWEEN 1 AND 11");
 
-                            t.HasCheckConstraint("CK_audit_entries_Payload", "(\n    \"Action\" BETWEEN 1 AND 4\n    AND \"PreviousValue\" IS NOT NULL\n    AND \"CurrentValue\" IS NOT NULL\n    AND \"PreviousValue\" <> \"CurrentValue\"\n    AND \"RelatedEntityId\" IS NULL\n    AND (\n        (\"Action\" = 1\n            AND \"PreviousValue\" BETWEEN 1 AND 8\n            AND \"CurrentValue\" BETWEEN 1 AND 8)\n        OR (\"Action\" = 2\n            AND \"PreviousValue\" BETWEEN 1 AND 6\n            AND \"CurrentValue\" BETWEEN 1 AND 6)\n        OR (\"Action\" IN (3, 4)\n            AND \"PreviousValue\" BETWEEN 1 AND 4\n            AND \"CurrentValue\" BETWEEN 1 AND 4)\n    )\n)\nOR\n(\n    \"Action\" = 5\n    AND \"PreviousValue\" IS NULL\n    AND \"CurrentValue\" IS NULL\n    AND \"RelatedEntityId\" IS NOT NULL\n    AND \"RelatedEntityId\" <>\n        '00000000-0000-0000-0000-000000000000'::uuid\n)");
+                            t.HasCheckConstraint("CK_audit_entries_Payload", "(\r\n    \"Action\" BETWEEN 1 AND 4\r\n    AND \"PreviousValue\" IS NOT NULL\r\n    AND \"CurrentValue\" IS NOT NULL\r\n    AND \"PreviousValue\" <> \"CurrentValue\"\r\n    AND \"RelatedEntityId\" IS NULL\r\n    AND (\r\n        (\"Action\" = 1\r\n            AND \"PreviousValue\" BETWEEN 1 AND 8\r\n            AND \"CurrentValue\" BETWEEN 1 AND 8)\r\n        OR (\"Action\" = 2\r\n            AND \"PreviousValue\" BETWEEN 1 AND 6\r\n            AND \"CurrentValue\" BETWEEN 1 AND 6)\r\n        OR (\"Action\" IN (3, 4)\r\n            AND \"PreviousValue\" BETWEEN 1 AND 4\r\n            AND \"CurrentValue\" BETWEEN 1 AND 4)\r\n    )\r\n)\r\nOR\r\n(\r\n    \"Action\" = 5\r\n    AND \"PreviousValue\" IS NULL\r\n    AND \"CurrentValue\" IS NULL\r\n    AND \"RelatedEntityId\" IS NOT NULL\r\n    AND \"RelatedEntityId\" <>\r\n        '00000000-0000-0000-0000-000000000000'::uuid\r\n)\r\nOR\r\n(\r\n    \"Action\" = 6\r\n    AND \"PreviousValue\" IN (0, 1)\r\n    AND \"CurrentValue\" IN (0, 1)\r\n    AND \"PreviousValue\" <> \"CurrentValue\"\r\n    AND \"RelatedEntityId\" IS NULL\r\n)\r\nOR\r\n(\r\n    \"Action\" = 7\r\n    AND \"PreviousValue\" BETWEEN 1 AND 4\r\n    AND \"CurrentValue\" BETWEEN 1 AND 4\r\n    AND \"PreviousValue\" <> \"CurrentValue\"\r\n    AND \"RelatedEntityId\" IS NULL\r\n)\r\nOR\r\n(\r\n    \"Action\" = 8\r\n    AND \"PreviousValue\" BETWEEN 1 AND 127\r\n    AND \"CurrentValue\" BETWEEN 1 AND 127\r\n    AND \"PreviousValue\" <> \"CurrentValue\"\r\n    AND \"RelatedEntityId\" IS NULL\r\n)\r\nOR\r\n(\r\n    \"Action\" = 9\r\n    AND \"PreviousValue\" IS NULL\r\n    AND \"CurrentValue\" >= 1\r\n    AND \"RelatedEntityId\" IS NULL\r\n)\r\nOR\r\n(\r\n    \"Action\" = 10\r\n    AND \"PreviousValue\" IS NULL\r\n    AND \"CurrentValue\" >= 0\r\n    AND \"RelatedEntityId\" IS NULL\r\n)\r\nOR\r\n(\r\n    \"Action\" = 11\r\n    AND \"PreviousValue\" IS NULL\r\n    AND \"CurrentValue\" <> 0\r\n    AND \"RelatedEntityId\" IS NOT NULL\r\n    AND \"RelatedEntityId\" <>\r\n        '00000000-0000-0000-0000-000000000000'::uuid\r\n)");
 
-                            t.HasCheckConstraint("CK_audit_entries_RequiredIds", "\"OperationId\" <> '00000000-0000-0000-0000-000000000000'::uuid\nAND \"ActorUserId\" <> '00000000-0000-0000-0000-000000000000'::uuid\nAND \"TargetId\" <> '00000000-0000-0000-0000-000000000000'::uuid");
+                            t.HasCheckConstraint("CK_audit_entries_RequiredIds", "\"OperationId\" <> '00000000-0000-0000-0000-000000000000'::uuid\r\nAND \"ActorUserId\" <> '00000000-0000-0000-0000-000000000000'::uuid\r\nAND \"TargetId\" <> '00000000-0000-0000-0000-000000000000'::uuid");
                         });
                 });
 
@@ -441,6 +441,181 @@ namespace RentoX.Infrastructure.Persistence.Migrations
                     b.ToTable("category_field_translations", "catalog");
                 });
 
+            modelBuilder.Entity("RentoX.Domain.Content.ContentPage", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("BodyAz")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("BodyEn")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("BodyRu")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Slug")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)");
+
+                    b.Property<string>("TitleAz")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
+
+                    b.Property<string>("TitleEn")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
+
+                    b.Property<string>("TitleRu")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
+
+                    b.Property<DateTimeOffset>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("UpdatedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Slug")
+                        .IsUnique();
+
+                    b.ToTable("pages", "content");
+                });
+
+            modelBuilder.Entity("RentoX.Domain.Content.HomeBanner", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("DisplayOrder")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset?>("EndsAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ImageKey")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("LinkUrl")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<DateTimeOffset?>("StartsAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("SubtitleAz")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("SubtitleEn")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("SubtitleRu")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("TitleAz")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("TitleEn")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("TitleRu")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("IsActive", "DisplayOrder");
+
+                    b.ToTable("home_banners", "content");
+                });
+
+            modelBuilder.Entity("RentoX.Domain.Content.SiteInfo", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Address")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.Property<string>("Email")
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
+
+                    b.Property<string>("Facebook")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.Property<string>("Hotline")
+                        .HasMaxLength(25)
+                        .HasColumnType("character varying(25)");
+
+                    b.Property<string>("Instagram")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.Property<string>("OperatorName")
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
+
+                    b.Property<string>("Phone")
+                        .HasMaxLength(25)
+                        .HasColumnType("character varying(25)");
+
+                    b.Property<string>("TikTok")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.Property<DateTimeOffset>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("UpdatedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Voen")
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<string>("WhatsApp")
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("site_info", "content");
+                });
+
             modelBuilder.Entity("RentoX.Domain.Favorites.Favorite", b =>
                 {
                     b.Property<Guid>("Id")
@@ -466,6 +641,262 @@ namespace RentoX.Infrastructure.Persistence.Migrations
                         .IsUnique();
 
                     b.ToTable("favorites", "engagement");
+                });
+
+            modelBuilder.Entity("RentoX.Domain.Hr.AttendanceAlert", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateOnly>("Day")
+                        .HasColumnType("date");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId", "Day")
+                        .IsUnique();
+
+                    b.ToTable("attendance_alerts", "hr");
+                });
+
+            modelBuilder.Entity("RentoX.Domain.Hr.AttendanceRecord", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CheckInAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset?>("CheckOutAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateOnly>("Day")
+                        .HasColumnType("date");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Day");
+
+                    b.HasIndex("UserId", "Day")
+                        .IsUnique();
+
+                    b.ToTable("attendance_records", "hr");
+                });
+
+            modelBuilder.Entity("RentoX.Domain.Hr.LeaveRequest", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset?>("DecidedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("DecidedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("DecisionNote")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<DateOnly>("FromDay")
+                        .HasColumnType("date");
+
+                    b.Property<bool>("OverLimit")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<DateOnly>("ToDay")
+                        .HasColumnType("date");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("WorkingDays")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Status");
+
+                    b.HasIndex("UserId", "FromDay");
+
+                    b.ToTable("leave_requests", "hr", t =>
+                        {
+                            t.HasCheckConstraint("CK_leave_requests_Status", "\"Status\" BETWEEN 1 AND 4");
+                        });
+                });
+
+            modelBuilder.Entity("RentoX.Domain.Hr.PayrollEntry", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("AmountInQepik")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Kind")
+                        .HasColumnType("integer");
+
+                    b.Property<DateOnly>("Month")
+                        .HasColumnType("date");
+
+                    b.Property<string>("Note")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset?>("VoidedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("VoidedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId", "Month");
+
+                    b.ToTable("payroll_entries", "hr", t =>
+                        {
+                            t.HasCheckConstraint("CK_payroll_entries_Amount", "\"AmountInQepik\" > 0");
+
+                            t.HasCheckConstraint("CK_payroll_entries_Kind", "\"Kind\" BETWEEN 1 AND 4");
+                        });
+                });
+
+            modelBuilder.Entity("RentoX.Domain.Hr.StaffProfile", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("LoginAllowed")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("MonthlyDayOffLimit")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("MonthlySalaryInQepik")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Note")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<DateTimeOffset>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("WorkDaysMask")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("WorkEndMinute")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("WorkStartMinute")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId")
+                        .IsUnique();
+
+                    b.ToTable("staff_profiles", "hr", t =>
+                        {
+                            t.HasCheckConstraint("CK_staff_profiles_Days", "\"WorkDaysMask\" BETWEEN 0 AND 127 AND \"MonthlyDayOffLimit\" BETWEEN 0 AND 31");
+
+                            t.HasCheckConstraint("CK_staff_profiles_Hours", "\"WorkStartMinute\" BETWEEN 0 AND 1439 AND \"WorkEndMinute\" BETWEEN 1 AND 1440 AND \"WorkEndMinute\" > \"WorkStartMinute\"");
+
+                            t.HasCheckConstraint("CK_staff_profiles_Salary", "\"MonthlySalaryInQepik\" BETWEEN 0 AND 10000000");
+                        });
+                });
+
+            modelBuilder.Entity("RentoX.Domain.Hr.StaffRequest", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Answer")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<string>("Body")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<DateTimeOffset>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("FromUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset?>("HandledAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("HandledByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Subject")
+                        .IsRequired()
+                        .HasMaxLength(160)
+                        .HasColumnType("character varying(160)");
+
+                    b.Property<bool>("ToOwner")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTimeOffset>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FromUserId");
+
+                    b.HasIndex("Status", "CreatedAtUtc");
+
+                    b.ToTable("staff_requests", "hr", t =>
+                        {
+                            t.HasCheckConstraint("CK_staff_requests_Status", "\"Status\" BETWEEN 1 AND 4");
+                        });
                 });
 
             modelBuilder.Entity("RentoX.Domain.Listings.Billing.ListingBillingCycle", b =>
@@ -519,6 +950,43 @@ namespace RentoX.Infrastructure.Persistence.Migrations
                     b.HasIndex("ListingId", "PeriodEndUtc");
 
                     b.ToTable("listing_billing_cycles", "payments");
+                });
+
+            modelBuilder.Entity("RentoX.Domain.Listings.Billing.TariffVersion", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("ActivationFee")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<decimal>("BumpPrice")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<DateTimeOffset>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("FreeActiveListingLimit")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("VipDurationDays")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal>("VipPrice")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedAtUtc");
+
+                    b.ToTable("tariffs", "payments");
                 });
 
             modelBuilder.Entity("RentoX.Domain.Listings.Listing", b =>
@@ -1034,6 +1502,31 @@ namespace RentoX.Infrastructure.Persistence.Migrations
                         });
                 });
 
+            modelBuilder.Entity("RentoX.Domain.Moderation.BannedWord", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Word")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Word")
+                        .IsUnique();
+
+                    b.ToTable("banned_words", "moderation");
+                });
+
             modelBuilder.Entity("RentoX.Domain.Moderation.ContentReport", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1218,6 +1711,31 @@ namespace RentoX.Infrastructure.Persistence.Migrations
                     b.HasIndex("Status", "NextAttemptAtUtc");
 
                     b.ToTable("push_deliveries", "notifications");
+                });
+
+            modelBuilder.Entity("RentoX.Domain.Settings.SettingsVersion", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("ListingLifetimeDays")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("MaxListingPhotos")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedAtUtc");
+
+                    b.ToTable("settings_versions", "admin");
                 });
 
             modelBuilder.Entity("RentoX.Domain.Stores.StoreFollower", b =>
@@ -1430,6 +1948,9 @@ namespace RentoX.Infrastructure.Persistence.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<bool>("AnnouncementsEnabled")
+                        .HasColumnType("boolean");
+
                     b.Property<string>("Bio")
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)");
@@ -1460,6 +1981,10 @@ namespace RentoX.Infrastructure.Persistence.Migrations
 
                     b.Property<int>("Status")
                         .HasColumnType("integer");
+
+                    b.Property<string>("StatusReason")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
 
                     b.Property<DateTimeOffset?>("UpdatedAtUtc")
                         .HasColumnType("timestamp with time zone");
@@ -1795,6 +2320,60 @@ namespace RentoX.Infrastructure.Persistence.Migrations
                     b.HasOne("RentoX.Infrastructure.Identity.AppUser", null)
                         .WithMany()
                         .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("RentoX.Domain.Hr.AttendanceAlert", b =>
+                {
+                    b.HasOne("RentoX.Infrastructure.Identity.AppUser", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("RentoX.Domain.Hr.AttendanceRecord", b =>
+                {
+                    b.HasOne("RentoX.Infrastructure.Identity.AppUser", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("RentoX.Domain.Hr.LeaveRequest", b =>
+                {
+                    b.HasOne("RentoX.Infrastructure.Identity.AppUser", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("RentoX.Domain.Hr.PayrollEntry", b =>
+                {
+                    b.HasOne("RentoX.Infrastructure.Identity.AppUser", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("RentoX.Domain.Hr.StaffProfile", b =>
+                {
+                    b.HasOne("RentoX.Infrastructure.Identity.AppUser", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("RentoX.Domain.Hr.StaffRequest", b =>
+                {
+                    b.HasOne("RentoX.Infrastructure.Identity.AppUser", null)
+                        .WithMany()
+                        .HasForeignKey("FromUserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });

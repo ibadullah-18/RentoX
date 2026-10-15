@@ -1,7 +1,7 @@
+import { BackLink } from "@/components/admin/BackLink";
 import { adminHref } from "@/lib/admin-path";
-import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ChevronLeft, Store } from "lucide-react";
+import { Store } from "lucide-react";
 import { approveStore, reinstateStore, rejectStore, suspendStore } from "@/app/admin/(panel)/actions";
 import { ModerationActions, ReinstateButton, TakeDownPanel } from "@/components/admin/AdminControls";
 import { authed } from "@/lib/authed";
@@ -26,10 +26,7 @@ export default async function ReviewStorePage({ params }: PageProps<"/admin/maga
 
   return (
     <div className="space-y-6">
-      <Link href={adminHref("/magazalar")} className="flex items-center gap-1 text-sm font-semibold text-ink-2 hover:text-primary">
-        <ChevronLeft className="size-4" aria-hidden />
-        Mağazalar
-      </Link>
+      <BackLink href={adminHref("/magazalar")} title="Mağazalar" />
 
       <div className="grid gap-6 md:grid-cols-[minmax(0,1fr)_320px]">
         <div className="min-w-0 space-y-5">

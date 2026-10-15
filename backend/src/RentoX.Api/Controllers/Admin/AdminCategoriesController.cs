@@ -9,6 +9,7 @@ namespace RentoX.Api.Controllers.Admin;
 [ApiController]
 [Route("api/admin/categories")]
 [Authorize(Policy = PolicyNames.AdminAccess)]
+[Authorize(Policy = AdminSections.CatalogPolicy)]
 public sealed class AdminCategoriesController(
     ICategoryManagementService categoryManagementService)
     : ControllerBase

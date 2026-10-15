@@ -13,7 +13,8 @@ public sealed record SupportTicketMessageResult(
     Guid SenderId,
     bool IsAdmin,
     string Body,
-    DateTimeOffset SentAtUtc);
+    DateTimeOffset SentAtUtc,
+    string? SenderName = null);
 
 public sealed record SupportTicketSummaryResult(
     Guid Id,
@@ -23,7 +24,12 @@ public sealed record SupportTicketSummaryResult(
     int Priority,
     int Status,
     DateTimeOffset CreatedAtUtc,
-    DateTimeOffset UpdatedAtUtc);
+    DateTimeOffset UpdatedAtUtc,
+    string? UserName = null,
+    DateTimeOffset? LastMessageAtUtc = null,
+    bool? LastMessageIsAdmin = null,
+    string? LastMessagePreview = null,
+    int MessageCount = 0);
 
 public sealed record SupportTicketDetailsResult(
     Guid Id,
@@ -36,7 +42,27 @@ public sealed record SupportTicketDetailsResult(
     DateTimeOffset UpdatedAtUtc,
     DateTimeOffset? ResolvedAtUtc,
     DateTimeOffset? ClosedAtUtc,
-    IReadOnlyList<SupportTicketMessageResult> Messages);
+    IReadOnlyList<SupportTicketMessageResult> Messages,
+    string? UserName = null,
+    string? UserPhone = null,
+    int OtherTickets = 0,
+    IReadOnlyList<SupportNotificationLog>? Notifications = null,
+    int UserDevices = 0);
+
+/// <summary>
+/// One notification the person was sent about this request (a reply or a change of state): when, whether it was
+/// read, and how the push to the phone went (null: nothing was queued, 1 waiting, 2 sending, 3 sent, 4 failed, 5 gave up).
+/// </summary>
+public sealed record SupportNotificationLog(
+    int Type,
+    string Title,
+    DateTimeOffset CreatedAtUtc,
+    DateTimeOffset? ReadAtUtc,
+    int? PushStatus,
+    string? Body = null,
+    int PushAttempts = 0,
+    DateTimeOffset? PushSentAtUtc = null,
+    string? PushError = null);
 
 public interface ISupportTicketService
 {
@@ -67,6 +93,12 @@ public interface ISupportTicketService
         int? category,
         int page,
         int pageSize,
+        bool openOnly = false,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>Who owns the request, or null when there is none (for the live line).</summary>
+    Task<Guid?> GetOwnerIdAsync(
+        Guid ticketId,
         CancellationToken cancellationToken = default);
 
     Task<SupportTicketDetailsResult?> GetAdminDetailsAsync(

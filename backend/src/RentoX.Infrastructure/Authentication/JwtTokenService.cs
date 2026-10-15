@@ -3,6 +3,10 @@ using Microsoft.IdentityModel.Tokens;
 using RentoX.Application.Abstractions.Time;
 using RentoX.Application.Authentication;
 using RentoX.Domain.Authentication;
+using Microsoft.EntityFrameworkCore;
+using RentoX.Domain.Common.Exceptions;
+using RentoX.Domain.Users;
+using RentoX.Domain.Users.Enums;
 using RentoX.Infrastructure.Identity;
 using RentoX.Infrastructure.Persistence;
 using System.Globalization;
@@ -51,6 +55,17 @@ public sealed class JwtTokenService(
                 "User account was not found.");
         }
 
+        UserStatus? status = await dbContext.Set<UserProfile>()
+            .AsNoTracking()
+            .Where(p => p.Id == userId)
+            .Select(p => (UserStatus?)p.Status)
+            .SingleOrDefaultAsync(cancellationToken);
+
+        if (status is UserStatus.Blocked or UserStatus.Suspended)
+        {
+            throw new DomainException("This account is blocked.");
+        }
+
         IList<string> roles =
             await userManager.GetRolesAsync(user);
 
@@ -74,6 +89,16 @@ public sealed class JwtTokenService(
             "D",
             CultureInfo.InvariantCulture))
 ];
+
+        // An Admin limited to some sections of the panel: they ride in the token.
+        if (roles.Contains(RentoX.Application.Authorization.RoleNames.Admin))
+        {
+            foreach (Claim section in (await userManager.GetClaimsAsync(user))
+                         .Where(c => c.Type == RentoX.Application.Authorization.AdminSections.ClaimType))
+            {
+                claims.Add(new Claim(RentoX.Application.Authorization.AdminSections.ClaimType, section.Value));
+            }
+        }
 
         claims.AddRange(
             roles.Select(role =>

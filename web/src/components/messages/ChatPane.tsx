@@ -29,6 +29,7 @@ import type { ChatMessage, Conversation } from "@/lib/types";
 import { ConfirmDialog } from "../ConfirmDialog";
 import { useInbox } from "./MessagesShell";
 import { useRealtime } from "./Realtime";
+import { ReportDialog } from "../ReportDialog";
 import { UserAvatar } from "./UserAvatar";
 
 /** A message as shown: the server's, or one still being sent. */
@@ -369,6 +370,7 @@ export function ChatPane({
           </Link>
           <p className={`text-xs font-semibold ${typing || online ? "text-success" : "text-ink-2"}`}>{status}</p>
         </div>
+        <ReportDialog kind="chat" targetId={cid} variant="icon" />
         <button
           type="button"
           onClick={() => setAskBlock(true)}

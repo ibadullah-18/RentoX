@@ -64,7 +64,7 @@ public sealed class ListingPromotionService(
             (ListingPromotionType)command.Type;
 
         ListingPromotionPricingResult pricing =
-            pricingService.GetPricing(type);
+            await pricingService.GetPricingAsync(type, cancellationToken);
 
         await using var databaseTransaction =
             await dbContext.Database.BeginTransactionAsync(

@@ -49,7 +49,9 @@ public sealed class AdminAuditLogsController(
                     item.PreviousValue,
                     item.CurrentValue,
                     item.RelatedEntityId,
-                    item.OccurredAtUtc))
+                    item.OccurredAtUtc,
+                    item.ActorName,
+                    item.TargetName))
                 .ToArray();
 
         return Ok(new AuditLogPageResponse(

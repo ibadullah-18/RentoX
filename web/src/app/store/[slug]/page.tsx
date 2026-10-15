@@ -6,6 +6,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Globe, MapPin, Phone, Store } from "lucide-react";
 import { FollowButton } from "@/components/FollowButton";
+import { ReportDialog } from "@/components/ReportDialog";
 import { ListingGrid } from "@/components/ListingGrid";
 import { Pagination } from "@/components/Pagination";
 import { getStore, getStoreListings } from "@/lib/api";
@@ -127,6 +128,8 @@ export default async function StorePage({ params, searchParams }: PageProps<"/st
           </div>
         </div>
       </section>
+
+      {!isOwner && <ReportDialog kind="store" targetId={store.id} />}
 
       <section>
         <h2 className="mb-4 text-xl font-extrabold">

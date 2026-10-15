@@ -15,6 +15,7 @@ using RentoX.Domain.Listings.Billing;
 using RentoX.Domain.Listings.Billing.Enums;
 using RentoX.Domain.Listings.Enums;
 using RentoX.Domain.Wallets.Enums;
+using RentoX.Application.Settings;
 using RentoX.Infrastructure.Persistence;
 
 namespace RentoX.Infrastructure.Listings;
@@ -25,13 +26,12 @@ public sealed class ListingModerationService(
     IListingActivationPricingService pricingService,
     IWalletService walletService,
     INotificationService notificationService,
-    ICurrentUserContext currentUserContext)
+    ICurrentUserContext currentUserContext,
+    ISystemSettingsService systemSettings)
     : IListingModerationService
 {
     private const int MaximumPageSize = 50;
 
-    private static readonly TimeSpan ListingLifetime =
-        TimeSpan.FromDays(30);
 
     public async Task<
         PagedResult<ModerationListingSummaryResult>>
@@ -135,14 +135,16 @@ public sealed class ListingModerationService(
 
         ListingStatus previousStatus = listing.Status;
         DateTimeOffset now = clock.UtcNow;
+        TimeSpan listingLifetime = TimeSpan.FromDays(
+            (await systemSettings.GetCurrentAsync(cancellationToken)).ListingLifetimeDays);
         DateTimeOffset periodEndUtc =
-            now.Add(ListingLifetime);
+            now.Add(listingLifetime);
 
         if (!pricing.RequiresPayment)
         {
             listing.Publish(
                 now,
-                ListingLifetime);
+                listingLifetime);
 
             RecordListingStatusChange(
                 listing, previousStatus, actorUserId, operationId);
@@ -241,7 +243,7 @@ public sealed class ListingModerationService(
 
         listing.Publish(
             now,
-            ListingLifetime);
+            listingLifetime);
 
         RecordListingStatusChange(
             listing, previousStatus, actorUserId, operationId);
@@ -322,6 +324,55 @@ public sealed class ListingModerationService(
                 (int)NotificationType.ListingRejected,
                 "Elan rədd edildi",
                 $"\"{listing.Title}\" elanı rədd edildi. Səbəb: {reason.Trim()}",
+                listing.Id,
+                $"/listings/{listing.Id:D}"),
+            cancellationToken);
+
+        return CreateResult(
+            listing,
+            false,
+            0,
+            0,
+            null);
+    }
+
+    public async Task<ListingModerationResult>
+        TakeDownAsync(
+            Guid listingId,
+            string reason,
+            CancellationToken cancellationToken = default)
+    {
+        Guid actorUserId = RequireAuditActor();
+        Guid operationId = Guid.NewGuid();
+
+        await using var auditTransaction =
+            await dbContext.Database.BeginTransactionAsync(
+                IsolationLevel.Serializable,
+                cancellationToken);
+
+        Listing listing =
+            await GetListingAsync(
+                listingId,
+                cancellationToken);
+
+        ListingStatus previousStatus = listing.Status;
+
+        listing.TakeDown(reason);
+
+        RecordListingStatusChange(
+            listing, previousStatus, actorUserId, operationId);
+
+        await dbContext.SaveChangesAsync(
+            cancellationToken);
+
+        await auditTransaction.CommitAsync(cancellationToken);
+
+        await notificationService.CreateAsync(
+            new CreateNotificationCommand(
+                listing.OwnerId,
+                (int)NotificationType.ListingRejected,
+                "Elan dayandırıldı",
+                $"\"{listing.Title}\" elanı idarəetmə tərəfindən dayandırıldı. Səbəb: {reason.Trim()}",
                 listing.Id,
                 $"/listings/{listing.Id:D}"),
             cancellationToken);

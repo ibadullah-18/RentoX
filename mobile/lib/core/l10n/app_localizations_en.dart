@@ -1459,4 +1459,35 @@ class AppL10nEn extends AppL10n {
   @override
   String get announcementsHint =>
       'Updates and notices sent to everyone. Personal messages to you and notifications about your listings always arrive.';
+
+  @override
+  String get infoTitle => 'Information and contact';
+
+  @override
+  String get contactTitle => 'Contact';
+
+  @override
+  String get contactPhone => 'Phone';
+
+  @override
+  String get contactHotline => 'Hotline';
+
+  @override
+  String get contactEmail => 'E-mail';
+
+  @override
+  String get termsTitle => 'Terms of Use';
+
+  @override
+  String get privacyTitle => 'Privacy Policy';
+
+  @override
+  String consentText(String terms, String privacy) {
+    return 'By continuing you accept the $terms and the $privacy.';
+  }
+
+  @override
+  String infoUpdated(String date) {
+    return 'Last updated: $date';
+  }
 }

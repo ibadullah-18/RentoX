@@ -30,6 +30,9 @@ public sealed class UserProfileConfiguration
         builder.Property(x => x.Status)
             .HasConversion<int>();
 
+        builder.Property(x => x.StatusReason)
+            .HasMaxLength(1000);
+
         builder.HasIndex(x => x.Status);
 
         builder.HasIndex(x => x.CreatedAtUtc);

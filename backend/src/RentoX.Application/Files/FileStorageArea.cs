@@ -6,5 +6,6 @@ public enum FileStorageArea
     StoreLogos = 2,
     StoreCovers = 3,
     ProfileImages = 4,
-    ChatAttachments = 5
+    ChatAttachments = 5,
+    Banners = 6
 }

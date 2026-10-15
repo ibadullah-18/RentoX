@@ -11,6 +11,7 @@ namespace RentoX.Api.Controllers.Admin;
 
 [ApiController]
 [Authorize(Policy = PolicyNames.AdminAccess)]
+[Authorize(Policy = AdminSections.SupportPolicy)]
 [Route("api/admin/support/tickets")]
 public sealed class AdminSupportTicketsController(
     ISupportTicketService supportTicketService)
@@ -25,6 +26,7 @@ public sealed class AdminSupportTicketsController(
             [FromQuery] int? status = null,
             [FromQuery] int? priority = null,
             [FromQuery] int? category = null,
+            [FromQuery] bool open = false,
             [FromQuery] int page = 1,
             [FromQuery] int pageSize = 20,
             CancellationToken cancellationToken = default)
@@ -36,6 +38,7 @@ public sealed class AdminSupportTicketsController(
                 category,
                 page,
                 pageSize,
+                open,
                 cancellationToken);
 
         return Ok(MapPage(result));
@@ -180,7 +183,12 @@ public sealed class AdminSupportTicketsController(
             result.Priority,
             result.Status,
             result.CreatedAtUtc,
-            result.UpdatedAtUtc);
+            result.UpdatedAtUtc,
+            result.UserName,
+            result.LastMessageAtUtc,
+            result.LastMessageIsAdmin,
+            result.LastMessagePreview,
+            result.MessageCount);
     }
 
     private static SupportTicketDetailsResponse MapDetails(
@@ -199,7 +207,16 @@ public sealed class AdminSupportTicketsController(
             result.ClosedAtUtc,
             result.Messages
                 .Select(MapMessage)
-                .ToArray());
+                .ToArray(),
+            result.UserName,
+            result.UserPhone,
+            result.OtherTickets,
+            result.Notifications?
+                .Select(n => new SupportNotificationLogResponse(
+                    n.Type, n.Title, n.CreatedAtUtc, n.ReadAtUtc, n.PushStatus,
+                    n.Body, n.PushAttempts, n.PushSentAtUtc, n.PushError))
+                .ToArray(),
+            result.UserDevices);
     }
 
     private static SupportTicketMessageResponse MapMessage(
@@ -210,6 +227,7 @@ public sealed class AdminSupportTicketsController(
             result.SenderId,
             result.IsAdmin,
             result.Body,
-            result.SentAtUtc);
+            result.SentAtUtc,
+            result.SenderName);
     }
 }

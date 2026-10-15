@@ -10,6 +10,7 @@ using RentoX.Domain.Listings.Billing.Enums;
 using RentoX.Domain.Listings.Enums;
 using RentoX.Domain.Wallets;
 using RentoX.Domain.Wallets.Enums;
+using RentoX.Application.Settings;
 using RentoX.Infrastructure.Persistence;
 
 namespace RentoX.Infrastructure.Listings.Billing;
@@ -18,11 +19,10 @@ public sealed class ListingRenewalService(
     RentoXDbContext dbContext,
     IClock clock,
     IListingActivationPricingService pricingService,
-    IWalletService walletService)
+    IWalletService walletService,
+    ISystemSettingsService systemSettings)
     : IListingRenewalService
 {
-    private static readonly TimeSpan ListingLifetime =
-        TimeSpan.FromDays(30);
 
     public async Task<ListingRenewalResult> RenewAsync(
         Guid ownerId,
@@ -42,6 +42,8 @@ public sealed class ListingRenewalService(
                 cancellationToken);
 
         DateTimeOffset now = clock.UtcNow;
+        TimeSpan listingLifetime = TimeSpan.FromDays(
+            (await systemSettings.GetCurrentAsync(cancellationToken)).ListingLifetimeDays);
 
         Listing listing =
             await dbContext.Listings.SingleOrDefaultAsync(
@@ -131,11 +133,11 @@ public sealed class ListingRenewalService(
         }
 
         DateTimeOffset periodEndUtc =
-            now.Add(ListingLifetime);
+            now.Add(listingLifetime);
 
         if (!pricing.RequiresPayment)
         {
-            listing.Renew(now, ListingLifetime);
+            listing.Renew(now, listingLifetime);
 
             dbContext.ListingBillingCycles.Add(
                 ListingBillingCycle.CreateFree(
@@ -184,7 +186,7 @@ public sealed class ListingRenewalService(
                     idempotencyKey),
                 cancellationToken);
 
-        listing.Renew(now, ListingLifetime);
+        listing.Renew(now, listingLifetime);
 
         dbContext.ListingBillingCycles.Add(
             ListingBillingCycle.CreatePaid(

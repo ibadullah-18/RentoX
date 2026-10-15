@@ -24,7 +24,7 @@ import {
   type OwnedDetails,
 } from "@/lib/types";
 import { FieldInput } from "./FieldInput";
-import { PhotoPicker, MAX_PHOTOS, type Photo } from "./PhotoPicker";
+import { PhotoPicker, type Photo } from "./PhotoPicker";
 import { emptyAnswer, parseNumber, toRequest, validate, type Answer } from "./fields";
 
 const input =
@@ -57,11 +57,14 @@ export function EditListingForm({
   fieldDefs,
   cities,
   periods,
+  maxPhotos,
 }: {
   listing: OwnedDetails;
   fieldDefs: FieldDefinition[];
   cities: City[];
   periods: number[];
+  /** The most photos one listing may have. */
+  maxPhotos: number;
 }) {
   const t = useT();
   const locale = useLocale();
@@ -369,7 +372,7 @@ export function EditListingForm({
           </ul>
         )}
 
-        <PhotoPicker photos={added} disabled={busy} onChange={setAdded} max={MAX_PHOTOS - saved.length} />
+        <PhotoPicker photos={added} disabled={busy} onChange={setAdded} max={maxPhotos - saved.length} total={maxPhotos} />
         {showErrors && <Problem>{problems.photos}</Problem>}
       </section>
 
