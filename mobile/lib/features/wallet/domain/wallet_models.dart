@@ -16,7 +16,8 @@ abstract final class Pricing {
   static const currency = 'AZN';
 
   static void apply(Map<String, dynamic> json) {
-    activationFee = (json['activationFee'] as num?)?.toDouble() ?? activationFee;
+    activationFee =
+        (json['activationFee'] as num?)?.toDouble() ?? activationFee;
     vipPrice = (json['vipPrice'] as num?)?.toDouble() ?? vipPrice;
     bumpPrice = (json['bumpPrice'] as num?)?.toDouble() ?? bumpPrice;
     vipDays = (json['vipDurationDays'] as num?)?.toInt() ?? vipDays;

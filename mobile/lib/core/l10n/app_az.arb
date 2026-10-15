@@ -487,5 +487,7 @@
   "txRefund": "Geri qaytarma",
   "txBonus": "Bonus",
   "txAdjustment": "Düzəliş",
-  "loadMore": "Daha çox göstər"
+  "loadMore": "Daha çox göstər",
+  "announcementsTitle": "Saytdan gələn ümumi xəbərlər",
+  "announcementsHint": "Yeniliklər və hamıya göndərilən məlumatlar. Sizə yazılan şəxsi mesajlar və elanlarınız barədə bildirişlər həmişə gəlir."
 }

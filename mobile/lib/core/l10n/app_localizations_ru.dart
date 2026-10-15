@@ -1459,4 +1459,11 @@ class AppL10nRu extends AppL10n {
 
   @override
   String get loadMore => 'Показать ещё';
+
+  @override
+  String get announcementsTitle => 'Общие новости RentoX';
+
+  @override
+  String get announcementsHint =>
+      'Новости и сообщения для всех. Личные сообщения вам и уведомления о ваших объявлениях приходят всегда.';
 }

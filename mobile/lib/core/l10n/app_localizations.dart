@@ -2762,6 +2762,18 @@ abstract class AppL10n {
   /// In az, this message translates to:
   /// **'Daha çox göstər'**
   String get loadMore;
+
+  /// No description provided for @announcementsTitle.
+  ///
+  /// In az, this message translates to:
+  /// **'Saytdan gələn ümumi xəbərlər'**
+  String get announcementsTitle;
+
+  /// No description provided for @announcementsHint.
+  ///
+  /// In az, this message translates to:
+  /// **'Yeniliklər və hamıya göndərilən məlumatlar. Sizə yazılan şəxsi mesajlar və elanlarınız barədə bildirişlər həmişə gəlir.'**
+  String get announcementsHint;
 }
 
 class _AppL10nDelegate extends LocalizationsDelegate<AppL10n> {

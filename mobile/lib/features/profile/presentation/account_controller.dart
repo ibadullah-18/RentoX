@@ -88,3 +88,15 @@ class AccountController extends AsyncNotifier<Account?> {
 final accountProvider = AsyncNotifierProvider<AccountController, Account?>(
   AccountController.new,
 );
+
+/// The switch for the general messages from RentoX (on by default). Null
+/// when the server cannot say (an older server): the page then shows no switch.
+final announcementsEnabledProvider = FutureProvider.autoDispose<bool?>((
+  ref,
+) async {
+  try {
+    return await ref.watch(accountRepositoryProvider).announcementsEnabled();
+  } catch (_) {
+    return null;
+  }
+});

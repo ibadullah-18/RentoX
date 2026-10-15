@@ -465,5 +465,7 @@
   "txRefund": "Refund",
   "txBonus": "Bonus",
   "txAdjustment": "Adjustment",
-  "loadMore": "Show more"
+  "loadMore": "Show more",
+  "announcementsTitle": "General news from RentoX",
+  "announcementsHint": "Updates and notices sent to everyone. Personal messages to you and notifications about your listings always arrive."
 }

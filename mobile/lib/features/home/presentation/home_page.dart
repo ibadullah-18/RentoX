@@ -1,4 +1,5 @@
 import '../../../shared/widgets/category_icon.dart';
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -22,6 +23,7 @@ import '../../store/domain/store_models.dart';
 import '../../notifications/presentation/notifications_controller.dart';
 import '../../store/presentation/store_controller.dart';
 import '../../shell/tab_page.dart';
+import 'home_banners.dart';
 
 class HomePage extends ConsumerWidget {
   const HomePage({super.key});
@@ -33,6 +35,7 @@ class HomePage extends ConsumerWidget {
 
     return TabPage(
       onRefresh: () async {
+        ref.invalidate(bannersProvider);
         ref.invalidate(categoriesProvider);
         ref.invalidate(homeListingsProvider);
         ref.invalidate(homeStoresProvider);
@@ -41,6 +44,7 @@ class HomePage extends ConsumerWidget {
       },
       slivers: [
         const SliverToBoxAdapter(child: _SearchRow()),
+        const SliverToBoxAdapter(child: HomeBanners()),
         SliverToBoxAdapter(
           child: _SectionHeader(title: _categoriesTitle(ref, l10n)),
         ),

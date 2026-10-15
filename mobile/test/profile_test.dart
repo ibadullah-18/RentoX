@@ -35,6 +35,18 @@ class FakeAccounts extends AccountRepository {
   int deletes = 0;
   bool failUpdate = false;
 
+  bool announcements = true;
+  bool failAnnouncements = false;
+
+  @override
+  Future<bool> announcementsEnabled() async => announcements;
+
+  @override
+  Future<void> setAnnouncementsEnabled(bool enabled) async {
+    if (failAnnouncements) throw Exception('boom');
+    announcements = enabled;
+  }
+
   @override
   Future<Account> me() async => account;
 
@@ -197,6 +209,47 @@ void main() {
       expect(c.read(localeProvider).languageCode, 'en');
       expect(repo.updates, isEmpty); // the server needs a name first
     });
+  });
+
+  testWidgets('the announcements switch saves and goes back when it fails', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(800, 2400);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    final repo = FakeAccounts();
+    final c = makeContainer(repo);
+    addTearDown(c.dispose);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: c,
+        child: const MaterialApp(
+          locale: Locale('az'),
+          localizationsDelegates: AppL10n.localizationsDelegates,
+          supportedLocales: AppL10n.supportedLocales,
+          home: EditProfilePage(),
+        ),
+      ),
+    );
+    await tester.pump(const Duration(milliseconds: 100));
+    await tester.pump(const Duration(milliseconds: 100));
+
+    Switch toggle() => tester.widget<Switch>(find.byType(Switch));
+    expect(toggle().value, isTrue);
+
+    await tester.tap(find.byType(Switch));
+    await tester.pump(const Duration(milliseconds: 100));
+    await tester.pump(const Duration(milliseconds: 100));
+    expect(repo.announcements, isFalse);
+    expect(toggle().value, isFalse);
+
+    repo.failAnnouncements = true;
+    await tester.tap(find.byType(Switch));
+    await tester.pump(const Duration(milliseconds: 100));
+    await tester.pump(const Duration(milliseconds: 100));
+    expect(repo.announcements, isFalse);
+    expect(toggle().value, isFalse);
   });
 
   testWidgets('edit page validates, saves and resets the dirty state', (

@@ -1452,4 +1452,11 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get loadMore => 'Show more';
+
+  @override
+  String get announcementsTitle => 'General news from RentoX';
+
+  @override
+  String get announcementsHint =>
+      'Updates and notices sent to everyone. Personal messages to you and notifications about your listings always arrive.';
 }

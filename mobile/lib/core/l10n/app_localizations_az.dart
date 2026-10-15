@@ -1422,4 +1422,11 @@ class AppL10nAz extends AppL10n {
 
   @override
   String get loadMore => 'Daha çox göstər';
+
+  @override
+  String get announcementsTitle => 'Saytdan gələn ümumi xəbərlər';
+
+  @override
+  String get announcementsHint =>
+      'Yeniliklər və hamıya göndərilən məlumatlar. Sizə yazılan şəxsi mesajlar və elanlarınız barədə bildirişlər həmişə gəlir.';
 }

@@ -269,6 +269,14 @@ _Look _lookOf(NotificationKind kind) => switch (kind) {
     AppIcons.info,
     AppColors.primary,
   ),
+  NotificationKind.announcement => const _Look(
+    AppIcons.bell,
+    AppColors.primary,
+  ),
+  NotificationKind.listingExpiring => const _Look(
+    AppIcons.soon,
+    AppColors.warning,
+  ),
   NotificationKind.other => const _Look(AppIcons.bell, AppColors.primary),
 };
 

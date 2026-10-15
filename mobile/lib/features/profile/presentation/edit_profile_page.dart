@@ -9,6 +9,7 @@ import '../../../shared/widgets/async_states.dart';
 import '../../../shared/widgets/sub_page.dart';
 import '../../listing_create/data/photo_source.dart';
 import '../../listing_create/domain/photo.dart';
+import '../data/account_repository.dart';
 import '../domain/account_models.dart';
 import 'account_controller.dart';
 import 'profile_avatar.dart';
@@ -289,6 +290,8 @@ class _EditFormState extends ConsumerState<_EditForm> {
             ],
           ),
         ),
+        const SizedBox(height: AppSpacing.lg),
+        const _AnnouncementsSwitch(),
         const SizedBox(height: AppSpacing.xl),
         FilledButton(
           onPressed: (_dirty && !_saving) ? _save : null,
@@ -304,6 +307,61 @@ class _EditFormState extends ConsumerState<_EditForm> {
               : Text(l10n.profileSave),
         ),
       ],
+    );
+  }
+}
+
+/// One switch: the general messages from RentoX. It saves at once.
+class _AnnouncementsSwitch extends ConsumerStatefulWidget {
+  const _AnnouncementsSwitch();
+
+  @override
+  ConsumerState<_AnnouncementsSwitch> createState() =>
+      _AnnouncementsSwitchState();
+}
+
+class _AnnouncementsSwitchState extends ConsumerState<_AnnouncementsSwitch> {
+  bool? _value; // what the person just chose, until the server confirms
+  bool _busy = false;
+
+  Future<void> _set(bool enabled) async {
+    setState(() {
+      _value = enabled;
+      _busy = true;
+    });
+    try {
+      await ref
+          .read(accountRepositoryProvider)
+          .setAnnouncementsEnabled(enabled);
+      ref.invalidate(announcementsEnabledProvider);
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _value = !enabled);
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(SnackBar(content: Text(errorMessage(context, e))));
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppL10n.of(context);
+    final stored = ref.watch(announcementsEnabledProvider);
+    // No switch until the server has answered (an old server has no setting).
+    final current = _value ?? stored.value;
+    if (current == null) return const SizedBox.shrink();
+
+    return SwitchListTile(
+      contentPadding: EdgeInsets.zero,
+      value: current,
+      onChanged: _busy ? null : _set,
+      title: Text(
+        l10n.announcementsTitle,
+        style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+      ),
+      subtitle: Text(l10n.announcementsHint),
     );
   }
 }

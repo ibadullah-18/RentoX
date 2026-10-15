@@ -8,6 +8,8 @@ enum NotificationKind {
   reportUpdated(6),
   supportReply(7),
   supportStatusChanged(8),
+  announcement(9),
+  listingExpiring(10),
   other(0);
 
   const NotificationKind(this.id);
@@ -19,7 +21,8 @@ enum NotificationKind {
   bool get isListing =>
       this == listingApproved ||
       this == listingRejected ||
-      this == listingPaymentRequired;
+      this == listingPaymentRequired ||
+      this == listingExpiring;
 }
 
 final _guid = RegExp(

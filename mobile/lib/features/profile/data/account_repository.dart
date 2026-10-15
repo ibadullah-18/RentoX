@@ -17,6 +17,21 @@ class AccountRepository {
     return Account.fromJson(res.data!);
   });
 
+  /// Whether the general messages from RentoX reach this person.
+  Future<bool> announcementsEnabled() => guardApi(() async {
+    final res = await _dio.get<Map<String, dynamic>>(
+      '/api/account/notification-settings',
+    );
+    return res.data!['announcementsEnabled'] as bool? ?? true;
+  });
+
+  Future<void> setAnnouncementsEnabled(bool enabled) => guardApi(
+    () => _dio.put<void>(
+      '/api/account/notification-settings',
+      data: {'announcementsEnabled': enabled},
+    ),
+  );
+
   /// Deletes the account for good (the server ends every session).
   Future<void> deleteAccount() => guardApi(
     () => _dio.delete<void>('/api/account/me', data: {'confirm': true}),
