@@ -49,6 +49,17 @@ export async function setSections(userId: string, sections: string[]): Promise<S
   return res.ok ? { ok: true } : fail(res.status, res.message);
 }
 
+/** Signs a staff member out on every device (they must sign in again; an issued token lives up to 15 minutes). */
+export async function endSessions(userId: string): Promise<StaffDone & { ended?: number }> {
+  const denied = await guard();
+  if (denied) return denied;
+  if (!ID.test(userId)) return { ok: false, unauthorized: false, message: "Yanlış sorğu." };
+  const res = await authed<{ ended: number }>(`/api/admin/staff/${userId}/end-sessions`, { method: "POST" });
+  revalidatePath("/admin/isciler");
+  revalidatePath("/admin/audit");
+  return res.ok ? { ok: true, ended: res.data.ended } : fail(res.status, res.message);
+}
+
 export async function revokeAdmin(userId: string): Promise<StaffDone> {
   const denied = await guard();
   if (denied) return denied;

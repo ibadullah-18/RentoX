@@ -6,6 +6,7 @@ import { ChevronLeft } from "lucide-react";
 import { approveListing, rejectListing, takeDownListing } from "@/app/admin/(panel)/actions";
 import { ModerationActions, TakeDownPanel } from "@/components/admin/AdminControls";
 import { authed } from "@/lib/authed";
+import { getFlags } from "@/lib/banned-words";
 import type { ModerationListing } from "@/lib/admin-types";
 import { fieldValue, formatPrice, ownerImage } from "@/lib/format";
 import { statusLabel } from "@/lib/status";
@@ -20,6 +21,7 @@ export default async function ReviewListingPage({ params }: PageProps<"/admin/el
   const l = result.data;
   const images = [...l.images].sort((a, b) => a.displayOrder - b.displayOrder);
   const pending = l.status === 2;
+  const flagged = (await getFlags([l.id]))[l.id] ?? [];
 
   return (
     <div className="space-y-6">
@@ -30,6 +32,12 @@ export default async function ReviewListingPage({ params }: PageProps<"/admin/el
 
       <div className="grid gap-6 md:grid-cols-[minmax(0,1fr)_320px]">
         <div className="min-w-0 space-y-5">
+          {flagged.length > 0 && (
+            <p role="alert" className="rounded-xl bg-warning-soft px-4 py-3 text-sm font-semibold">
+              Diqqət: başlıqda və ya təsvirdə qadağan söz tapıldı — <b>{flagged.join(", ")}</b>. Elanı diqqətlə yoxlayın.
+            </p>
+          )}
+
           <div>
             <h1 className="text-2xl font-extrabold leading-tight">{l.title}</h1>
             <p className="mt-1 text-xl font-extrabold text-primary">

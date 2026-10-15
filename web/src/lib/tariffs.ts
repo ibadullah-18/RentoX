@@ -7,17 +7,32 @@ export type Prices = {
   bump: number;
   vip: number;
   vipDays: number;
+  /** How many days a listing stays on show after it is published or renewed. */
+  lifetimeDays: number;
 };
 
 /** What the site started with: used until the API answers (or if it cannot). */
-export const startingPrices: Prices = { freeLimit: 5, activation: 1, bump: 5, vip: 10, vipDays: 7 };
+export const startingPrices: Prices = { freeLimit: 5, activation: 1, bump: 5, vip: 10, vipDays: 7, lifetimeDays: 30 };
 
 const API_BASE = process.env.API_BASE_URL ?? "http://localhost:5155";
 
+/** The days a listing lives (an admin can change it); the starting value if the API cannot say. */
+async function getLifetimeDays(): Promise<number> {
+  try {
+    const res = await fetch(`${API_BASE}/api/settings`, { next: { revalidate: 30, tags: ["settings"] } });
+    if (!res.ok) return startingPrices.lifetimeDays;
+    const s = (await res.json()) as { listingLifetimeDays?: number };
+    return s.listingLifetimeDays ?? startingPrices.lifetimeDays;
+  } catch {
+    return startingPrices.lifetimeDays;
+  }
+}
+
 export async function getPrices(): Promise<Prices> {
+  const lifetimeDays = await getLifetimeDays();
   try {
     const res = await fetch(`${API_BASE}/api/tariffs`, { next: { revalidate: 30, tags: ["tariffs"] } });
-    if (!res.ok) return startingPrices;
+    if (!res.ok) return { ...startingPrices, lifetimeDays };
     const t = (await res.json()) as {
       freeActiveListingLimit: number;
       activationFee: number;
@@ -31,6 +46,7 @@ export async function getPrices(): Promise<Prices> {
       bump: t.bumpPrice,
       vip: t.vipPrice,
       vipDays: t.vipDurationDays,
+      lifetimeDays,
     };
   } catch {
     return startingPrices;

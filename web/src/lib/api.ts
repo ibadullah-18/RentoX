@@ -4,6 +4,7 @@ import type {
   FieldDefinition,
   PublicStore,
   StoreCard,
+  Banner,
   City,
   ListingDetails,
   ListingSummary,
@@ -47,9 +48,14 @@ export async function getCategories(): Promise<Category[]> {
   );
 }
 
+/** The banners on show on the home page (none if the API cannot say). */
+export async function getBanners(): Promise<Banner[]> {
+  return (await get<Banner[]>("/api/banners", { language: await lang() }, 60, ["banners"])) ?? [];
+}
+
 export async function getCities(): Promise<City[]> {
   return (
-    (await get<City[]>("/api/locations/cities", { language: await lang() }, 3600)) ?? []
+    (await get<City[]>("/api/locations/cities", { language: await lang() }, 3600, ["locations"])) ?? []
   );
 }
 

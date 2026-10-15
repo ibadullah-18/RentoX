@@ -83,13 +83,25 @@ export default async function AuditPageView({ searchParams }: PageProps<"/admin/
                       <td className="whitespace-nowrap px-4 py-3">{dateTime(i.occurredAtUtc)}</td>
                       <td className="px-4 py-3">
                         <Link href={link({ actor: i.actorUserId, page: undefined })} className="font-mono text-xs hover:text-primary">
-                          {shortId(i.actorUserId)}
+                          {i.actorName ?? shortId(i.actorUserId)}
                         </Link>
+                        {i.actorName && <span className="block font-mono text-[11px] text-ink-2">{shortId(i.actorUserId)}</span>}
                       </td>
                       <td className="px-4 py-3 font-semibold">{a?.label ?? `Əməliyyat ${i.action}`}</td>
                       <td className="px-4 py-3">
                         <Link href={link({ target: i.targetId, page: undefined })} className="hover:text-primary">
-                          {a?.target ?? "Obyekt"} <span className="font-mono text-xs">{shortId(i.targetId)}</span>
+                          {i.targetName ? (
+                            <>
+                              <span className="font-semibold">{i.targetName}</span>
+                              <span className="block text-[11px] text-ink-2">
+                                {a?.target ?? "Obyekt"} <span className="font-mono">{shortId(i.targetId)}</span>
+                              </span>
+                            </>
+                          ) : (
+                            <>
+                              {a?.target ?? "Obyekt"} <span className="font-mono text-xs">{shortId(i.targetId)}</span>
+                            </>
+                          )}
                         </Link>
                       </td>
                       <td className="px-4 py-3">

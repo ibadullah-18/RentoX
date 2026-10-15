@@ -76,5 +76,8 @@ export const auditAction: Record<
   5: { label: "Dəstək cavabı əlavə edildi", target: "Müraciət" },
   7: { label: "İstifadəçi statusu dəyişdi", value: { 1: "Aktiv", 2: "Dayandırılıb", 3: "Bloklanıb", 4: "Silinib" }, target: "İstifadəçi" },
   8: { label: "Admin bölmələri dəyişdi", format: sectionsFromMask, target: "İstifadəçi" },
+  11: { label: "Pul kisəsi əllə dəyişdirildi", format: (n) => `${n > 0 ? "+" : "−"}${(Math.abs(n) / 100).toFixed(2)} AZN`, target: "İstifadəçi" },
+  10: { label: "İşçinin sessiyaları bağlandı", format: (n) => `${n} sessiya`, target: "İstifadəçi" },
+  9: { label: "Bildiriş göndərildi", format: (n) => `${n} nəfər`, target: "Mesaj" },
   6: { label: "Admin icazəsi dəyişdi", value: { 0: "Yoxdur", 1: "Admin" }, target: "İstifadəçi" },
 };

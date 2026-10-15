@@ -144,6 +144,21 @@ export type AdminUserDetails = {
   bio?: string | null;
   preferredLanguage: number;
   statusReason?: string | null;
+  /** What others reported about this person (absent on an older API). */
+  reports?: {
+    total: number;
+    open: number;
+    upheld: number;
+    dismissed: number;
+    recent: {
+      kind: "listing" | "store" | "conversation";
+      id: string;
+      reason: number;
+      status: number;
+      createdAtUtc: string;
+      note?: string | null;
+    }[];
+  } | null;
   recentTransactions: {
     id: string;
     direction: number;
@@ -169,7 +184,16 @@ export type AdminStoreItem = {
   createdAtUtc: string;
 };
 
-export type StaffMember = { userId: string; fullName: string; phone?: string | null; role: string; sections: string[] };
+export type StaffMember = {
+  userId: string;
+  fullName: string;
+  phone?: string | null;
+  role: string;
+  sections: string[];
+  /** Devices still signed in (absent on an older API). */
+  activeSessions?: number;
+  lastActiveAtUtc?: string | null;
+};
 
 /** The sections of the panel (the API's names) with what the person sees. */
 export const PANEL_SECTIONS: { id: string; label: string }[] = [

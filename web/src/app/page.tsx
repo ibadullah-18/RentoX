@@ -4,11 +4,13 @@ import { Crown } from "lucide-react";
 import { CategoryTiles } from "@/components/CategoryTiles";
 import { ListingGrid } from "@/components/ListingGrid";
 import { StoreTile } from "@/components/StoreTile";
-import { getCategories, getListings, getStores } from "@/lib/api";
+import { HomeBanners } from "@/components/HomeBanners";
+import { getBanners, getCategories, getListings, getStores } from "@/lib/api";
 
 export default async function HomePage() {
   const t = await getT();
-  const [categories, listings, stores] = await Promise.all([
+  const [banners, categories, listings, stores] = await Promise.all([
+    getBanners(),
     getCategories(),
     getListings({ pageSize: 30 }),
     getStores(undefined, 1, 6),
@@ -19,6 +21,8 @@ export default async function HomePage() {
 
   return (
     <div className="space-y-10">
+      <HomeBanners banners={banners} />
+
       <section aria-label={t("Kateqoriyalar")}>
         <CategoryTiles categories={categories} showAll />
       </section>

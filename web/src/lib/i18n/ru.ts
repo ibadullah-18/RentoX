@@ -1,7 +1,7 @@
 // Russian. Keys are the Azerbaijani texts used in the code.
 export const ru: Record<string, string> = {
   "{fee} AZN ödə və aktiv et": "Оплатить {fee} AZN и активировать",
-  "30 gün yenilə": "Продлить на 30 дней",
+  "{days} gün yenilə": "Продлить на {days} дн.",
   "6 rəqəmli kodu yazın.": "Введите 6-значный код.",
   "AZN": "AZN",
   "AZN ödə və aktiv et": "Оплатить AZN и активировать",
@@ -73,7 +73,7 @@ export const ru: Record<string, string> = {
   "E-poçt (ixtiyari)": "Эл. почта (необязательно)",
   "E-poçt çox uzundur.": "Email слишком длинный.",
   "Elan": "Объявление",
-  "Elan 30 gün yeniləndi.": "Объявление продлено на 30 дней.",
+  "Elan {days} gün yeniləndi.": "Объявление продлено на {days} дн.",
   "Elan aktivləşdirildi.": "Объявление активировано.",
   "Elan axtarışdan və siyahılardan çıxacaq. İstədiyiniz vaxt yenidən aktiv edə bilərsiniz.": "Объявление исчезнет из поиска и списков. Вы можете снова активировать его в любой момент.",
   "Elan dayandırıldı.": "Объявление приостановлено.",
@@ -105,7 +105,7 @@ export const ru: Record<string, string> = {
   "Elanı idarə et": "Управление объявлением",
   "Elanı redaktə et": "Редактировать объявление",
   "Elanı sil": "Удалить объявление",
-  "Elanın 30 günü bitib. Yeniləyənədək görünmür.": "30 дней объявления истекли. Оно скрыто, пока вы его не продлите.",
+  "Elanın {days} günü bitib. Yeniləyənədək görünmür.": "Срок объявления ({days} дн.) истёк. Оно скрыто, пока вы его не продлите.",
   "Elanın aktivləşdirilməsi": "Активация объявления",
   "Elanın irəli çəkilməsi": "Продвижение объявления",
   "Elanın vəziyyətini mobil tətbiqdə görə bilərsiniz.": "Статус объявления можно посмотреть в мобильном приложении.",
@@ -373,4 +373,6 @@ export const ru: Record<string, string> = {
   "Hesabınız, elanlarınız və mesajlarınız silinəcək. Bunu geri qaytarmaq olmaz.": "Ваш аккаунт, объявления и сообщения будут удалены. Это нельзя отменить.",
   "Haqqınızda ən çoxu {n} simvol yazın.": "Напишите о себе не более {n} символов.",
   "Hesabınız bloklanıb. Ətraflı məlumat üçün dəstəyə yazın.": "Ваш аккаунт заблокирован. Подробности — в службе поддержки.",
+  "Saytdan gələn ümumi xəbərlər": "Общие новости RentoX",
+  "Yeniliklər və hamıya göndərilən məlumatlar. Sizə yazılan şəxsi mesajlar və elanlarınız barədə bildirişlər həmişə gəlir.": "Новости и сообщения для всех. Личные сообщения вам и уведомления о ваших объявлениях приходят всегда.",
 };

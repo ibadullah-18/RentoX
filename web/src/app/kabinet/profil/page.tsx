@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { BackButton } from "@/components/BackButton";
+import { NotificationSettings } from "@/components/NotificationSettings";
 import { ProfileForm } from "@/components/ProfileForm";
 import { getLocale, getT } from "@/lib/i18n/server";
+import { authed } from "@/lib/authed";
 import { getAccount } from "@/lib/personal";
 import { getSession } from "@/lib/session";
 
@@ -21,6 +23,8 @@ export default async function EditProfilePage() {
     redirect("/kabinet");
   }
 
+  const settings = await authed<{ announcementsEnabled: boolean }>("/api/account/notification-settings");
+
   return (
     <div className="mx-auto max-w-xl space-y-5">
       <div className="flex items-center gap-3">
@@ -34,6 +38,7 @@ export default async function EditProfilePage() {
         initialBio={account.data.bio ?? ""}
         initialLanguage={await getLocale()}
       />
+      {settings.ok && <NotificationSettings initial={settings.data.announcementsEnabled} />}
     </div>
   );
 }

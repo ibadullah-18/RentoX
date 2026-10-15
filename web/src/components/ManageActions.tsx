@@ -171,11 +171,11 @@ export function ManageActions({
         <button
           type="button"
           disabled={disabled}
-          onClick={() => run("renew", () => renew(id), t("Elan 30 gün yeniləndi."))}
+          onClick={() => run("renew", () => renew(id), t("Elan {days} gün yeniləndi.", { days: prices.lifetimeDays }))}
           className={solid}
         >
           {spin("renew") || <RefreshCw className="size-5" aria-hidden />}
-          {t("30 gün yenilə")}</button>
+          {t("{days} gün yenilə", { days: prices.lifetimeDays })}</button>
       )}
 
       <button

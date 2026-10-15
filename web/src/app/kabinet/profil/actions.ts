@@ -54,3 +54,21 @@ export async function deleteAccount(): Promise<Saved> {
   await clearSession();
   redirect("/");
 }
+
+/** Turns the general messages from RentoX (news, notices to everyone) on or off. Personal ones always come. */
+export async function setAnnouncements(enabled: boolean): Promise<Saved> {
+  const t = await getT();
+  const res = await authed("/api/account/notification-settings", {
+    method: "PUT",
+    body: { announcementsEnabled: enabled },
+  });
+  if (!res.ok) {
+    if (res.status === 401) return { ok: false, unauthorized: true, message: "" };
+    return {
+      ok: false,
+      unauthorized: false,
+      message: res.status === 0 ? t("Serverə qoşulmaq olmadı.") : t("Əməliyyat alınmadı. Yenidən cəhd edin."),
+    };
+  }
+  return { ok: true };
+}

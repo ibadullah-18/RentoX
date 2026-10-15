@@ -7,10 +7,12 @@ import { useState } from "react";
 import {
   AlertTriangle,
   Bell,
+  Clock,
   CheckCheck,
   CheckCircle2,
   Flag,
   LifeBuoy,
+  Megaphone,
   Store,
   Wallet,
   XCircle,
@@ -44,6 +46,12 @@ function describe(n: AppNotification): { Icon: LucideIcon; tone: string; href: s
       const ticket =
         new RegExp(`/support/tickets/(${GUID})`).exec(n.actionUrl ?? "")?.[1] ?? n.relatedEntityId ?? null;
       return { Icon: LifeBuoy, tone: "text-primary", href: ticket ? `/destek/${ticket}` : "/destek" };
+    }
+    case 10:
+      return { Icon: Clock, tone: "text-warning", href: listing ? `/elanlarim/${listing}` : "/elanlarim" };
+    case 9: {
+      const url = n.actionUrl ?? "";
+      return { Icon: Megaphone, tone: "text-primary", href: url.startsWith("/") && !url.startsWith("//") ? url : null };
     }
     default:
       return { Icon: AlertTriangle, tone: "text-ink-2", href: null };

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   ClipboardCheck,
   ExternalLink,
@@ -11,7 +11,13 @@ import {
   Flag,
   LayoutDashboard,
   LifeBuoy,
+  Megaphone,
+  Map as MapIcon,
+  GalleryHorizontal,
   Menu,
+  OctagonAlert,
+  SlidersHorizontal,
+  Search,
   MessagesSquare,
   ScrollText,
   ShieldCheck,
@@ -36,6 +42,11 @@ const icons = {
   support: LifeBuoy,
   finance: Wallet,
   audit: ScrollText,
+  notify: Megaphone,
+  places: MapIcon,
+  settings: SlidersHorizontal,
+  banned: OctagonAlert,
+  banners: GalleryHorizontal,
 };
 
 /**
@@ -55,6 +66,22 @@ export function AdminShell({
 }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
+  const searchRef = useRef<HTMLInputElement>(null);
+
+  // "/" jumps to the search box (unless a field already has the cursor).
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const el = e.target as HTMLElement | null;
+      const typing = el && (el.tagName === "INPUT" || el.tagName === "TEXTAREA" || el.tagName === "SELECT" || el.isContentEditable);
+      if (e.key === "/" && !typing && !e.metaKey && !e.ctrlKey) {
+        e.preventDefault();
+        searchRef.current?.focus();
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
   const [seen, setSeen] = useState(pathname);
   if (seen !== pathname) {
     setSeen(pathname);
@@ -80,6 +107,20 @@ export function AdminShell({
           <X className="size-5" />
         </button>
       </div>
+
+      <form action={adminHref("/axtaris")} className="px-3 pb-3">
+        <div className="flex h-9 items-center gap-2 rounded-lg border border-line bg-bg px-2.5 focus-within:border-primary">
+          <Search className="size-4 shrink-0 text-muted" aria-hidden />
+          <input
+            ref={searchRef}
+            name="q"
+            type="search"
+            placeholder="Axtar  ( / )"
+            aria-label="Axtarış"
+            className="min-w-0 flex-1 bg-transparent text-[14px] outline-none"
+          />
+        </div>
+      </form>
 
       <div className="min-h-0 flex-1 space-y-5 overflow-y-auto px-3 pb-4">
         {groups.map((g) => (

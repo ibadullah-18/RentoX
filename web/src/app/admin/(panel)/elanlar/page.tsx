@@ -1,8 +1,10 @@
 import Image from "next/image";
 import Link from "next/link";
-import { ClipboardList, ImageIcon, Search } from "lucide-react";
+import { ClipboardList, Download, ImageIcon, Search } from "lucide-react";
 import { Chips, Empty, LoadProblem, PageHead, Pill, dateTime, type Tone } from "@/components/admin/ui";
+import { BulkBar, BulkCheck, BulkProvider } from "@/components/admin/BulkSelect";
 import { Pagination } from "@/components/Pagination";
+import { getFlags } from "@/lib/banned-words";
 import { adminHref } from "@/lib/admin-path";
 import { listingStatusLabel } from "@/lib/admin-labels";
 import type { AdminListingItem } from "@/lib/admin-catalog";
@@ -36,6 +38,12 @@ export default async function ListingsAdminPage({ searchParams }: PageProps<"/ad
     query: { page, pageSize: 20, status: status === "all" ? undefined : status, q: q || undefined },
   });
   const data = result.ok ? result.data : null;
+  // Listings whose title or text contain a banned word get a warning.
+  const flags = data ? await getFlags(data.items.map((l) => l.id)) : {};
+
+  // Several waiting listings can be decided together.
+  const bulk = status === "2";
+  const exportQuery = `?${new URLSearchParams({ status, ...(q ? { q } : {}) })}`;
 
   const link = (over: { status?: string; page?: number }) => {
     const query = new URLSearchParams();
@@ -57,7 +65,19 @@ export default async function ListingsAdminPage({ searchParams }: PageProps<"/ad
 
   return (
     <div className="space-y-5">
-      <PageHead title="Elanlar" hint="Başlıq, elan sahibinin adı və ya telefonu ilə axtarın; statusa görə süzün." />
+      <PageHead
+        title="Elanlar"
+        hint="Başlıq, elan sahibinin adı və ya telefonu ilə axtarın; statusa görə süzün. CSV düyməsi cari süzgəcin nəticəsini fayla yazır (ən çox 2000 sətir)."
+        actions={
+          <a
+            href={`/bff/admin-export/listings${exportQuery}`}
+            className="no-print flex h-9 items-center gap-1.5 rounded-lg border border-line px-3 text-sm font-bold hover:border-primary hover:text-primary"
+          >
+            <Download className="size-4" aria-hidden />
+            CSV
+          </a>
+        }
+      />
 
       <form action={adminHref("/elanlar")} className="no-print flex gap-2">
         {status !== "2" && <input type="hidden" name="status" value={status} />}
@@ -83,12 +103,14 @@ export default async function ListingsAdminPage({ searchParams }: PageProps<"/ad
         <Empty icon={ClipboardList} text={q ? "Heç nə tapılmadı" : "Bu vəziyyətdə elan yoxdur"} />
       ) : (
         <>
+          <BulkProvider ids={bulk ? data.items.map((l) => l.id) : []}>
           <ul className="space-y-2">
             {data.items.map((l) => (
-              <li key={l.id}>
+              <li key={l.id} className="flex items-stretch gap-1">
+                {bulk && <BulkCheck id={l.id} label={l.title} />}
                 <Link
                   href={adminHref(`/elanlar/${l.id}`)}
-                  className="flex gap-3 rounded-xl border border-line bg-surface p-3 hover:border-primary"
+                  className="flex min-w-0 flex-1 gap-3 rounded-xl border border-line bg-surface p-3 hover:border-primary"
                 >
                   <span className="relative size-16 shrink-0 overflow-hidden rounded-lg bg-primary-soft">
                     {l.coverImageId ? (
@@ -114,6 +136,11 @@ export default async function ListingsAdminPage({ searchParams }: PageProps<"/ad
                     <span className="block text-sm font-extrabold text-primary">
                       {formatPrice(l.price, l.currency, l.rentalPeriodUnit as RentalPeriodId)}
                     </span>
+                    {flags[l.id] && (
+                      <span className="mb-0.5 inline-flex max-w-full items-center truncate rounded-md bg-warning-soft px-1.5 py-0.5 text-xs font-bold text-warning">
+                        Qadağan söz: {flags[l.id].join(", ")}
+                      </span>
+                    )}
                     <span className="block truncate text-xs text-ink-2">
                       {l.ownerName}
                       {l.ownerPhone ? ` · ${l.ownerPhone}` : ""} · {l.imageCount} şəkil · {l.viewCount} baxış · {dateTime(l.createdAtUtc)}
@@ -123,6 +150,8 @@ export default async function ListingsAdminPage({ searchParams }: PageProps<"/ad
               </li>
             ))}
           </ul>
+          {bulk && <BulkBar />}
+          </BulkProvider>
           <Pagination page={data.page} totalPages={data.totalPages} hrefFor={(p) => link({ page: p })} />
         </>
       )}

@@ -34,10 +34,12 @@ export default async function MyListingPage({ params }: PageProps<"/elanlarim/[i
   const balance = wallet.ok ? wallet.data.balance : 0;
   const place = [l.cityName, l.districtName].filter(Boolean).join(", ");
 
+  const prices = await getPrices();
+
   const hint: Record<number, string> = {
     [Status.pendingReview]: t("Moderator baxır. Nəticəni bildirişlə xəbər verəcəyik."),
     [Status.paymentRequired]: t("Pulsuz elan limiti dolub. Dərc üçün aktivləşdirmə haqqı lazımdır."),
-    [Status.expired]: t("Elanın 30 günü bitib. Yeniləyənədək görünmür."),
+    [Status.expired]: t("Elanın {days} günü bitib. Yeniləyənədək görünmür.", { days: prices.lifetimeDays }),
     [Status.deactivated]: t("Elan dayandırılıb, axtarışda görünmür."),
     [Status.draft]: t("Elan hələ göndərilməyib."),
   };
@@ -114,7 +116,7 @@ export default async function MyListingPage({ params }: PageProps<"/elanlarim/[i
             <p className="text-sm text-ink-2">{t("Pul kisəsi")}</p>
             <p className="text-xl font-extrabold">{formatNumber(balance, locale)} {t("AZN")}</p>
           </div>
-          <ManageActions id={l.id} status={status} balance={balance} prices={await getPrices()} />
+          <ManageActions id={l.id} status={status} balance={balance} prices={prices} />
         </aside>
       </div>
     </div>

@@ -2,8 +2,8 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { Loader2, ShieldCheck, UserMinus, UserPlus } from "lucide-react";
-import { grantAdmin, revokeAdmin, setSections } from "@/app/admin/(panel)/staff-actions";
+import { Loader2, LogOut, ShieldCheck, UserMinus, UserPlus } from "lucide-react";
+import { endSessions, grantAdmin, revokeAdmin, setSections } from "@/app/admin/(panel)/staff-actions";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { Pill } from "@/components/admin/ui";
 import { PANEL_SECTIONS, type StaffMember } from "@/lib/admin-catalog";
@@ -19,6 +19,8 @@ export function StaffManager({ members, me }: { members: StaffMember[]; me: stri
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [asking, setAsking] = useState<StaffMember | null>(null);
+  const [signingOut, setSigningOut] = useState<StaffMember | null>(null);
+  const [note, setNote] = useState<string | null>(null);
 
   async function add() {
     if (busy) return;
@@ -39,6 +41,19 @@ export function StaffManager({ members, me }: { members: StaffMember[]; me: stri
     setBusy(false);
     if (res.ok) router.refresh();
     else setError(res.unauthorized ? "İcazə yoxdur." : res.message);
+  }
+
+  async function signOut(member: StaffMember) {
+    setBusy(true);
+    setError(null);
+    setNote(null);
+    const res = await endSessions(member.userId);
+    setBusy(false);
+    setSigningOut(null);
+    if (res.ok) {
+      setNote(`${member.fullName}: ${res.ended ?? 0} sessiya bağlandı. Yenidən daxil olmalıdır.`);
+      router.refresh();
+    } else setError(res.unauthorized ? "İcazə yoxdur." : res.message);
   }
 
   async function remove(member: StaffMember) {
@@ -102,6 +117,12 @@ export function StaffManager({ members, me }: { members: StaffMember[]; me: stri
                   {m.userId === me && <span className="ml-2 text-xs font-bold text-ink-2">(siz)</span>}
                 </span>
                 <span className="block text-sm text-ink-2">{m.phone ?? "—"}</span>
+                {m.activeSessions !== undefined && (
+                  <span className="block text-xs text-ink-2">
+                    {m.activeSessions} aktiv sessiya
+                    {m.lastActiveAtUtc ? ` · son aktivlik ${new Date(m.lastActiveAtUtc).toLocaleString("az")}` : ""}
+                  </span>
+                )}
               </span>
               <Pill tone={m.role === "SuperAdmin" ? "primary" : "success"}>{m.role}</Pill>
               {m.role === "Admin" && (
@@ -111,6 +132,17 @@ export function StaffManager({ members, me }: { members: StaffMember[]; me: stri
                   busy={busy}
                   onSave={(sections) => void saveSections(m, sections)}
                 />
+              )}
+              {m.userId !== me && (m.activeSessions ?? 0) > 0 && (
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={() => setSigningOut(m)}
+                  className="flex h-9 items-center gap-1.5 rounded-lg border border-line px-3 text-sm font-semibold hover:border-primary hover:text-primary disabled:opacity-60"
+                >
+                  <LogOut className="size-4" aria-hidden />
+                  Sessiyaları bağla
+                </button>
               )}
               {m.role === "Admin" && m.userId !== me && (
                 <button
@@ -127,6 +159,23 @@ export function StaffManager({ members, me }: { members: StaffMember[]; me: stri
           ))}
         </ul>
       </div>
+
+      {note && (
+        <p role="status" className="rounded-xl bg-success/10 px-4 py-3 text-sm font-semibold text-success">
+          {note}
+        </p>
+      )}
+
+      <ConfirmDialog
+        open={signingOut !== null}
+        title="Sessiyalar bağlansın?"
+        message={`${signingOut?.fullName ?? ""} bütün cihazlardan çıxarılacaq və yenidən daxil olmalı olacaq. Artıq verilmiş giriş bileti ən çoxu 15 dəqiqə qüvvədə qala bilər.`}
+        confirmLabel="Bağla"
+        destructive
+        busy={busy}
+        onClose={() => setSigningOut(null)}
+        onConfirm={() => signingOut && void signOut(signingOut)}
+      />
 
       <ConfirmDialog
         open={asking !== null}

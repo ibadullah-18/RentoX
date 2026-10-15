@@ -141,6 +141,8 @@ export type AuditItem = {
   previousValue?: number | null;
   currentValue?: number | null;
   relatedEntityId?: string | null;
+  actorName?: string | null;
+  targetName?: string | null;
   occurredAtUtc: string;
 };
 

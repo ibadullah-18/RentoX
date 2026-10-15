@@ -1,13 +1,16 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Card, LoadProblem, PageHead, Pill, dateTime, type Tone } from "@/components/admin/ui";
+import { AnnouncementForm } from "@/components/admin/AnnouncementForm";
 import { BlockUserPanel, UnblockPanel } from "@/components/admin/AdminControls";
+import { WalletAdjustForm } from "@/components/admin/WalletAdjustForm";
 import { PrintButton } from "@/components/admin/PrintButton";
 import { blockUser, unblockUser } from "@/app/admin/(panel)/actions";
 import { adminHref } from "@/lib/admin-path";
-import { walletDirection, walletType, listingStatusLabel } from "@/lib/admin-labels";
+import { chatReason, listingStatusLabel, reportReason, reportStatus, walletDirection, walletType } from "@/lib/admin-labels";
 import { userStatusLabel, type AdminListingItem, type AdminUserDetails } from "@/lib/admin-catalog";
 import { authed } from "@/lib/authed";
+import { getSections } from "@/lib/session";
 import type { Paged } from "@/lib/types";
 
 const tone: Record<number, Tone> = { 1: "success", 2: "warning", 3: "danger", 4: "muted" };
@@ -26,6 +29,8 @@ export default async function UserAdminPage({ params }: PageProps<"/admin/istifa
     return <LoadProblem what="İstifadəçi" status={details.status} />;
   }
   const d = details.data;
+  const sections = await getSections();
+  const canAdjust = sections === null || sections.includes("finance");
   const u = d.user;
 
   return (
@@ -50,6 +55,58 @@ export default async function UserAdminPage({ params }: PageProps<"/admin/istifa
         <Stat label="Elanlar" value={`${u.activeListingCount} aktiv / ${u.listingCount}`} />
         <Stat label="Son aktivlik" value={dateTime(u.lastSeenAtUtc)} />
       </div>
+
+      {u.status === 1 && (
+        <Card title="Mesaj göndər">
+          <div className="p-4">
+            <AnnouncementForm userId={u.id} />
+          </div>
+        </Card>
+      )}
+
+      {d.reports && (
+        <Card title="Bu şəxs haqqında şikayətlər">
+          <div className="grid grid-cols-2 gap-px bg-line sm:grid-cols-4">
+            {[
+              { label: "Cəmi", n: d.reports.total, tone: "" },
+              { label: "Gözləyir / baxılır", n: d.reports.open, tone: d.reports.open > 0 ? "text-warning" : "" },
+              { label: "Təsdiqlənib", n: d.reports.upheld, tone: d.reports.upheld > 0 ? "text-danger" : "" },
+              { label: "Rədd edilib", n: d.reports.dismissed, tone: "" },
+            ].map((x) => (
+              <div key={x.label} className="bg-surface px-4 py-3">
+                <p className="text-xs text-ink-2">{x.label}</p>
+                <p className={`text-xl font-extrabold ${x.tone}`}>{x.n}</p>
+              </div>
+            ))}
+          </div>
+          {d.reports.recent.length === 0 ? (
+            <p className="px-4 py-5 text-center text-sm text-ink-2">Şikayət yoxdur.</p>
+          ) : (
+            <ul className="divide-y divide-line border-t border-line">
+              {d.reports.recent.map((r) => (
+                <li key={`${r.kind}-${r.id}`}>
+                  <Link
+                    href={adminHref(r.kind === "conversation" ? `/yazisma-sikayetleri/${r.id}` : `/sikayetler/${r.id}`)}
+                    className="flex items-center gap-3 px-4 py-2.5 hover:bg-primary-soft"
+                  >
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate font-semibold">
+                        {r.kind === "listing" ? "Elan" : r.kind === "store" ? "Mağaza" : "Yazışma"} ·{" "}
+                        {(r.kind === "conversation" ? chatReason : reportReason)[r.reason] ?? r.reason}
+                      </span>
+                      <span className="block truncate text-xs text-ink-2">
+                        {dateTime(r.createdAtUtc)}
+                        {r.note ? ` · ${r.note}` : ""}
+                      </span>
+                    </span>
+                    <Pill tone={r.status === 3 ? "danger" : r.status === 4 ? "muted" : "warning"}>{reportStatus[r.status] ?? r.status}</Pill>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+        </Card>
+      )}
 
       <Card title="Məlumat">
         <dl className="divide-y divide-line text-sm">
@@ -83,6 +140,12 @@ export default async function UserAdminPage({ params }: PageProps<"/admin/istifa
           </div>
         )}
       </Card>
+
+      {canAdjust && d.user.status !== 4 && (
+        <Card title="Pul kisəsini əllə dəyiş">
+          <WalletAdjustForm userId={d.user.id} balance={d.user.balance} currency={d.user.currency} />
+        </Card>
+      )}
 
       <Card title="Pul kisəsinin son əməliyyatları">
         <div className="overflow-x-auto">

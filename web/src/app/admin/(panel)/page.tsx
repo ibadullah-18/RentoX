@@ -1,8 +1,10 @@
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
+import { DailyBars, type DailyPoint } from "@/components/admin/DailyBars";
 import { Card, PageHead } from "@/components/admin/ui";
 import { PrintButton } from "@/components/admin/PrintButton";
 import { adminHref } from "@/lib/admin-path";
+import { trName, type AdminCategory } from "@/lib/admin-catalog";
 import type { Dashboard } from "@/lib/admin-types";
 import { getDashboard } from "@/lib/admin";
 import { authed } from "@/lib/authed";
@@ -30,8 +32,11 @@ async function waiting(path: string, status: number): Promise<number> {
 export default async function AdminDashboard() {
   const sections = await getSections();
   const has = (section: string) => sections === null || sections.includes(section);
-  const [result, contentReports, chatReports] = await Promise.all([
+  const [result, categoryCounts, categories, daily, contentReports, chatReports] = await Promise.all([
     getDashboard(),
+    authed<{ categoryId: string; activeListings: number }[]>("/api/admin/analytics/categories"),
+    has("catalog") ? authed<AdminCategory[]>("/api/admin/categories") : Promise.resolve(null),
+    authed<DailyPoint[]>("/api/admin/analytics/daily", { query: { days: 30 } }),
     has("reports") ? waiting("/api/admin/content-reports", 1) : Promise.resolve(0),
     has("reports") ? waiting("/api/admin/conversation-reports", 1) : Promise.resolve(0),
   ]);
@@ -71,6 +76,32 @@ export default async function AdminDashboard() {
           </Link>
         ))}
       </section>
+
+      {daily.ok && (
+        <Card title="Son 30 gün">
+          <DailyBars points={daily.data} />
+        </Card>
+      )}
+
+      {categoryCounts.ok && categories?.ok && categoryCounts.data.length > 0 && (
+        <Card title="Kateqoriyalar üzrə aktiv elanlar">
+          <ul className="space-y-2 p-4">
+            {categoryCounts.data.slice(0, 10).map((c) => {
+              const top = categoryCounts.data[0].activeListings;
+              const category = categories.data.find((x) => x.id === c.categoryId);
+              return (
+                <li key={c.categoryId} className="flex items-center gap-3 text-sm">
+                  <span className="w-40 shrink-0 truncate font-semibold sm:w-56">{category ? trName(category.translations) : "—"}</span>
+                  <span className="h-3 min-w-0 flex-1 overflow-hidden rounded-full bg-primary-soft">
+                    <span className="block h-full rounded-full bg-primary" style={{ width: `${Math.max(3, (c.activeListings / top) * 100)}%` }} />
+                  </span>
+                  <span className="w-10 shrink-0 text-right font-bold">{num.format(c.activeListings)}</span>
+                </li>
+              );
+            })}
+          </ul>
+        </Card>
+      )}
 
       <Card title="Fəaliyyət">
         <div className="overflow-x-auto">

@@ -275,3 +275,12 @@ export type SupportTicket = {
   updatedAtUtc?: string | null;
   messages?: SupportMessage[];
 };
+
+/** A banner at the top of the home page. */
+export type Banner = {
+  id: string;
+  title: string;
+  subtitle?: string | null;
+  imageUrl: string;
+  linkUrl?: string | null;
+};

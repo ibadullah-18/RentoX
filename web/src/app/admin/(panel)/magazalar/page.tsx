@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Search, Store } from "lucide-react";
+import { Download, Search, Store } from "lucide-react";
 import { Chips, Empty, LoadProblem, PageHead, Pill, dateTime, type Tone } from "@/components/admin/ui";
 import { Pagination } from "@/components/Pagination";
 import { adminHref } from "@/lib/admin-path";
@@ -22,6 +22,7 @@ export default async function StoresAdminPage({ searchParams }: PageProps<"/admi
     query: { page, pageSize: 20, status: status === "all" ? undefined : status, q: q || undefined },
   });
   const data = result.ok ? result.data : null;
+  const exportQuery = `?${new URLSearchParams({ status, ...(q ? { q } : {}) })}`;
 
   const link = (over: { status?: string; page?: number }) => {
     const query = new URLSearchParams();
@@ -43,7 +44,19 @@ export default async function StoresAdminPage({ searchParams }: PageProps<"/admi
 
   return (
     <div className="space-y-5">
-      <PageHead title="Mağazalar" hint="Mağaza adı, sahibin adı və ya telefonu ilə axtarın; statusa görə süzün." />
+      <PageHead
+        title="Mağazalar"
+        hint="Mağaza adı, sahibin adı və ya telefonu ilə axtarın; statusa görə süzün. CSV düyməsi cari süzgəcin nəticəsini fayla yazır."
+        actions={
+          <a
+            href={`/bff/admin-export/stores${exportQuery}`}
+            className="no-print flex h-9 items-center gap-1.5 rounded-lg border border-line px-3 text-sm font-bold hover:border-primary hover:text-primary"
+          >
+            <Download className="size-4" aria-hidden />
+            CSV
+          </a>
+        }
+      />
 
       <form action={adminHref("/magazalar")} className="no-print flex gap-2">
         {status !== "2" && <input type="hidden" name="status" value={status} />}

@@ -62,6 +62,47 @@ export async function rejectListing(id: string, reason: string): Promise<Done> {
   return act(`/api/admin/listings/${id}/reject`, "POST", { reason: text.slice(0, 1000) }, ["/admin/elanlar"]);
 }
 
+export type BulkDone =
+  | { ok: true; done: number; failed: { id: string; message: string }[] }
+  | { ok: false; unauthorized: boolean; message: string };
+
+const BULK_LIMIT = 50;
+
+/** Approves or rejects several waiting listings, one by one; one failing does not stop the rest. */
+export async function bulkReviewListings(
+  ids: string[],
+  decision: "approve" | "reject",
+  reason: string,
+): Promise<BulkDone> {
+  const denied = await allowed();
+  if (denied && !denied.ok) return { ok: false, unauthorized: denied.unauthorized, message: denied.message };
+  const unique = [...new Set(ids)];
+  if (unique.length === 0 || unique.length > BULK_LIMIT || !unique.every((id) => ID.test(id))) {
+    return { ok: false, unauthorized: false, message: `Bir dəfəyə ən çox ${BULK_LIMIT} elan seçilə bilər.` };
+  }
+  const text = reason.trim();
+  if (decision === "reject" && !text) return { ok: false, unauthorized: false, message: "Rədd səbəbini yazın." };
+
+  let done = 0;
+  const failed: { id: string; message: string }[] = [];
+  for (const id of unique) {
+    const res =
+      decision === "approve"
+        ? await authed(`/api/admin/listings/${id}/approve`, { method: "POST" })
+        : await authed(`/api/admin/listings/${id}/reject`, { method: "POST", body: { reason: text.slice(0, 1000) } });
+    if (res.ok) {
+      done++;
+      continue;
+    }
+    // The session ended or the permission is gone: nothing else will work either.
+    if (res.status === 401 || res.status === 403) return { ok: false, unauthorized: true, message: "" };
+    const failure = fail(res.status, res.message);
+    failed.push({ id, message: failure.ok ? "" : failure.message });
+  }
+  revalidatePath("/admin/elanlar");
+  return { ok: true, done, failed };
+}
+
 /** Takes a listing that is already live (paused, pending or unpaid too) down; the owner is told the reason. */
 export async function takeDownListing(id: string, reason: string): Promise<Done> {
   if (!ID.test(id)) return bad;

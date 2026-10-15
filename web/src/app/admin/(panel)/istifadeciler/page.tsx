@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ChevronRight, Search, Users } from "lucide-react";
+import { ChevronRight, Download, Search, Users } from "lucide-react";
 import { Chips, Empty, LoadProblem, PageHead, Pill, dateTime, type Tone } from "@/components/admin/ui";
 import { Pagination } from "@/components/Pagination";
 import { adminHref } from "@/lib/admin-path";
@@ -33,6 +33,8 @@ export default async function UsersAdminPage({ searchParams }: PageProps<"/admin
     return adminHref(text ? `/istifadeciler?${text}` : "/istifadeciler");
   };
 
+  const exportQuery = `?${new URLSearchParams({ ...(status ? { status } : {}), ...(q ? { q } : {}) })}`;
+
   const chips = [
     { label: "Hamısı", href: link({ status: null }), value: undefined },
     ...Object.entries(userStatusLabel).map(([v, label]) => ({ label, href: link({ status: v }), value: v })),
@@ -40,7 +42,19 @@ export default async function UsersAdminPage({ searchParams }: PageProps<"/admin
 
   return (
     <div className="space-y-5">
-      <PageHead title="İstifadəçilər" hint="Ad və ya telefon ilə axtarın. Siyahı yalnız oxumaq üçündür." />
+      <PageHead
+        title="İstifadəçilər"
+        hint="Ad və ya telefon ilə axtarın. CSV düyməsi cari axtarış və süzgəcin nəticəsini fayla yazır (ən çox 2000 sətir)."
+        actions={
+          <a
+            href={`/bff/admin-export/users${exportQuery}`}
+            className="no-print flex h-9 items-center gap-1.5 rounded-lg border border-line px-3 text-sm font-bold hover:border-primary hover:text-primary"
+          >
+            <Download className="size-4" aria-hidden />
+            CSV
+          </a>
+        }
+      />
 
       <form action={adminHref("/istifadeciler")} className="no-print flex gap-2">
         {status && <input type="hidden" name="status" value={status} />}

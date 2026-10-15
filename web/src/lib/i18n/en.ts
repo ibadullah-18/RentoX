@@ -1,7 +1,7 @@
 // English. Keys are the Azerbaijani texts used in the code.
 export const en: Record<string, string> = {
   "{fee} AZN ödə və aktiv et": "Pay {fee} AZN and activate",
-  "30 gün yenilə": "Renew for 30 days",
+  "{days} gün yenilə": "Renew for {days} days",
   "6 rəqəmli kodu yazın.": "Enter the 6-digit code.",
   "AZN": "AZN",
   "AZN ödə və aktiv et": "Pay AZN and activate",
@@ -73,7 +73,7 @@ export const en: Record<string, string> = {
   "E-poçt (ixtiyari)": "Email (optional)",
   "E-poçt çox uzundur.": "The email is too long.",
   "Elan": "Listing",
-  "Elan 30 gün yeniləndi.": "The listing was renewed for 30 days.",
+  "Elan {days} gün yeniləndi.": "The listing was renewed for {days} days.",
   "Elan aktivləşdirildi.": "The listing is now active.",
   "Elan axtarışdan və siyahılardan çıxacaq. İstədiyiniz vaxt yenidən aktiv edə bilərsiniz.": "The listing will be removed from search and lists. You can reactivate it at any time.",
   "Elan dayandırıldı.": "The listing was paused.",
@@ -105,7 +105,7 @@ export const en: Record<string, string> = {
   "Elanı idarə et": "Manage listing",
   "Elanı redaktə et": "Edit listing",
   "Elanı sil": "Delete listing",
-  "Elanın 30 günü bitib. Yeniləyənədək görünmür.": "The listing's 30 days are over. It stays hidden until you renew it.",
+  "Elanın {days} günü bitib. Yeniləyənədək görünmür.": "The listing's {days} days are over. It stays hidden until you renew it.",
   "Elanın aktivləşdirilməsi": "Listing activation",
   "Elanın irəli çəkilməsi": "Listing promotion",
   "Elanın vəziyyətini mobil tətbiqdə görə bilərsiniz.": "You can see the listing's status in the mobile app.",
@@ -373,4 +373,6 @@ export const en: Record<string, string> = {
   "Hesabınız, elanlarınız və mesajlarınız silinəcək. Bunu geri qaytarmaq olmaz.": "Your account, listings and messages will be deleted. This cannot be undone.",
   "Haqqınızda ən çoxu {n} simvol yazın.": "Write up to {n} characters about yourself.",
   "Hesabınız bloklanıb. Ətraflı məlumat üçün dəstəyə yazın.": "Your account has been blocked. Contact support for details.",
+  "Saytdan gələn ümumi xəbərlər": "General news from RentoX",
+  "Yeniliklər və hamıya göndərilən məlumatlar. Sizə yazılan şəxsi mesajlar və elanlarınız barədə bildirişlər həmişə gəlir.": "Updates and notices sent to everyone. Personal messages to you and notifications about your listings always arrive.",
 };
