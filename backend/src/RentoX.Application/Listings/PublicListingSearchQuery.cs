@@ -23,4 +23,5 @@ public sealed record PublicListingSearchQuery(
     PublicListingSort Sort = PublicListingSort.Default,
     Guid? CityId = null,
     Guid? DistrictId = null,
-    int? RentalPeriodUnit = null);
+    int? RentalPeriodUnit = null,
+    bool WideFeed = false);

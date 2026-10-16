@@ -7,6 +7,8 @@ import type {
   ChatMessage,
   FollowStatus,
   MyStore,
+  StoreStats,
+  StoreVipStatus,
   Conversation,
   ListingSummary,
   OwnedDetails,
@@ -87,6 +89,14 @@ export async function getUnreadMessages(): Promise<number> {
 /** The signed-in person's store; 404 (not ok) when they have none. */
 export function getMyStore() {
   return authed<MyStore>("/api/stores/mine");
+}
+
+export function getMyStoreVip() {
+  return authed<StoreVipStatus>("/api/stores/mine/vip");
+}
+
+export function getMyStoreStats() {
+  return authed<StoreStats>("/api/stores/mine/stats");
 }
 
 export function getFollowStatus(storeId: string) {

@@ -123,15 +123,15 @@ export default async function ListingPage({ params }: PageProps<"/listing/[id]">
 
           {rows.length > 0 && (
             <section>
-              <h2 className="mb-3 text-lg font-extrabold">{t("Məlumat")}</h2>
-              <dl className="overflow-hidden rounded-xl border border-line bg-surface">
+              <h2 className="mb-2 text-base font-bold">{t("Məlumat")}</h2>
+              <dl className="overflow-hidden rounded-xl border border-line bg-surface text-sm">
                 {rows.map(([label, value], i) => (
                   <div
                     key={`${label}-${i}`}
-                    className="flex justify-between gap-4 border-b border-line px-4 py-3 last:border-b-0"
+                    className="flex justify-between gap-4 border-b border-line px-4 py-2.5 last:border-b-0"
                   >
                     <dt className="text-ink-2">{label}</dt>
-                    <dd className="text-right font-semibold">{value}</dd>
+                    <dd className="text-right font-medium">{value}</dd>
                   </div>
                 ))}
               </dl>
@@ -140,7 +140,7 @@ export default async function ListingPage({ params }: PageProps<"/listing/[id]">
 
           {listing.description && (
             <section>
-              <h2 className="mb-3 text-lg font-extrabold">{t("Təsvir")}</h2>
+              <h2 className="mb-2 text-base font-bold">{t("Təsvir")}</h2>
               <ExpandableText text={listing.description} />
             </section>
           )}
@@ -151,10 +151,10 @@ export default async function ListingPage({ params }: PageProps<"/listing/[id]">
             <Summary title={listing.title} price={price} place={place} published={published} views={formatNumber(listing.viewCount, locale)} />
           </div>
 
-          <div className="rounded-xl border border-line bg-surface p-3.5">
+          <div className="rounded-xl border border-line bg-surface p-3">
             <div className="flex items-center gap-3">
-              <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary-soft text-primary">
-                {store ? <Store className="size-5" aria-hidden /> : <User className="size-5" aria-hidden />}
+              <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary-soft text-primary">
+                {store ? <Store className="size-[18px]" aria-hidden /> : <User className="size-[18px]" aria-hidden />}
               </span>
               <div className="min-w-0">
                 <p className="text-xs text-ink-2">{store ? t("Mağaza") : t("Elan sahibi")}</p>
@@ -189,7 +189,7 @@ export default async function ListingPage({ params }: PageProps<"/listing/[id]">
 
       {similar.length > 0 && (
         <section>
-          <h2 className="mb-4 text-xl font-extrabold">{t("Oxşar elanlar")}</h2>
+          <h2 className="mb-3 text-lg font-bold">{t("Oxşar elanlar")}</h2>
           <ListingGrid items={similar.slice(0, 10)} />
         </section>
       )}
@@ -212,8 +212,8 @@ function Summary({
 }) {
   return (
     <div className="space-y-2">
-      <h1 className="text-2xl font-extrabold leading-tight md:text-[28px]">{title}</h1>
-      <p className="text-2xl font-extrabold text-primary">{price}</p>
+      <h1 className="text-xl font-bold leading-tight md:text-2xl">{title}</h1>
+      <p className="text-xl font-bold text-primary md:text-2xl">{price}</p>
       <ul className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-ink-2">
         {place && (
           <li className="flex items-center gap-1">

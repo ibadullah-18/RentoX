@@ -1,7 +1,7 @@
+import { fmtDate } from "@/lib/dates";
 export type DailyPoint = { date: string; newUsers: number; newListings: number };
 
-const day = new Intl.DateTimeFormat("az", { day: "numeric", month: "short" });
-const label = (iso: string) => day.format(new Date(`${iso}T00:00:00Z`));
+const label = (iso: string) => fmtDate(`${iso}T00:00:00Z`, "az", { short: true, year: false });
 
 /** One bar per day, tallest day at the top; hover (or long-press) a bar for its number. */
 function Bars({ title, points, pick, color }: { title: string; points: DailyPoint[]; pick: (p: DailyPoint) => number; color: string }) {

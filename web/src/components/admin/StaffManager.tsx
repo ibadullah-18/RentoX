@@ -1,5 +1,7 @@
 "use client";
 
+import { fmtNumeric } from "@/lib/dates";
+
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -122,7 +124,7 @@ export function StaffManager({ members, me }: { members: StaffMember[]; me: stri
                 {m.activeSessions !== undefined && (
                   <span className="block text-xs text-ink-2">
                     {m.activeSessions} aktiv sessiya
-                    {m.lastActiveAtUtc ? ` · son aktivlik ${new Date(m.lastActiveAtUtc).toLocaleString("az")}` : ""}
+                    {m.lastActiveAtUtc ? ` · son aktivlik ${fmtNumeric(m.lastActiveAtUtc)}` : ""}
                   </span>
                 )}
               </span>

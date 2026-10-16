@@ -1,15 +1,19 @@
-import { Info } from "lucide-react";
+import { fmtNumeric } from "@/lib/dates";
+import Link from "next/link";
+import { FileText, Info, Receipt } from "lucide-react";
 import { Card, PageHead } from "@/components/admin/ui";
 import { PrintButton } from "@/components/admin/PrintButton";
 import { walletDirection, walletType } from "@/lib/admin-labels";
 import { getDashboard } from "@/lib/admin";
+import { adminHref } from "@/lib/admin-path";
+import { getFinanceSummary, type FinancePeriod } from "@/lib/admin-finance";
 
 const money = new Intl.NumberFormat("az", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const count = new Intl.NumberFormat("az");
 
 /** The money side of the site: wallet balances and what moved in and out. */
 export default async function FinancePage() {
-  const result = await getDashboard();
+  const [result, summary] = await Promise.all([getDashboard(), getFinanceSummary()]);
   if (!result.ok) {
     return <p className="rounded-xl bg-danger/10 px-4 py-3 font-semibold text-danger">Məlumat yüklənmədi.</p>;
   }
@@ -23,6 +27,33 @@ export default async function FinancePage() {
         hint="İstifadəçilərin pul kisələri və platforma xidmətləri (aktivləşdirmə, irəli çəkmə, VIP). Elanın kirayə qiyməti platformanın gəliri deyil."
         actions={<PrintButton />}
       />
+
+      {summary.ok && (
+        <section className="space-y-3">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <h2 className="text-lg font-extrabold">Qazanc</h2>
+            <div className="no-print flex gap-2">
+              <Link href={adminHref("/maliyye/xercler")} className="flex h-9 items-center gap-2 rounded-lg border border-line bg-surface px-3 text-sm font-semibold hover:border-primary">
+                <Receipt className="size-4" aria-hidden />
+                Xərclər
+              </Link>
+              <Link href={adminHref("/maliyye/akt")} className="flex h-9 items-center gap-2 rounded-lg bg-primary px-3 text-sm font-bold text-white hover:bg-primary-press">
+                <FileText className="size-4" aria-hidden />
+                Aylıq akt
+              </Link>
+            </div>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            {summary.data.periods.map((p) => (
+              <PeriodCard key={p.name} p={p} currency={summary.data.currency} />
+            ))}
+          </div>
+          <p className="text-xs text-ink-2">
+            Qazanc yalnız xidmətlərə (elan haqqı, irəli çəkmə, VIP, VIP mağaza) xərclənən puldur, geri qaytarılanlar çıxılır. Pul kisəsinə artırılan məbləğ
+            qazanc deyil. İşçi maaşı aylıq hesablanır, ona görə xalis yalnız ay və ümumi üçün göstərilir.
+          </p>
+        </section>
+      )}
 
       <div className="flex gap-3 rounded-xl border border-warning/40 bg-warning-soft p-4 text-sm">
         <Info className="mt-0.5 size-5 shrink-0 text-warning" aria-hidden />
@@ -84,7 +115,39 @@ export default async function FinancePage() {
         );
       })}
 
-      <p className="text-xs text-ink-2">Yenilənib: {new Date(d.generatedAtUtc).toLocaleString("az")}</p>
+      <p className="text-xs text-ink-2">Yenilənib: {fmtNumeric(d.generatedAtUtc)}</p>
+    </div>
+  );
+}
+
+const periodTitle: Record<string, string> = { today: "Bu gün", week: "Bu həftə", month: "Bu ay", all: "Ümumi" };
+
+function PeriodCard({ p, currency }: { p: FinancePeriod; currency: string }) {
+  return (
+    <div className="rounded-xl border border-line bg-surface p-4">
+      <p className="text-sm font-semibold text-ink-2">{periodTitle[p.name] ?? p.name}</p>
+      <p className="mt-1 text-2xl font-extrabold">
+        {money.format(p.income)} <span className="text-sm font-bold text-ink-2">{currency}</span>
+      </p>
+      <p className="text-xs text-ink-2">qazanc{p.refunds > 0 ? ` (geri qaytarılan ${money.format(p.refunds)})` : ""}</p>
+      <dl className="mt-3 space-y-1 border-t border-line pt-3 text-sm">
+        <div className="flex justify-between gap-2">
+          <dt className="text-ink-2">Xərc</dt>
+          <dd className="font-semibold">{money.format(p.businessExpenses)}</dd>
+        </div>
+        {p.staffCost !== null && (
+          <div className="flex justify-between gap-2">
+            <dt className="text-ink-2">İşçilər</dt>
+            <dd className="font-semibold">{money.format(p.staffCost)}</dd>
+          </div>
+        )}
+        {p.netIncome !== null && (
+          <div className="flex justify-between gap-2">
+            <dt className="font-bold">Xalis</dt>
+            <dd className={`font-extrabold ${p.netIncome < 0 ? "text-danger" : "text-success"}`}>{money.format(p.netIncome)}</dd>
+          </div>
+        )}
+      </dl>
     </div>
   );
 }

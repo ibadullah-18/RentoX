@@ -92,6 +92,17 @@ public sealed class StoreProfile : AuditableEntity
 
     public string? WebsiteUrl { get; private set; }
 
+    public string? YoutubeUrl { get; private set; }
+
+    /// <summary>The WhatsApp number in international form, digits only (for example 994501234567).</summary>
+    public string? WhatsAppNumber { get; private set; }
+
+    /// <summary>The first message a visitor's WhatsApp opens with; the owner decides what it says.</summary>
+    public string? WhatsAppMessage { get; private set; }
+
+    /// <summary>The open days and hours as kept text; read it with <see cref="StoreWorkingHours.Read"/>.</summary>
+    public string? WorkingHours { get; private set; }
+
     public StoreStatus Status { get; private set; }
 
     public string? RejectionReason { get; private set; }
@@ -169,6 +180,104 @@ public sealed class StoreProfile : AuditableEntity
         WebsiteUrl = ValidateUrl(websiteUrl);
         Status = StoreStatus.Draft;
         RejectionReason = null;
+    }
+
+    /// <summary>
+    /// The name and the description of a LIVE store. The owner may rewrite them at any time (the store stays live and
+    /// the address does not change); a moderator can still suspend the store if the new text is not acceptable.
+    /// </summary>
+    public void UpdateInfo(string name, string description)
+    {
+        if (Status != StoreStatus.Active)
+        {
+            throw new DomainException(
+                "Only a live store can be edited this way.");
+        }
+
+        string newName = ValidateRequiredText(name, "Store name", 2, 100);
+        string newDescription = ValidateRequiredText(description, "Store description", 10, 2000);
+        Name = newName;
+        Description = newDescription;
+    }
+
+    /// <summary>
+    /// The contact side of the store: phone, e-mail, address, social media, WhatsApp and the hours. The owner can
+    /// change it at any time (a live store stays live): it is not what the moderators approved. Everything is checked
+    /// first, then set.
+    /// </summary>
+    public void UpdateContact(
+        string phoneNumber,
+        string? email,
+        string? address,
+        string? instagramUrl,
+        string? tiktokUrl,
+        string? facebookUrl,
+        string? youtubeUrl,
+        string? websiteUrl,
+        string? whatsAppNumber,
+        string? whatsAppMessage,
+        IReadOnlyCollection<StoreOpenDay>? workingHours)
+    {
+        if (Status is StoreStatus.Deleted or StoreStatus.Suspended)
+        {
+            throw new DomainException(
+                "This store cannot be changed now.");
+        }
+
+        string phone = ValidateRequiredText(phoneNumber, "Store phone number", 7, 30);
+        string? mail = ValidateEmail(email);
+        string? place = NormalizeOptionalText(address, 500);
+        string? instagram = ValidateUrl(instagramUrl);
+        string? tiktok = ValidateUrl(tiktokUrl);
+        string? facebook = ValidateUrl(facebookUrl);
+        string? youtube = ValidateUrl(youtubeUrl);
+        string? website = ValidateUrl(websiteUrl);
+        string? whatsApp = NormalizeWhatsApp(whatsAppNumber);
+        string? greeting = NormalizeOptionalText(whatsAppMessage, 300);
+        string? hours = StoreWorkingHours.Serialize(workingHours);
+
+        PhoneNumber = phone;
+        Email = mail;
+        Address = place;
+        InstagramUrl = instagram;
+        TiktokUrl = tiktok;
+        FacebookUrl = facebook;
+        YoutubeUrl = youtube;
+        WebsiteUrl = website;
+        WhatsAppNumber = whatsApp;
+        WhatsAppMessage = whatsApp is null ? null : greeting;
+        WorkingHours = hours;
+    }
+
+    /// <summary>
+    /// "+994 50 123 45 67", "050 123 45 67" and "501234567" all become 994501234567 (a local number is an
+    /// Azerbaijani one). Anything that is not 9 to 15 digits is refused.
+    /// </summary>
+    public static string? NormalizeWhatsApp(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return null;
+        }
+
+        string digits = new(value.Where(char.IsAsciiDigit).ToArray());
+
+        if (digits.Length == 10 && digits[0] == '0')
+        {
+            digits = "994" + digits[1..];
+        }
+        else if (digits.Length == 9)
+        {
+            digits = "994" + digits;
+        }
+
+        if (digits.Length is < 9 or > 15)
+        {
+            throw new DomainException(
+                "WhatsApp number is invalid.");
+        }
+
+        return digits;
     }
 
     public void SetLogo(string? storageKey)

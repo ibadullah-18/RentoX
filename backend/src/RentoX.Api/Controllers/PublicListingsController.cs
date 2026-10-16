@@ -49,6 +49,7 @@ public sealed class PublicListingsController(
             [FromQuery] Guid? cityId = null,
             [FromQuery] Guid? districtId = null,
             [FromQuery] int? rentalPeriod = null,
+            [FromQuery] string? feed = null,
             CancellationToken cancellationToken = default)
     {
         PreferredLanguage? preferredLanguage =
@@ -167,7 +168,8 @@ public sealed class PublicListingsController(
             Sort = order,
             CityId = cityId,
             DistrictId = districtId,
-            RentalPeriodUnit = rentalPeriod
+            RentalPeriodUnit = rentalPeriod,
+            WideFeed = string.Equals(feed, "wide", StringComparison.OrdinalIgnoreCase)
         };
 
         PagedResult<PublicListingSummaryResult> result =

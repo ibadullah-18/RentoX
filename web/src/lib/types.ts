@@ -215,11 +215,46 @@ export type PublicStore = {
   tiktokUrl?: string | null;
   facebookUrl?: string | null;
   websiteUrl?: string | null;
+  youtubeUrl?: string | null;
+  /** International digits, for example 994501234567. */
+  whatsAppNumber?: string | null;
+  /** The first message the visitor's WhatsApp opens with. */
+  whatsAppMessage?: string | null;
+  /** Open days: day 1 Monday to 7 Sunday, the hours as minutes after midnight. */
+  workingHours?: { day: number; openMinute: number; closeMinute: number }[] | null;
+  followerCount?: number;
   logoImageUrl?: string | null;
   coverImageUrl?: string | null;
   activeListingCount?: number;
   totalViewCount?: number;
   totalFavoriteCount?: number;
+};
+
+export type StoreStats = {
+  followers: number;
+  activeListings: number;
+  listingViews: number;
+  listingFavorites: number;
+  profileViews: number;
+  calls: number;
+  whatsApp: number;
+  messages: number;
+  profileViewsLast7Days: number;
+  profileViewsLast30Days: number;
+  contactsLast30Days: number;
+  last30Days: { day: string; views: number; calls: number; whatsApp: number; messages: number }[];
+};
+
+/** What the owner of a live store is offered: the VIP place on the home page. */
+export type StoreVipStatus = {
+  name: string;
+  price: number;
+  durationDays: number;
+  offerMessage: string;
+  isOnSale: boolean;
+  isVip: boolean;
+  vipUntilUtc?: string | null;
+  currency: string;
 };
 
 /** A store in a list (search, followed). */

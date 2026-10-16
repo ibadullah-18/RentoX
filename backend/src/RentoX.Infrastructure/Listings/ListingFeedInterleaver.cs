@@ -12,7 +12,10 @@ public static class ListingFeedInterleaver
 {
     public const int VipPerRound = 4;
     public const int BumpedPerRound = 4;
-    public const int PlainPerRound = 6;
+    public const int PlainPerRound = 4;
+
+    /// <summary>The wide (computer) feed: rows of five, so 2 rows of VIP, 3 of moved-up, 3 of ordinary.</summary>
+    public static readonly int[] WideRound = [10, 15, 15];
 
     public const int Vip = 0;
     public const int Bumped = 1;
@@ -33,13 +36,14 @@ public static class ListingFeedInterleaver
         int bumpedCount,
         int plainCount,
         int skip,
-        int take)
+        int take,
+        int[]? round = null)
     {
         ArgumentOutOfRangeException.ThrowIfNegative(skip);
         ArgumentOutOfRangeException.ThrowIfNegative(take);
 
         int[] available = [vipCount, bumpedCount, plainCount];
-        int[] perRound = [VipPerRound, BumpedPerRound, PlainPerRound];
+        int[] perRound = round ?? [VipPerRound, BumpedPerRound, PlainPerRound];
         int[] skipped = [0, 0, 0];
         int[] taken = [0, 0, 0];
         List<int> page = [];

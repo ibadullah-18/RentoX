@@ -63,9 +63,38 @@ public sealed class AdminStoreSearchService(RentoXDbContext dbContext) : IAdminS
             })
             .ToListAsync(cancellationToken);
 
+        // The numbers an admin looks at in the list: followers, live listings, how often the page was opened.
+        Guid[] ids = rows.Select(r => r.Id).ToArray();
+        Guid[] owners = rows.Select(r => r.OwnerId).ToArray();
+        DateTimeOffset now = DateTimeOffset.UtcNow;
+
+        Dictionary<Guid, long> followers = await dbContext.StoreFollowers
+            .AsNoTracking()
+            .Where(f => ids.Contains(f.StoreId))
+            .GroupBy(f => f.StoreId)
+            .Select(g => new { g.Key, Count = (long)g.Count() })
+            .ToDictionaryAsync(x => x.Key, x => x.Count, cancellationToken);
+        Dictionary<Guid, long> views = await dbContext.Set<RentoX.Domain.Stores.StoreDayStat>()
+            .AsNoTracking()
+            .Where(s => ids.Contains(s.StoreId))
+            .GroupBy(s => s.StoreId)
+            .Select(g => new { g.Key, Count = g.Sum(s => (long)s.Views) })
+            .ToDictionaryAsync(x => x.Key, x => x.Count, cancellationToken);
+        Dictionary<Guid, long> live = await dbContext.Listings
+            .AsNoTracking()
+            .Where(l => owners.Contains(l.OwnerId) &&
+                        l.Status == RentoX.Domain.Listings.Enums.ListingStatus.Active &&
+                        l.ExpiresAtUtc.HasValue && l.ExpiresAtUtc.Value > now)
+            .GroupBy(l => l.OwnerId)
+            .Select(g => new { g.Key, Count = (long)g.Count() })
+            .ToDictionaryAsync(x => x.Key, x => x.Count, cancellationToken);
+
         AdminStoreItem[] items = rows
             .Select(r => new AdminStoreItem(
-                r.Id, r.OwnerId, r.FullName, r.PhoneNumber, r.Name, r.Slug, r.Status, r.RejectionReason, r.CreatedAtUtc))
+                r.Id, r.OwnerId, r.FullName, r.PhoneNumber, r.Name, r.Slug, r.Status, r.RejectionReason, r.CreatedAtUtc,
+                followers.GetValueOrDefault(r.Id),
+                live.GetValueOrDefault(r.OwnerId),
+                views.GetValueOrDefault(r.Id)))
             .ToArray();
 
         int totalPages = total == 0 ? 0 : (int)Math.Ceiling(total / (double)pageSize);

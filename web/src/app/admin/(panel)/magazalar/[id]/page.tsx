@@ -7,6 +7,9 @@ import { ModerationActions, ReinstateButton, TakeDownPanel } from "@/components/
 import { authed } from "@/lib/authed";
 import type { MyStore } from "@/lib/types";
 
+const days = ["B.e.", "Ç.a.", "Çər.", "C.a.", "Cümə", "Şən.", "Baz."];
+const hhmm = (m: number) => `${String(Math.floor(m / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`;
+
 export default async function ReviewStorePage({ params }: PageProps<"/admin/magazalar/[id]">) {
   const { id } = await params;
   const result = await authed<MyStore & { ownerId?: string }>(`/api/admin/stores/${encodeURIComponent(id)}`);
@@ -22,6 +25,15 @@ export default async function ReviewStorePage({ params }: PageProps<"/admin/maga
     ["Instagram", s.instagramUrl],
     ["TikTok", s.tiktokUrl],
     ["Facebook", s.facebookUrl],
+    ["YouTube", s.youtubeUrl],
+    ["WhatsApp", s.whatsAppNumber ? `+${s.whatsAppNumber}` : null],
+    ["WhatsApp ilk mesaj", s.whatsAppMessage],
+    [
+      "İş saatları",
+      s.workingHours && s.workingHours.length > 0
+        ? s.workingHours.map((h) => `${days[h.day - 1]} ${hhmm(h.openMinute)}–${hhmm(h.closeMinute)}`).join(" · ")
+        : null,
+    ],
   ];
 
   return (

@@ -12,7 +12,6 @@ import '../../../core/theme/app_icons.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../shared/widgets/async_states.dart';
 import '../../../shared/widgets/glass.dart';
-import '../../../shared/widgets/listing_card.dart';
 import '../../../shared/widgets/listing_grid.dart';
 import '../../catalog/data/catalog_repository.dart';
 import '../../catalog/domain/catalog_models.dart';
@@ -32,6 +31,11 @@ class HomePage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppL10n.of(context);
     final listings = ref.watch(homeListingsProvider);
+    // A search, a picked category or a filter: only the matching listings are shown, without banners and stores.
+    final browsing =
+        ref.watch(homeCategoryPathProvider).isNotEmpty ||
+        ref.watch(homeQueryProvider).isNotEmpty ||
+        ref.watch(homeFiltersProvider).hasSheetFilters;
 
     return TabPage(
       onRefresh: () async {
@@ -44,12 +48,14 @@ class HomePage extends ConsumerWidget {
       },
       slivers: [
         const SliverToBoxAdapter(child: _SearchRow()),
-        const SliverToBoxAdapter(child: HomeBanners()),
+        if (!browsing) ...const [
+          SliverToBoxAdapter(child: HomeBanners()),
+          SliverToBoxAdapter(child: _StoreStrip()),
+        ],
         SliverToBoxAdapter(
           child: _SectionHeader(title: _categoriesTitle(ref, l10n)),
         ),
         const SliverToBoxAdapter(child: _CategoryStrip()),
-        const SliverToBoxAdapter(child: _StoreStrip()),
         ...listings.when(
           loading: () => const [
             SliverFillRemaining(
@@ -120,35 +126,8 @@ class HomePage extends ConsumerWidget {
       ];
     }
 
-    final vip = items.where((e) => e.isVip).toList(growable: false);
+    // One feed, in the order the API makes it: 4 VIP, 4 moved up, 4 ordinary, and again.
     return [
-      if (vip.isNotEmpty) ...[
-        SliverToBoxAdapter(
-          child: _SectionHeader(
-            title: l10n.vipListings,
-            leading: const Icon(
-              AppIcons.vip,
-              size: 20,
-              fill: 1,
-              color: AppColors.warning,
-            ),
-          ),
-        ),
-        SliverToBoxAdapter(
-          child: SizedBox(
-            height: 250,
-            child: ListView.separated(
-              scrollDirection: Axis.horizontal,
-              padding: AppSpacing.screenPadding,
-              itemCount: vip.length,
-              separatorBuilder: (_, _) =>
-                  const SizedBox(width: SliverListingGrid.gap),
-              itemBuilder: (_, i) =>
-                  SizedBox(width: 214, child: ListingCard(listing: vip[i])),
-            ),
-          ),
-        ),
-      ],
       SliverToBoxAdapter(
         child: _SectionHeader(title: pickedName ?? l10n.forYou),
       ),
@@ -359,7 +338,7 @@ class _CategoryStrip extends ConsumerWidget {
     final scheme = Theme.of(context).colorScheme;
 
     return SizedBox(
-      height: 64,
+      height: 46,
       child: categories.when(
         loading: () => const SizedBox.shrink(),
         error: (_, _) => const SizedBox.shrink(),
@@ -443,13 +422,13 @@ class _BackTile extends StatelessWidget {
         key: const ValueKey('category-back'),
         onTap: onTap,
         behavior: HitTestBehavior.opaque,
-        child: Container(
-          width: 48,
-          decoration: BoxDecoration(
-            color: scheme.primary.withValues(alpha: 0.10),
-            borderRadius: BorderRadius.circular(AppRadius.lg),
+        child: SizedBox(
+          width: 28,
+          child: Icon(
+            Icons.chevron_left_rounded,
+            size: 30,
+            color: scheme.onSurfaceVariant,
           ),
-          child: Icon(AppIcons.back, size: 26, color: scheme.primary),
         ),
       ),
     );
@@ -488,8 +467,8 @@ class _CategoryTile extends StatelessWidget {
         behavior: HitTestBehavior.opaque,
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 160),
-          constraints: const BoxConstraints(minWidth: 120, maxWidth: 190),
-          padding: const EdgeInsets.fromLTRB(8, 8, 16, 8),
+          constraints: const BoxConstraints(minWidth: 0, maxWidth: 160),
+          padding: const EdgeInsets.fromLTRB(5, 5, 12, 5),
           decoration: BoxDecoration(
             color: color,
             borderRadius: BorderRadius.circular(AppRadius.lg),
@@ -502,27 +481,28 @@ class _CategoryTile extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               Container(
-                width: 40,
-                height: 40,
+                width: 28,
+                height: 28,
                 decoration: BoxDecoration(
                   color: scheme.surface.withValues(alpha: 0.65),
-                  borderRadius: BorderRadius.circular(AppRadius.md),
+                  borderRadius: BorderRadius.circular(AppRadius.sm),
                 ),
                 child: CategoryIcon(
                   slug: slug,
                   iconUrl: iconUrl,
                   color: iconColor,
+                  size: 18,
                 ),
               ),
-              const SizedBox(width: 10),
+              const SizedBox(width: 8),
               Flexible(
                 child: Text(
                   label,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: selected ? FontWeight.w800 : FontWeight.w700,
+                    fontSize: 13,
+                    fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
                     color: selected ? scheme.primary : null,
                   ),
                 ),
@@ -554,10 +534,10 @@ class _StoreStrip extends ConsumerWidget {
         child: Icon(AppIcons.store, color: scheme.primary),
       );
       return ClipRRect(
-        borderRadius: BorderRadius.circular(AppRadius.lg),
+        borderRadius: BorderRadius.circular(AppRadius.md),
         child: SizedBox(
-          width: 62,
-          height: 62,
+          width: 48,
+          height: 48,
           child: store.logoUrl == null
               ? placeholder
               : CachedNetworkImage(
@@ -575,15 +555,21 @@ class _StoreStrip extends ConsumerWidget {
       children: [
         _SectionHeader(
           title: l10n.storesTitle,
+          leading: const Icon(
+            AppIcons.vip,
+            size: 20,
+            fill: 1,
+            color: AppColors.warning,
+          ),
           onSeeAll: () => context.push(Routes.searchWith(stores: true)),
         ),
         SizedBox(
-          height: 100,
+          height: 76,
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
             padding: AppSpacing.screenPadding,
             itemCount: stores.length,
-            separatorBuilder: (_, _) => const SizedBox(width: 14),
+            separatorBuilder: (_, _) => const SizedBox(width: 10),
             itemBuilder: (context, i) {
               final store = stores[i];
               return Semantics(
@@ -592,22 +578,76 @@ class _StoreStrip extends ConsumerWidget {
                 child: GestureDetector(
                   onTap: () => context.push(Routes.store(store.slug)),
                   behavior: HitTestBehavior.opaque,
-                  child: SizedBox(
-                    width: 76,
-                    child: Column(
+                  child: Container(
+                    constraints: const BoxConstraints(
+                      minWidth: 150,
+                      maxWidth: 230,
+                    ),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: scheme.surface,
+                      borderRadius: BorderRadius.circular(AppRadius.lg),
+                      border: Border.all(
+                        color: AppColors.warning.withValues(alpha: 0.55),
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
                         logo(store),
-                        const SizedBox(height: 8),
-                        Text(
-                          store.name,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            fontSize: 12.5,
-                            fontWeight: FontWeight.w600,
+                        const SizedBox(width: 10),
+                        Flexible(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(
+                                    AppIcons.vip,
+                                    size: 12,
+                                    fill: 1,
+                                    color: AppColors.warning,
+                                  ),
+                                  const SizedBox(width: 3),
+                                  Text(
+                                    l10n.storeVipBadge,
+                                    style: const TextStyle(
+                                      fontSize: 10.5,
+                                      fontWeight: FontWeight.w800,
+                                      color: AppColors.warning,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              Text(
+                                store.name,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                              Text(
+                                l10n.storeListingsCount(
+                                  store.activeListingCount,
+                                ),
+                                maxLines: 1,
+                                style: TextStyle(
+                                  fontSize: 11.5,
+                                  color: scheme.primary,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
+                        const SizedBox(width: 4),
                       ],
                     ),
                   ),

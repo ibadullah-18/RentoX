@@ -18,4 +18,8 @@ public sealed record StoreProfileResult(
     int Status,
     string? RejectionReason,
     DateTimeOffset CreatedAtUtc,
-    DateTimeOffset? UpdatedAtUtc);
+    DateTimeOffset? UpdatedAtUtc,
+    string? YoutubeUrl = null,
+    string? WhatsAppNumber = null,
+    string? WhatsAppMessage = null,
+    IReadOnlyList<StoreHoursDay>? WorkingHours = null);

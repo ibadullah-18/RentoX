@@ -33,12 +33,24 @@ public sealed class FeedOrderTests(AuditPostgresFixture database)
         string pattern = string.Concat(plan.Page.Select(k => "VBP"[k]));
 
         Assert.Equal(
-            "VVVV" + "BBBB" + "PPPPPP" +
-            "VVVV" + "BB" + "PPPPPP" +
-            "VVVV" + "PPPPPP" +
-            "VV" + "PP",
+            "VVVV" + "BBBB" + "PPPP" +
+            "VVVV" + "BB" + "PPPP" +
+            "VVVV" + "PPPP" +
+            "VV" + "PPPP" +
+            "PPPP",
             pattern);
         Assert.Equal(40, plan.Page.Count);
+    }
+
+    [Fact]
+    public void TheWideFeedShowsTwoRowsOfVipThreeMovedUpThreeOrdinaryOfFive()
+    {
+        ListingFeedInterleaver.Plan plan =
+            ListingFeedInterleaver.Build(30, 30, 30, 0, 80, ListingFeedInterleaver.WideRound);
+
+        Assert.Equal(
+            new string('V', 10) + new string('B', 15) + new string('P', 15) + new string('V', 10) + new string('B', 15) + new string('P', 15),
+            string.Concat(plan.Page.Select(k => "VBP"[k])));
     }
 
     [Fact]
@@ -50,9 +62,9 @@ public sealed class FeedOrderTests(AuditPostgresFixture database)
 
         Assert.Equal([4, 4, 0], plan.SkipPerKind);
         Assert.Equal(
-            "PPPPPPVV",
+            "PPPPVVVV",
             string.Concat(plan.Page.Select(k => "VBP"[k])));
-        Assert.Equal([2, 0, 6], plan.TakePerKind);
+        Assert.Equal([4, 0, 4], plan.TakePerKind);
     }
 
     [Fact]
@@ -74,8 +86,8 @@ public sealed class FeedOrderTests(AuditPostgresFixture database)
         List<string> first = await FeedAsync(1, 20);
         string pattern = string.Concat(first.Select(t => t[0]));
 
-        // 4 VIP, 4 bumped, 6 plain, then VIP again.
-        Assert.Equal("VVVV" + "BBBB" + "PPPPPP" + "VVVV" + "BB", pattern);
+        // 4 VIP, 4 bumped, 4 plain, then VIP again.
+        Assert.Equal("VVVV" + "BBBB" + "PPPP" + "VVVV" + "BB" + "PP", pattern);
 
         // Free listings are reachable on the very first page even though
         // there are more VIP listings than a page can hold.

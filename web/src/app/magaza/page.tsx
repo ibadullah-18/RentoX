@@ -3,11 +3,16 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { StoreForm } from "@/components/store/StoreForm";
+import { StoreInfoForm } from "@/components/store/StoreInfoForm";
+import { StoreContactForm } from "@/components/store/StoreContactForm";
 import { StoreImages } from "@/components/store/StoreImages";
+import { StoreVipPanel } from "@/components/store/StoreVipPanel";
+import { StoreStatsCard } from "@/components/store/StoreStatsCard";
 import { SubmitStore } from "@/components/store/SubmitStore";
-import { getMyStore } from "@/lib/personal";
+import { getMyStore, getMyStoreStats, getMyStoreVip } from "@/lib/personal";
 import { getSession } from "@/lib/session";
 import { emptyStoreForm } from "@/lib/store-form";
+import { msUntil } from "@/lib/store-contact";
 import { tx } from "@/lib/i18n/locales";
 import { StoreStatus } from "@/lib/types";
 
@@ -53,6 +58,9 @@ export default async function MyStorePage() {
   }
 
   const store = result.data;
+  const [stats, vip] =
+    store.status === StoreStatus.active ? await Promise.all([getMyStoreStats(), getMyStoreVip()]) : [null, null];
+  const contactOpen = store.status !== StoreStatus.suspended && store.status !== StoreStatus.deleted;
   const editable = store.status === StoreStatus.draft || store.status === StoreStatus.rejected;
 
   return (
@@ -91,6 +99,10 @@ export default async function MyStorePage() {
           {t("Mağaza dayandırılıb. Dəstəyə yazın.")}</p>
       )}
 
+      {vip?.ok && <StoreVipPanel vip={vip.data} leftMs={vip.data.vipUntilUtc ? msUntil(vip.data.vipUntilUtc) : 0} />}
+
+      {stats?.ok && <StoreStatsCard stats={stats.data} />}
+
       <StoreImages
         storeId={store.id}
         hasLogo={Boolean(store.logoImageUrl)}
@@ -101,7 +113,9 @@ export default async function MyStorePage() {
       {editable ? (
         <>
           <StoreForm
+            key={`${store.phoneNumber}|${store.email}|${store.address}|${store.instagramUrl}|${store.tiktokUrl}|${store.facebookUrl}|${store.websiteUrl}`}
             mode="edit"
+            contactSeparate
             initial={{
               name: store.name,
               description: store.description,
@@ -131,6 +145,27 @@ export default async function MyStorePage() {
             ) : null,
           )}
         </dl>
+      )}
+
+      {store.status === StoreStatus.active && <StoreInfoForm key={`${store.name}|${store.description}`} name={store.name} description={store.description} />}
+
+      {contactOpen && (
+        <StoreContactForm
+          key={JSON.stringify([store.phoneNumber, store.email, store.address, store.instagramUrl, store.tiktokUrl, store.facebookUrl, store.youtubeUrl, store.websiteUrl, store.whatsAppNumber, store.whatsAppMessage, store.workingHours])}
+          initial={{
+            phone: store.phoneNumber,
+            email: store.email ?? "",
+            address: store.address ?? "",
+            whatsApp: store.whatsAppNumber ?? "",
+            whatsAppMessage: store.whatsAppMessage ?? "",
+            instagram: store.instagramUrl ?? "",
+            tiktok: store.tiktokUrl ?? "",
+            youtube: store.youtubeUrl ?? "",
+            facebook: store.facebookUrl ?? "",
+            website: store.websiteUrl ?? "",
+            hours: store.workingHours ?? [],
+          }}
+        />
       )}
     </div>
   );

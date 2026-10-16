@@ -16,6 +16,8 @@ String storeIssueText(AppL10n l10n, StoreIssue issue) => switch (issue) {
   StoreIssue.tooLong => l10n.storeErrLong,
   StoreIssue.invalidEmail => l10n.storeErrEmail,
   StoreIssue.invalidUrl => l10n.storeErrUrl,
+  StoreIssue.invalidNumber => l10n.storeErrNumber,
+  StoreIssue.invalidHours => l10n.storeErrHours,
 };
 
 /// Create the user's store, or edit it while it is a draft / rejected.

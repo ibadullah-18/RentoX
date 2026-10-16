@@ -1490,4 +1490,175 @@ class AppL10nEn extends AppL10n {
   String infoUpdated(String date) {
     return 'Last updated: $date';
   }
+
+  @override
+  String get storeWriteTo => 'Message the store';
+
+  @override
+  String get storeCall => 'Call';
+
+  @override
+  String get storeHoursTitle => 'Working hours';
+
+  @override
+  String get storeOpenNow => 'Open now';
+
+  @override
+  String get storeClosedNow => 'Closed now';
+
+  @override
+  String get storeDayClosed => 'Closed';
+
+  @override
+  String get storeVipTitle => 'VIP listings';
+
+  @override
+  String get storeShowAll => 'Show all';
+
+  @override
+  String get storeShowLess => 'Show less';
+
+  @override
+  String get storeStatsTitle => 'Statistics';
+
+  @override
+  String get storeStatsHint =>
+      'How often the store page was opened and the contact buttons used. Your own visits are not counted.';
+
+  @override
+  String get storeStatFollowers => 'Followers';
+
+  @override
+  String get storeStatViews7 => 'Store views (7 days)';
+
+  @override
+  String get storeStatViews30 => 'Store views (30 days)';
+
+  @override
+  String get storeStatListingViews => 'Listing views';
+
+  @override
+  String get storeStatFavorites => 'Listings in favorites';
+
+  @override
+  String get storeStatCalls => 'Call button';
+
+  @override
+  String get storeStatWhatsApp => 'WhatsApp';
+
+  @override
+  String get storeStatMessages => 'Messages to the store';
+
+  @override
+  String get storeContactEdit => 'Contact, networks, working hours';
+
+  @override
+  String get storeContactEditHint =>
+      'You can change these at any time; the store does not go back to review.';
+
+  @override
+  String get storeContactSaved => 'Saved';
+
+  @override
+  String get storeYoutube => 'YouTube link (optional)';
+
+  @override
+  String get storeWhatsApp => 'WhatsApp number (optional)';
+
+  @override
+  String get storeWhatsAppMessage => 'First message on WhatsApp';
+
+  @override
+  String get storeWhatsAppHint =>
+      'When a visitor taps the WhatsApp button, it opens with this text written.';
+
+  @override
+  String get storeErrNumber => 'Enter a valid number (e.g. 050 123 45 67)';
+
+  @override
+  String get storeErrHours => 'Closing must be after opening';
+
+  @override
+  String get storeFirstMessage =>
+      'Hello! I am interested in your store. Could you tell me your address?';
+
+  @override
+  String get storeHoursCopyAll => 'Copy the first open day\'s hours to all';
+
+  @override
+  String get weekdayMon => 'Monday';
+
+  @override
+  String get weekdayTue => 'Tuesday';
+
+  @override
+  String get weekdayWed => 'Wednesday';
+
+  @override
+  String get weekdayThu => 'Thursday';
+
+  @override
+  String get weekdayFri => 'Friday';
+
+  @override
+  String get weekdaySat => 'Saturday';
+
+  @override
+  String get weekdaySun => 'Sunday';
+
+  @override
+  String get storeTodayClosed => 'Closed today';
+
+  @override
+  String get storeVipBuy => 'Make VIP';
+
+  @override
+  String get storeVipExtend => 'Extend';
+
+  @override
+  String get storeVipPaid =>
+      'Payment received. Your store will be shown on the home page.';
+
+  @override
+  String get storeVipDefaultOffer =>
+      'Show your store on the home page and win more customers.';
+
+  @override
+  String storeVipDays(int days) {
+    return '$days days';
+  }
+
+  @override
+  String storeVipActiveUntil(String date) {
+    return 'Your store is shown on the home page until $date';
+  }
+
+  @override
+  String storeVipLeftHours(int hours) {
+    return '$hours h left';
+  }
+
+  @override
+  String storeVipLeft(int days, int hours) {
+    return '$days d $hours h left';
+  }
+
+  @override
+  String get storeVipInfo =>
+      'A VIP store is shown on the home page before all listings. When the time ends it stays an ordinary store; extend in time and there is no gap.';
+
+  @override
+  String get storeVipBadge => 'VIP store';
+
+  @override
+  String get storeSearchHint => 'Search in store';
+
+  @override
+  String get storePriceFilter => 'Price';
+
+  @override
+  String get storeInfoEdit => 'Edit name and description';
+
+  @override
+  String get storeInfoSave => 'Save';
 }

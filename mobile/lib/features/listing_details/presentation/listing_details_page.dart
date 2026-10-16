@@ -302,11 +302,10 @@ class _DetailsView extends ConsumerWidget {
                           ),
                         ],
                         _SectionTitle(l10n.ownerTitle),
-                        _OwnerCard(owner: details.owner),
-                        if (details.owner.store case final store?) ...[
-                          const SizedBox(height: AppSpacing.sm),
-                          _StoreCard(store: store),
-                        ],
+                        if (details.owner.store case final store?)
+                          _StoreCard(store: store)
+                        else
+                          _OwnerCard(owner: details.owner),
                         if (!isOwner) ...[
                           const SizedBox(height: AppSpacing.md),
                           ReportProblemRow(

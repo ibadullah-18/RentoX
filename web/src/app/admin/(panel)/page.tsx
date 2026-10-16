@@ -1,3 +1,4 @@
+import { fmtNumeric } from "@/lib/dates";
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
 import { DailyBars, type DailyPoint } from "@/components/admin/DailyBars";
@@ -150,7 +151,7 @@ export default async function AdminDashboard() {
         <TopList title="Ən çox seçilmiş elanlar" items={d.mostFavoritedListings} unit="♥" pick="favoriteCount" />
       </div>
 
-      <p className="text-xs text-ink-2">Yenilənib: {new Date(d.generatedAtUtc).toLocaleString("az")}</p>
+      <p className="text-xs text-ink-2">Yenilənib: {fmtNumeric(d.generatedAtUtc)}</p>
     </div>
   );
 }

@@ -1,5 +1,7 @@
 "use client";
 
+import { fmtNumeric } from "@/lib/dates";
+
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import { ImagePlus, Loader2, Pencil, Plus, Trash2 } from "lucide-react";
@@ -314,7 +316,7 @@ export function BannerManager({ banners }: { banners: BannerRow[] }) {
                 </span>
                 {(b.startsAtUtc || b.endsAtUtc) && (
                   <span className="block text-xs text-ink-2">
-                    {b.startsAtUtc ? new Date(b.startsAtUtc).toLocaleString("az") : "…"} — {b.endsAtUtc ? new Date(b.endsAtUtc).toLocaleString("az") : "…"}
+                    {b.startsAtUtc ? fmtNumeric(b.startsAtUtc) : "…"} — {b.endsAtUtc ? fmtNumeric(b.endsAtUtc) : "…"}
                   </span>
                 )}
               </span>

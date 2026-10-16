@@ -103,7 +103,16 @@ public sealed class PublicStoreQueryService(
             activeListingCount,
             totalViewCount,
             totalFavoriteCount,
-            store.CreatedAtUtc);
+            store.CreatedAtUtc,
+            store.YoutubeUrl,
+            store.WhatsAppNumber,
+            store.WhatsAppMessage,
+            StoreWorkingHours.Read(store.WorkingHours)
+                .Select(day => new StoreHoursDay(day.Day, day.OpenMinute, day.CloseMinute))
+                .ToArray(),
+            await dbContext.StoreFollowers
+                .AsNoTracking()
+                .LongCountAsync(follower => follower.StoreId == store.Id, cancellationToken));
     }
 
     public async Task<PagedResult<PublicStoreSummaryResult>>

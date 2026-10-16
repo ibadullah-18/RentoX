@@ -2,33 +2,28 @@
   "@@locale": "en",
   "appName": "RentoX",
   "tagline": "Everything for rent",
-
   "loginTitle": "Welcome",
   "loginSubtitle": "Enter your phone number to continue. We'll send you a verification code.",
   "phoneLabel": "Phone number",
   "phoneHint": "50 123 45 67",
   "phoneInvalid": "The number must contain 9 digits",
   "continueAction": "Continue",
-
   "otpTitle": "Enter the code",
   "otpSubtitle": "Type the 6-digit code sent to {phone}.",
   "otpResendIn": "Resend in {seconds}s",
   "otpResend": "Resend code",
   "accountBlocked": "Your account has been blocked. Contact support for details.",
   "otpWrong": "The code is incorrect or has expired",
-
   "registerTitle": "Create account",
   "registerSubtitle": "No account found for this number. Enter your name to finish signing up.",
   "fullNameLabel": "Full name",
   "fullNameHint": "Full name",
   "fullNameRequired": "Enter your name",
   "registerAction": "Complete sign up",
-
   "errorNetwork": "No internet connection. Please try again.",
   "errorTooManyRequests": "Too many attempts. Wait a moment and try again.",
   "errorGeneric": "Something went wrong. Try again in a moment.",
   "retry": "Try again",
-
   "navHome": "Home",
   "navFavorites": "Favorites",
   "favoritesTitle": "Favorites",
@@ -43,7 +38,6 @@
   "navCreate": "Post",
   "navMessages": "Messages",
   "navProfile": "Profile",
-
   "searchHint": "What do you want to rent?",
   "categories": "Categories",
   "seeAll": "See all",
@@ -59,7 +53,6 @@
   "filters": "Filters",
   "trustTitle": "Verified users",
   "trustSubtitle": "Safe rentals, trusted people",
-
   "listingNotFound": "Listing not found",
   "listingNotFoundHint": "It may have been removed or has expired.",
   "descriptionTitle": "Description",
@@ -82,7 +75,6 @@
   "messageFailed": "Couldn't send the message. Try again.",
   "callFailed": "Couldn't start the call",
   "photoCounter": "{current} / {total}",
-
   "searchRecent": "Recent searches",
   "clearAll": "Clear all",
   "allCategories": "All",
@@ -98,7 +90,6 @@
   "resetAction": "Reset",
   "priceRangeInvalid": "Min price can't be higher than max price",
   "backAction": "Back",
-
   "createTitle": "New listing",
   "stepOf": "Step {current} of {total}",
   "stepPhotos": "Photos",
@@ -189,9 +180,7 @@
   "paymentSuccessVip": "Payment received. Your listing is now VIP.",
   "paymentFailed": "The payment failed. Try again.",
   "walletTitle": "Wallet",
-
   "vipActive": "VIP listing is active",
-
   "messagesTitle": "Messages",
   "messagesAll": "All",
   "messagesUnreadFilter": "Unread",
@@ -230,13 +219,10 @@
   "reportProhibited": "Prohibited content",
   "reportOther": "Other",
   "chatReconnecting": "Reconnecting…",
-
   "notificationsMarkAll": "Mark all read",
   "notificationsEmpty": "No notifications",
   "notificationsEmptyHint": "Updates about your listings and account will show up here.",
-
   "notificationView": "View",
-
   "profileEditTitle": "Edit profile",
   "profileAddName": "Add your name",
   "profileName": "Full name",
@@ -255,7 +241,6 @@
   "logoutAllTitle": "Sign out everywhere",
   "logoutAllMessage": "You'll be signed out on every device and will need to sign in again.",
   "logoutAllConfirm": "Sign out",
-
   "editListingTitle": "Edit listing",
   "editAction": "Edit",
   "editSave": "Save changes",
@@ -278,7 +263,6 @@
   "bumpAction": "Bump to top",
   "payForBump": "Bump the listing up the list",
   "paymentSuccessBump": "Listing bumped",
-
   "storeMine": "My store",
   "storeFollowing": "Stores I follow",
   "storeNone": "You don't have a store yet",
@@ -325,7 +309,6 @@
   "storeListingsCount": "{count} listings",
   "storeViews": "{count} views",
   "openLinkFailed": "Couldn't open the link",
-
   "supportTitle": "Support",
   "supportNew": "New request",
   "supportEmpty": "No requests yet",
@@ -360,19 +343,23 @@
   "reportStoreHint": "Something wrong with this store? Let us know.",
   "supportRefListing": "Listing: {title}",
   "supportRefStore": "Store: {title}",
-
   "unitHour": "hour",
   "unitDay": "day",
   "unitWeek": "week",
   "unitMonth": "month",
   "unitEvent": "event",
   "unitNegotiable": "negotiable",
-
   "signOut": "Sign out",
   "searchTabListings": "Listings",
   "searchTabStores": "Stores",
   "storesFound": "{count} stores found",
-  "@storesFound": { "placeholders": { "count": { "type": "int" } } },
+  "@storesFound": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "noStoresFound": "No stores found",
   "noStoresHint": "Try another word.",
   "ownerStoreLabel": "Store",
@@ -410,7 +397,13 @@
   "deleteAccountTitle": "Delete your account?",
   "deleteAccountMessage": "All your listings and your store will be removed, favourites and follows are lost, and any wallet balance is not refunded. Conversations stay for the other person but your name is hidden. This cannot be undone.",
   "deleteAccountType": "Type \"{word}\" to confirm",
-  "@deleteAccountType": { "placeholders": { "word": { "type": "String" } } },
+  "@deleteAccountType": {
+    "placeholders": {
+      "word": {
+        "type": "String"
+      }
+    }
+  },
   "deleteAccountWord": "DELETE",
   "deleteAccountConfirm": "Delete forever",
   "deleteAccountFailed": "The account was not deleted. Please try again.",
@@ -457,7 +450,13 @@
   "walletHistoryEmpty": "No transactions yet",
   "walletHistoryEmptyHint": "Top-ups and payments will show up here.",
   "walletAfter": "Balance: {amount}",
-  "@walletAfter": {"placeholders": {"amount": {"type": "String"}}},
+  "@walletAfter": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
   "walletTopUpAndHistory": "Top up · History",
   "txTopUp": "Top-up",
   "txListingFee": "Listing activation",
@@ -476,5 +475,88 @@
   "termsTitle": "Terms of Use",
   "privacyTitle": "Privacy Policy",
   "consentText": "By continuing you accept the {terms} and the {privacy}.",
-  "infoUpdated": "Last updated: {date}"
+  "infoUpdated": "Last updated: {date}",
+  "storeWriteTo": "Message the store",
+  "storeCall": "Call",
+  "storeHoursTitle": "Working hours",
+  "storeOpenNow": "Open now",
+  "storeClosedNow": "Closed now",
+  "storeDayClosed": "Closed",
+  "storeVipTitle": "VIP listings",
+  "storeShowAll": "Show all",
+  "storeShowLess": "Show less",
+  "storeStatsTitle": "Statistics",
+  "storeStatsHint": "How often the store page was opened and the contact buttons used. Your own visits are not counted.",
+  "storeStatFollowers": "Followers",
+  "storeStatViews7": "Store views (7 days)",
+  "storeStatViews30": "Store views (30 days)",
+  "storeStatListingViews": "Listing views",
+  "storeStatFavorites": "Listings in favorites",
+  "storeStatCalls": "Call button",
+  "storeStatWhatsApp": "WhatsApp",
+  "storeStatMessages": "Messages to the store",
+  "storeContactEdit": "Contact, networks, working hours",
+  "storeContactEditHint": "You can change these at any time; the store does not go back to review.",
+  "storeContactSaved": "Saved",
+  "storeYoutube": "YouTube link (optional)",
+  "storeWhatsApp": "WhatsApp number (optional)",
+  "storeWhatsAppMessage": "First message on WhatsApp",
+  "storeWhatsAppHint": "When a visitor taps the WhatsApp button, it opens with this text written.",
+  "storeErrNumber": "Enter a valid number (e.g. 050 123 45 67)",
+  "storeErrHours": "Closing must be after opening",
+  "storeFirstMessage": "Hello! I am interested in your store. Could you tell me your address?",
+  "storeHoursCopyAll": "Copy the first open day's hours to all",
+  "weekdayMon": "Monday",
+  "weekdayTue": "Tuesday",
+  "weekdayWed": "Wednesday",
+  "weekdayThu": "Thursday",
+  "weekdayFri": "Friday",
+  "weekdaySat": "Saturday",
+  "weekdaySun": "Sunday",
+  "storeTodayClosed": "Closed today",
+  "storeVipBuy": "Make VIP",
+  "storeVipExtend": "Extend",
+  "storeVipPaid": "Payment received. Your store will be shown on the home page.",
+  "storeVipDefaultOffer": "Show your store on the home page and win more customers.",
+  "storeVipDays": "{days} days",
+  "@storeVipDays": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "storeVipActiveUntil": "Your store is shown on the home page until {date}",
+  "@storeVipActiveUntil": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "storeVipLeftHours": "{hours} h left",
+  "@storeVipLeftHours": {
+    "placeholders": {
+      "hours": {
+        "type": "int"
+      }
+    }
+  },
+  "storeVipLeft": "{days} d {hours} h left",
+  "@storeVipLeft": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      },
+      "hours": {
+        "type": "int"
+      }
+    }
+  },
+  "storeVipInfo": "A VIP store is shown on the home page before all listings. When the time ends it stays an ordinary store; extend in time and there is no gap.",
+  "storeVipBadge": "VIP store",
+  "storeSearchHint": "Search in store",
+  "storePriceFilter": "Price",
+  "storeInfoEdit": "Edit name and description",
+  "storeInfoSave": "Save"
 }

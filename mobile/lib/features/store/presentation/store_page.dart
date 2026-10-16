@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import 'dart:async';
+
 import '../../../app/router.dart';
 import '../../../core/l10n/app_localizations.dart';
 import '../../../core/network/api_exception.dart';
@@ -10,21 +12,47 @@ import '../../../core/theme/app_icons.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../shared/utils/external_links.dart';
 import '../../../shared/widgets/async_states.dart';
+import '../../../shared/widgets/brand_icon.dart';
 import '../../../shared/widgets/glass.dart';
 import '../../../shared/widgets/listing_grid.dart';
 import '../../auth/presentation/auth_controller.dart';
+import '../../listing_details/presentation/message_sheet.dart';
+import '../../messages/presentation/inbox_controller.dart';
+import '../data/store_repository.dart';
 import '../../report/domain/report_models.dart';
 import '../../report/presentation/report_sheet.dart';
 import '../../support/presentation/support_widgets.dart';
+import '../../catalog/domain/catalog_models.dart' show ListingSummary;
 import '../domain/store_models.dart';
+import '../../search/presentation/price_filter_sheet.dart';
 import 'store_controller.dart';
 
 String _kindName(SocialKind k) => switch (k) {
   SocialKind.website => 'Website',
   SocialKind.instagram => 'Instagram',
   SocialKind.tiktok => 'TikTok',
+  SocialKind.youtube => 'YouTube',
   SocialKind.facebook => 'Facebook',
 };
+
+Brand? _brandOf(SocialKind k) => switch (k) {
+  SocialKind.instagram => Brand.instagram,
+  SocialKind.tiktok => Brand.tiktok,
+  SocialKind.youtube => Brand.youtube,
+  SocialKind.facebook => Brand.facebook,
+  SocialKind.website => null,
+};
+
+/// The seven days, Monday first (the order the backend counts them in).
+List<String> weekdayNames(AppL10n l10n) => [
+  l10n.weekdayMon,
+  l10n.weekdayTue,
+  l10n.weekdayWed,
+  l10n.weekdayThu,
+  l10n.weekdayFri,
+  l10n.weekdaySat,
+  l10n.weekdaySun,
+];
 
 /// A live store: who they are, how to reach them and everything they rent.
 class StorePage extends ConsumerWidget {
@@ -85,10 +113,19 @@ class _StoreBody extends ConsumerStatefulWidget {
 
 class _StoreBodyState extends ConsumerState<_StoreBody> {
   final _scroll = ScrollController();
+  bool _moreVip = false;
+  bool _moreRegular = false;
+
+  static const _vipFirst = 4;
+  static const _regularFirst = 6;
 
   @override
   void initState() {
     super.initState();
+    // The page was opened: the owner counts it (the owner own visits are left out by the server).
+    unawaited(
+      ref.read(storeRepositoryProvider).reportEvent(widget.store.slug, 'view'),
+    );
     _scroll.addListener(() {
       if (_scroll.hasClients && _scroll.position.extentAfter < 600) {
         ref.read(storeListingsProvider(widget.store.slug).notifier).loadMore();
@@ -103,6 +140,34 @@ class _StoreBodyState extends ConsumerState<_StoreBody> {
   }
 
   PublicStore get s => widget.store;
+
+  void _toggleVip() => setState(() => _moreVip = !_moreVip);
+
+  void _toggleRegular() => setState(() => _moreRegular = !_moreRegular);
+
+  void _signInThen() {
+    final from = GoRouterState.of(context).uri.toString();
+    context.push(
+      Uri(path: Routes.phone, queryParameters: {'from': from}).toString(),
+    );
+  }
+
+  /// "Write to the store" starts a conversation about the newest of its listings.
+  Future<void> _write(String listingId) async {
+    if (ref.read(authControllerProvider).value == null) {
+      _signInThen();
+      return;
+    }
+    final conversationId = await showMessageSheet(
+      context,
+      listingId: listingId,
+      initialText: AppL10n.of(context).storeFirstMessage,
+    );
+    if (conversationId == null || !mounted) return;
+    unawaited(ref.read(storeRepositoryProvider).reportEvent(s.slug, 'message'));
+    unawaited(ref.read(inboxProvider.notifier).refresh());
+    unawaited(context.push(Routes.chat(conversationId)));
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -217,7 +282,20 @@ class _StoreBodyState extends ConsumerState<_StoreBody> {
                   style: theme.textTheme.bodyLarge?.copyWith(height: 1.5),
                 ),
                 const SizedBox(height: AppSpacing.lg),
+                _Actions(
+                  store: s,
+                  onWrite: listings.value?.items.isNotEmpty == true
+                      ? () => _write(listings.value!.items.first.id)
+                      : null,
+                ),
+                const SizedBox(height: AppSpacing.lg),
                 _Contacts(store: s),
+                if (s.hours.isNotEmpty) ...[
+                  const SizedBox(height: AppSpacing.md),
+                  _HoursCard(store: s),
+                ],
+                const SizedBox(height: AppSpacing.md),
+                _ListingFilterRow(slug: s.slug),
                 if (ref.watch(myStoreProvider).value?.id != s.id) ...[
                   const SizedBox(height: AppSpacing.sm),
                   ReportProblemRow(
@@ -231,13 +309,6 @@ class _StoreBodyState extends ConsumerState<_StoreBody> {
                   ),
                 ],
                 const SizedBox(height: AppSpacing.xl),
-                Text(
-                  l10n.storeListingsTitle,
-                  style: theme.textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                const SizedBox(height: AppSpacing.md),
               ],
             ),
           ),
@@ -274,7 +345,7 @@ class _StoreBodyState extends ConsumerState<_StoreBody> {
                     ),
                   ]
                 : [
-                    SliverListingGrid(items: page.items),
+                    ..._sections(context, page.items),
                     if (page.loadingMore)
                       const SliverToBoxAdapter(
                         child: Padding(
@@ -299,6 +370,75 @@ class _StoreBodyState extends ConsumerState<_StoreBody> {
   }
 }
 
+extension on _StoreBodyState {
+  /// The listings in two parts: the VIP ones (4 at first) and the ordinary ones (6 at first).
+  List<Widget> _sections(BuildContext context, List<ListingSummary> items) {
+    final l10n = AppL10n.of(context);
+    final theme = Theme.of(context);
+    final vip = [
+      for (final l in items)
+        if (l.isVip) l,
+    ];
+    final regular = [
+      for (final l in items)
+        if (!l.isVip) l,
+    ];
+
+    Widget title(String text, int count) => SliverToBoxAdapter(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.lg,
+          0,
+          AppSpacing.lg,
+          AppSpacing.md,
+        ),
+        child: Text(
+          '$text ($count)',
+          style: theme.textTheme.titleLarge?.copyWith(
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+      ),
+    );
+
+    Widget toggle(bool open, int total, int first, VoidCallback onTap) =>
+        total <= first
+        ? const SliverToBoxAdapter(child: SizedBox.shrink())
+        : SliverToBoxAdapter(
+            child: Center(
+              child: TextButton(
+                onPressed: onTap,
+                child: Text(open ? l10n.storeShowLess : l10n.storeShowAll),
+              ),
+            ),
+          );
+
+    return [
+      if (vip.isNotEmpty) ...[
+        title(l10n.storeVipTitle, vip.length),
+        SliverListingGrid(
+          items: _moreVip ? vip : vip.take(_StoreBodyState._vipFirst).toList(),
+        ),
+        toggle(_moreVip, vip.length, _StoreBodyState._vipFirst, _toggleVip),
+      ],
+      if (regular.isNotEmpty) ...[
+        title(l10n.storeListingsTitle, regular.length),
+        SliverListingGrid(
+          items: _moreRegular
+              ? regular
+              : regular.take(_StoreBodyState._regularFirst).toList(),
+        ),
+        toggle(
+          _moreRegular,
+          regular.length,
+          _StoreBodyState._regularFirst,
+          _toggleRegular,
+        ),
+      ],
+    ];
+  }
+}
+
 class _Stats extends StatelessWidget {
   const _Stats({required this.store});
 
@@ -313,6 +453,7 @@ class _Stats extends StatelessWidget {
       spacing: AppSpacing.lg,
       runSpacing: 4,
       children: [
+        Text(l10n.storeFollowers(store.followerCount), style: style),
         Text(l10n.storeListingsCount(store.activeListingCount), style: style),
         Text(l10n.storeViews(store.totalViewCount), style: style),
       ],
@@ -370,6 +511,254 @@ class _FollowButton extends ConsumerWidget {
   }
 }
 
+/// Write to the store, call it, and the round logos of its WhatsApp and networks.
+class _Actions extends ConsumerWidget {
+  const _Actions({required this.store, required this.onWrite});
+
+  final PublicStore store;
+  final VoidCallback? onWrite;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppL10n.of(context);
+    final scheme = Theme.of(context).colorScheme;
+    final mine = ref.watch(myStoreProvider).value;
+    final isOwner = mine != null && mine.id == store.id;
+    final repo = ref.read(storeRepositoryProvider);
+
+    Widget round(Widget icon, String label, VoidCallback onTap) => Semantics(
+      button: true,
+      label: label,
+      child: InkResponse(
+        onTap: onTap,
+        radius: 28,
+        child: Container(
+          width: 48,
+          height: 48,
+          decoration: BoxDecoration(
+            color: scheme.surface,
+            shape: BoxShape.circle,
+            border: Border.all(color: scheme.outlineVariant),
+          ),
+          child: Center(child: icon),
+        ),
+      ),
+    );
+
+    final wa = store.whatsAppUri;
+    return Wrap(
+      spacing: AppSpacing.md,
+      runSpacing: AppSpacing.md,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      children: [
+        if (!isOwner && onWrite != null)
+          FilledButton.tonalIcon(
+            onPressed: onWrite,
+            style: FilledButton.styleFrom(minimumSize: const Size(0, 48)),
+            icon: const Icon(AppIcons.messages, size: 20),
+            label: Text(l10n.storeWriteTo),
+          ),
+        if (store.phone.isNotEmpty)
+          OutlinedButton.icon(
+            onPressed: () {
+              unawaited(repo.reportEvent(store.slug, 'call'));
+              openExternal(context, Uri(scheme: 'tel', path: store.phone));
+            },
+            style: OutlinedButton.styleFrom(minimumSize: const Size(0, 48)),
+            icon: const Icon(AppIcons.call, size: 20),
+            label: Text(l10n.storeCall),
+          ),
+        if (wa != null)
+          round(const BrandIcon(Brand.whatsapp, size: 26), 'WhatsApp', () {
+            unawaited(repo.reportEvent(store.slug, 'whatsapp'));
+            openExternal(context, wa);
+          }),
+        for (final (kind, url) in store.links)
+          if (_brandOf(kind) case final brand?)
+            round(BrandIcon(brand, size: 24), _kindName(kind), () {
+              final uri = Uri.tryParse(url);
+              if (uri != null) openExternal(context, uri);
+            }),
+      ],
+    );
+  }
+}
+
+/// The hours in one line (a clock, open or closed, today). Tapping it opens the whole week.
+class _HoursCard extends StatefulWidget {
+  const _HoursCard({required this.store});
+
+  final PublicStore store;
+
+  @override
+  State<_HoursCard> createState() => _HoursCardState();
+}
+
+class _HoursCardState extends State<_HoursCard> {
+  bool _shown = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final store = widget.store;
+    final l10n = AppL10n.of(context);
+    final scheme = Theme.of(context).colorScheme;
+    final names = weekdayNames(l10n);
+    final now = DateTime.now().toUtc().add(const Duration(hours: 4));
+    final open = StoreHours.openAt(store.hours, DateTime.now());
+    final todayHours = store.hours
+        .where((h) => h.day == now.weekday)
+        .firstOrNull;
+
+    return Card(
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          InkWell(
+            onTap: () => setState(() => _shown = !_shown),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.lg,
+                vertical: AppSpacing.md,
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      color: scheme.primary.withValues(alpha: 0.12),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      AppIcons.schedule,
+                      size: 20,
+                      color: scheme.primary,
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.md),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          l10n.storeHoursTitle,
+                          style: const TextStyle(fontWeight: FontWeight.w800),
+                        ),
+                        Text(
+                          todayHours == null
+                              ? l10n.storeTodayClosed
+                              : '${StoreHours.clock(todayHours.openMinute)} – '
+                                    '${StoreHours.clock(todayHours.closeMinute)}',
+                          style: TextStyle(
+                            fontSize: 12.5,
+                            color: scheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (open != null)
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: (open ? Colors.green : scheme.onSurfaceVariant)
+                            .withValues(alpha: 0.14),
+                        borderRadius: BorderRadius.circular(AppRadius.sm),
+                      ),
+                      child: Text(
+                        open ? l10n.storeOpenNow : l10n.storeClosedNow,
+                        style: TextStyle(
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.w700,
+                          color: open ? Colors.green : scheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ),
+                  const SizedBox(width: 4),
+                  AnimatedRotation(
+                    turns: _shown ? 0.5 : 0,
+                    duration: const Duration(milliseconds: 160),
+                    child: Icon(
+                      Icons.expand_more_rounded,
+                      color: scheme.onSurfaceVariant,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          if (_shown)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.md,
+                0,
+                AppSpacing.md,
+                AppSpacing.md,
+              ),
+              child: Column(
+                children: [
+                  for (var i = 0; i < 7; i++)
+                    Builder(
+                      builder: (context) {
+                        final day = store.hours
+                            .where((h) => h.day == i + 1)
+                            .firstOrNull;
+                        final today = now.weekday == i + 1;
+                        return Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 7,
+                          ),
+                          decoration: today
+                              ? BoxDecoration(
+                                  color: scheme.primary.withValues(alpha: 0.10),
+                                  borderRadius: BorderRadius.circular(
+                                    AppRadius.sm,
+                                  ),
+                                )
+                              : null,
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  names[i],
+                                  style: TextStyle(
+                                    fontWeight: today
+                                        ? FontWeight.w800
+                                        : FontWeight.w500,
+                                    color: today ? scheme.primary : null,
+                                  ),
+                                ),
+                              ),
+                              Text(
+                                day == null
+                                    ? l10n.storeDayClosed
+                                    : '${StoreHours.clock(day.openMinute)} – '
+                                          '${StoreHours.clock(day.closeMinute)}',
+                                style: TextStyle(
+                                  color: day == null
+                                      ? scheme.onSurfaceVariant
+                                      : null,
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
 class _Contacts extends StatelessWidget {
   const _Contacts({required this.store});
 
@@ -414,9 +803,9 @@ class _Contacts extends StatelessWidget {
           () => openExternal(context, Uri(scheme: 'mailto', path: store.email)),
         ),
       if (store.address.isNotEmpty) row(AppIcons.place, store.address, null),
-      for (final (kind, url) in store.links)
-        row(AppIcons.link, _kindName(kind), () {
-          final uri = Uri.tryParse(url);
+      if (store.website.isNotEmpty)
+        row(AppIcons.link, store.website, () {
+          final uri = Uri.tryParse(store.website);
           if (uri != null) openExternal(context, uri);
         }),
     ];
@@ -445,6 +834,103 @@ class _Contacts extends StatelessWidget {
           ],
         ],
       ),
+    );
+  }
+}
+
+/// Search and price range over the listings of this store.
+class _ListingFilterRow extends ConsumerStatefulWidget {
+  const _ListingFilterRow({required this.slug});
+
+  final String slug;
+
+  @override
+  ConsumerState<_ListingFilterRow> createState() => _ListingFilterRowState();
+}
+
+class _ListingFilterRowState extends ConsumerState<_ListingFilterRow> {
+  final _text = TextEditingController();
+
+  @override
+  void dispose() {
+    _text.dispose();
+    super.dispose();
+  }
+
+  Future<void> _price() async {
+    final current = ref.read(storeListingFilterProvider(widget.slug));
+    final range = await showPriceFilterSheet(
+      context,
+      min: current.min,
+      max: current.max,
+    );
+    if (range == null) return;
+    ref.read(storeListingFilterProvider(widget.slug).notifier).set((
+      search: current.search,
+      min: range.min,
+      max: range.max,
+    ));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppL10n.of(context);
+    final scheme = Theme.of(context).colorScheme;
+    final filter = ref.watch(storeListingFilterProvider(widget.slug));
+    final priced = filter.min != null || filter.max != null;
+
+    return Row(
+      children: [
+        Expanded(
+          child: SizedBox(
+            height: 42,
+            child: TextField(
+              controller: _text,
+              textInputAction: TextInputAction.search,
+              onSubmitted: (v) => ref
+                  .read(storeListingFilterProvider(widget.slug).notifier)
+                  .set((search: v.trim(), min: filter.min, max: filter.max)),
+              decoration: InputDecoration(
+                hintText: l10n.storeSearchHint,
+                prefixIcon: const Icon(AppIcons.search, size: 20),
+                isDense: true,
+                contentPadding: EdgeInsets.zero,
+                suffixIcon: filter.search.isEmpty
+                    ? null
+                    : IconButton(
+                        icon: const Icon(Icons.close_rounded, size: 18),
+                        onPressed: () {
+                          _text.clear();
+                          ref
+                              .read(
+                                storeListingFilterProvider(widget.slug)
+                                    .notifier,
+                              )
+                              .set((
+                                search: '',
+                                min: filter.min,
+                                max: filter.max,
+                              ));
+                        },
+                      ),
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: AppSpacing.sm),
+        SizedBox(
+          height: 42,
+          child: OutlinedButton.icon(
+            onPressed: _price,
+            icon: Icon(
+              AppIcons.filter,
+              size: 18,
+              color: priced ? scheme.primary : null,
+            ),
+            label: Text(l10n.storePriceFilter),
+          ),
+        ),
+      ],
     );
   }
 }

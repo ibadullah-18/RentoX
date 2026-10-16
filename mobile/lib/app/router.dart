@@ -28,6 +28,7 @@ import '../features/support/presentation/support_page.dart';
 import '../features/support/presentation/ticket_page.dart';
 import '../features/store/presentation/my_store_page.dart';
 import '../features/store/presentation/store_form_page.dart';
+import '../features/store/presentation/store_contact_page.dart';
 import '../features/store/presentation/store_page.dart';
 import '../features/profile/presentation/edit_profile_page.dart';
 import '../features/profile/presentation/profile_page.dart';
@@ -67,6 +68,7 @@ abstract final class Routes {
 
   static const myStore = '/store/mine';
   static const myStoreEdit = '/store/mine/edit';
+  static const myStoreContact = '/store/mine/contact';
   static const followedStores = '/store/following';
 
   /// A public store page: `/store/<slug>`.
@@ -252,6 +254,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (_, _) => const MyStorePage(),
         routes: [
           GoRoute(path: 'edit', builder: (_, _) => const StoreFormPage()),
+          GoRoute(path: 'contact', builder: (_, _) => const StoreContactPage()),
         ],
       ),
       GoRoute(path: Routes.wallet, builder: (_, _) => const WalletPage()),

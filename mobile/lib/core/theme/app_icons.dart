@@ -25,6 +25,7 @@ abstract final class AppIcons {
   static const IconData signOut = Symbols.logout_rounded;
   static const IconData close = Symbols.close_rounded;
   static const IconData call = Symbols.call_rounded;
+  static const IconData schedule = Symbols.schedule_rounded;
   static const IconData send = Symbols.send_rounded;
   static const IconData history = Symbols.history_rounded;
   static const IconData view = Symbols.visibility_rounded;

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Heart } from "lucide-react";
 import { ListingGrid } from "@/components/ListingGrid";
-import { Pagination } from "@/components/Pagination";
+import { MoreButton } from "@/components/MoreButton";
 import { getFavorites } from "@/lib/personal";
 import { getSession } from "@/lib/session";
 
@@ -18,10 +18,12 @@ export default async function FavoritesPage({ searchParams }: PageProps<"/secilm
 
   const raw = (await searchParams).page;
   const page = Math.max(1, Number.parseInt(Array.isArray(raw) ? raw[0] : (raw ?? "1"), 10) || 1);
-  const result = await getFavorites(page);
-  if (!result.ok && result.status === 401) redirect("/giris?next=/secilmisler");
+  const upTo = Math.min(page, 10);
+  const results = await Promise.all(Array.from({ length: upTo }, (_, i) => getFavorites(i + 1)));
+  if (results.some((r) => !r.ok && r.status === 401)) redirect("/giris?next=/secilmisler");
 
-  const data = result.ok ? result.data : null;
+  const first = results[0];
+  const data = first.ok ? { ...first.data, items: results.flatMap((r) => (r.ok ? r.data.items : [])), page: upTo } : null;
 
   return (
     <div className="space-y-6">
@@ -42,11 +44,7 @@ export default async function FavoritesPage({ searchParams }: PageProps<"/secilm
       ) : (
         <>
           <ListingGrid items={data.items} />
-          <Pagination
-            page={data.page}
-            totalPages={data.totalPages}
-            hrefFor={(p) => (p === 1 ? "/secilmisler" : `/secilmisler?page=${p}`)}
-          />
+          <MoreButton href={data.page < data.totalPages && data.page < 10 ? `/secilmisler?page=${data.page + 1}` : null} />
         </>
       )}
     </div>

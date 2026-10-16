@@ -5,6 +5,7 @@ import '../../../core/network/api_client.dart';
 import '../../../core/network/api_exception.dart';
 import '../../catalog/domain/catalog_models.dart';
 import '../../listing_create/domain/photo.dart';
+import '../../wallet/domain/wallet_models.dart';
 import '../domain/store_models.dart';
 
 enum StoreImageKind { logo, cover }
@@ -34,6 +35,71 @@ class StoreRepository {
 
   Future<void> update(StoreForm form) =>
       guardApi(() => _dio.put<void>('/api/stores/mine', data: form.toJson()));
+
+  /// The contact side (phone, networks, WhatsApp, hours): changeable at any time.
+  Future<void> updateContact(StoreContactForm form) => guardApi(
+    () => _dio.put<void>('/api/stores/mine/contact', data: form.toJson()),
+  );
+
+  /// The name and description of a live store, any time.
+  Future<void> updateInfo(String name, String description) => guardApi(
+    () => _dio.put<void>(
+      '/api/stores/mine/info',
+      data: {'name': name.trim(), 'description': description.trim()},
+    ),
+  );
+
+  /// The VIP place offer for the owner store (null when there is no live store).
+  Future<StoreVipOffer?> vipOffer() async {
+    try {
+      return await guardApi(() async {
+        final res = await _dio.get<Map<String, dynamic>>(
+          '/api/stores/mine/vip',
+        );
+        return StoreVipOffer.fromJson(res.data!);
+      });
+    } on ApiException catch (e) {
+      if (e.statusCode == 404) return null;
+      rethrow;
+    }
+  }
+
+  /// Pays for the VIP place from the wallet. The same [idempotencyKey] never
+  /// charges twice.
+  Future<PaymentResult> buyVip(String idempotencyKey) => guardApi(() async {
+    final res = await _dio.post<Map<String, dynamic>>(
+      '/api/stores/mine/vip',
+      data: {'idempotencyKey': idempotencyKey},
+    );
+    return PaymentResult.fromJson(res.data!);
+  });
+
+  /// The stores that paid for a place on the home page.
+  Future<List<FollowedStore>> vipStores({int take = 10}) => guardApi(() async {
+    final res = await _dio.get<List<dynamic>>(
+      '/api/stores/vip',
+      queryParameters: {'take': take},
+    );
+    return [
+      for (final e in res.data!)
+        FollowedStore.fromJson(e as Map<String, dynamic>),
+    ];
+  });
+
+  Future<StoreStats> stats() => guardApi(() async {
+    final res = await _dio.get<Map<String, dynamic>>('/api/stores/mine/stats');
+    return StoreStats.fromJson(res.data!);
+  });
+
+  /// Tells the site that the page was opened or a contact button used
+  /// (view, call, whatsapp, message). Fire and forget: it never fails the visitor.
+  Future<void> reportEvent(String slug, String kind) async {
+    try {
+      await _dio.post<void>('/api/stores/$slug/events', data: {'kind': kind});
+    } catch (_) {
+      // Counting must never get in the way.
+    }
+  }
 
   /// Sends the store for review (needs a logo).
   Future<void> submit() =>
@@ -70,6 +136,9 @@ class StoreRepository {
     required String language,
     int page = 1,
     int pageSize = 20,
+    String search = '',
+    double? minPrice,
+    double? maxPrice,
   }) => guardApi(() async {
     final res = await _dio.get<Map<String, dynamic>>(
       '/api/stores/$slug/listings',
@@ -77,6 +146,9 @@ class StoreRepository {
         'language': language,
         'page': page,
         'pageSize': pageSize,
+        if (search.trim().isNotEmpty) 'search': search.trim(),
+        'minPrice': ?minPrice,
+        'maxPrice': ?maxPrice,
       },
     );
     return Paged.fromJson(res.data!, ListingSummary.fromJson);

@@ -328,7 +328,13 @@ public sealed class StoreModerationService(
             (int)store.Status,
             store.RejectionReason,
             store.CreatedAtUtc,
-            store.UpdatedAtUtc);
+            store.UpdatedAtUtc,
+            store.YoutubeUrl,
+            store.WhatsAppNumber,
+            store.WhatsAppMessage,
+            StoreWorkingHours.Read(store.WorkingHours)
+                .Select(day => new StoreHoursDay(day.Day, day.OpenMinute, day.CloseMinute))
+                .ToArray());
     }
 
     private static StoreStatusResult MapStatus(

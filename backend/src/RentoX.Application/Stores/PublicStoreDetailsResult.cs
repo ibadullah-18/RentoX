@@ -18,4 +18,9 @@ public sealed record PublicStoreDetailsResult(
     long ActiveListingCount,
     long TotalViewCount,
     long TotalFavoriteCount,
-    DateTimeOffset CreatedAtUtc);
+    DateTimeOffset CreatedAtUtc,
+    string? YoutubeUrl = null,
+    string? WhatsAppNumber = null,
+    string? WhatsAppMessage = null,
+    IReadOnlyList<StoreHoursDay>? WorkingHours = null,
+    long FollowerCount = 0);

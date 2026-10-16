@@ -6,16 +6,34 @@ import { usePathname, useRouter } from "next/navigation";
 import { Loader2, MessageCircle } from "lucide-react";
 import { startConversation } from "@/app/mesajlar/actions";
 import { useFavorites } from "./FavoritesProvider";
+import { reportStoreEvent } from "./store/StoreTrack";
 
 /** "Mesaj yaz": signed out it leads to login first; signed in it asks for the first message. */
-export function MessageButton({ listingId, title }: { listingId: string; title: string }) {
+export function MessageButton({
+  listingId,
+  title,
+  label,
+  storeSlug,
+  defaultText = "",
+  outline = false,
+}: {
+  listingId: string;
+  title: string;
+  /** What the button says (the default is "Mesaj yaz"). */
+  label?: string;
+  /** Set on a store page: a sent message counts as a contact with the store. */
+  storeSlug?: string;
+  /** The first message the box starts with. */
+  defaultText?: string;
+  outline?: boolean;
+}) {
   const t = useT();
   const { signedIn } = useFavorites();
   const router = useRouter();
   const pathname = usePathname();
   const dialog = useRef<HTMLDialogElement>(null);
   const [open, setOpen] = useState(false);
-  const [text, setText] = useState("");
+  const [text, setText] = useState(defaultText);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -36,6 +54,7 @@ export function MessageButton({ listingId, title }: { listingId: string; title: 
     setError(null);
     const res = await startConversation(listingId, text);
     if (res.ok) {
+      if (storeSlug) reportStoreEvent(storeSlug, "message");
       router.push(`/mesajlar/${res.conversationId}`);
       return;
     }
@@ -49,10 +68,14 @@ export function MessageButton({ listingId, title }: { listingId: string; title: 
       <button
         type="button"
         onClick={() => (signedIn ? setOpen(true) : router.push(`/giris?next=${encodeURIComponent(pathname)}`))}
-        className="flex h-10 w-full items-center justify-center gap-1.5 rounded-lg bg-primary px-3 text-[14px] font-bold text-white hover:bg-primary-press"
+        className={
+          outline
+            ? "flex h-11 items-center justify-center gap-2 rounded-xl border border-line bg-surface px-4 font-bold hover:border-primary hover:text-primary"
+            : "flex h-10 w-full items-center justify-center gap-1.5 rounded-lg bg-primary px-3 text-[14px] font-bold text-white hover:bg-primary-press"
+        }
       >
-        <MessageCircle className="size-4" aria-hidden />
-        {t("Mesaj yaz")}
+        <MessageCircle className={outline ? "size-5" : "size-4"} aria-hidden />
+        {label ?? t("Mesaj yaz")}
       </button>
 
       <dialog

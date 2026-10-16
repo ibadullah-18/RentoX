@@ -182,6 +182,9 @@ export type AdminStoreItem = {
   status: number;
   rejectionReason?: string | null;
   createdAtUtc: string;
+  followers?: number;
+  activeListings?: number;
+  profileViews?: number;
 };
 
 export type StaffMember = {

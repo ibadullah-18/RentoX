@@ -10,7 +10,7 @@ import { FavoriteButton } from "./FavoriteButton";
 import { ShareButton } from "./ShareButton";
 
 const round =
-  "flex size-9 items-center justify-center rounded-full bg-black/35 text-white backdrop-blur-sm transition-colors hover:bg-black/55";
+  "flex size-8 items-center justify-center rounded-full bg-black/30 text-white backdrop-blur-sm transition-colors hover:bg-black/50";
 
 /**
  * The photos of a listing. They swipe sideways (arrows only on a computer);
@@ -58,7 +58,7 @@ export function Gallery({
 
   if (count === 0) {
     return (
-      <div className="relative flex aspect-[4/3] items-center justify-center rounded-xl bg-primary-soft text-primary">
+      <div className="relative flex aspect-[4/3] items-center justify-center rounded-xl md:aspect-[16/9] bg-primary-soft text-primary">
         {overlay}
         <ImageIcon className="size-12" aria-hidden />
       </div>
@@ -66,12 +66,12 @@ export function Gallery({
   }
 
   const arrow =
-    "absolute top-1/2 z-10 flex size-10 -translate-y-1/2 items-center justify-center rounded-full bg-surface/85 text-ink shadow hover:bg-surface max-md:hidden";
+    "absolute top-1/2 z-10 flex size-8 -translate-y-1/2 items-center justify-center rounded-full bg-surface/85 text-ink shadow-sm hover:bg-surface max-md:hidden";
 
   return (
     <div>
       <div className="relative overflow-hidden rounded-xl bg-primary-soft max-md:-mx-4 max-md:rounded-none">
-        <div ref={track} onScroll={onScroll} className="snap-track flex aspect-[4/3] snap-x snap-mandatory overflow-x-auto">
+        <div ref={track} onScroll={onScroll} className="snap-track flex aspect-[4/3] snap-x snap-mandatory overflow-x-auto md:aspect-[16/9]">
           {images.map((img, i) => (
             <button
               key={img.id}
@@ -99,12 +99,12 @@ export function Gallery({
           <>
             {index > 0 && (
               <button type="button" onClick={() => goTo(index - 1)} aria-label={t("Əvvəlki şəkil")} className={`${arrow} left-3`}>
-                <ChevronLeft className="size-5" />
+                <ChevronLeft className="size-4" />
               </button>
             )}
             {index < count - 1 && (
               <button type="button" onClick={() => goTo(index + 1)} aria-label={t("Növbəti şəkil")} className={`${arrow} right-3`}>
-                <ChevronRight className="size-5" />
+                <ChevronRight className="size-4" />
               </button>
             )}
             <span className="absolute bottom-3 right-3 rounded-full bg-black/40 px-2.5 py-0.5 text-[11px] font-semibold text-white backdrop-blur-sm">
@@ -115,7 +115,7 @@ export function Gallery({
       </div>
 
       {count > 1 && (
-        <ul className="strip mt-3 max-md:hidden">
+        <ul className="strip mt-2 max-md:hidden">
           {images.map((img, i) => (
             <li key={img.id} className="shrink-0">
               <button
@@ -123,7 +123,7 @@ export function Gallery({
                 onClick={() => goTo(i)}
                 aria-label={t("Şəkil {n}", { n: i + 1 })}
                 aria-current={i === index}
-                className={`relative block size-16 overflow-hidden rounded-lg border-2 md:size-[72px] ${
+                className={`relative block size-12 overflow-hidden rounded-md border-2 md:size-14 ${
                   i === index ? "border-primary" : "border-transparent opacity-70"
                 }`}
               >

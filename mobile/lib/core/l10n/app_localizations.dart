@@ -2828,6 +2828,318 @@ abstract class AppL10n {
   /// In az, this message translates to:
   /// **'Son yenilənmə: {date}'**
   String infoUpdated(String date);
+
+  /// No description provided for @storeWriteTo.
+  ///
+  /// In az, this message translates to:
+  /// **'Mağazaya yaz'**
+  String get storeWriteTo;
+
+  /// No description provided for @storeCall.
+  ///
+  /// In az, this message translates to:
+  /// **'Zəng et'**
+  String get storeCall;
+
+  /// No description provided for @storeHoursTitle.
+  ///
+  /// In az, this message translates to:
+  /// **'İş saatları'**
+  String get storeHoursTitle;
+
+  /// No description provided for @storeOpenNow.
+  ///
+  /// In az, this message translates to:
+  /// **'İndi açıqdır'**
+  String get storeOpenNow;
+
+  /// No description provided for @storeClosedNow.
+  ///
+  /// In az, this message translates to:
+  /// **'İndi bağlıdır'**
+  String get storeClosedNow;
+
+  /// No description provided for @storeDayClosed.
+  ///
+  /// In az, this message translates to:
+  /// **'Bağlıdır'**
+  String get storeDayClosed;
+
+  /// No description provided for @storeVipTitle.
+  ///
+  /// In az, this message translates to:
+  /// **'VIP elanlar'**
+  String get storeVipTitle;
+
+  /// No description provided for @storeShowAll.
+  ///
+  /// In az, this message translates to:
+  /// **'Hamısını göstər'**
+  String get storeShowAll;
+
+  /// No description provided for @storeShowLess.
+  ///
+  /// In az, this message translates to:
+  /// **'Daha az göstər'**
+  String get storeShowLess;
+
+  /// No description provided for @storeStatsTitle.
+  ///
+  /// In az, this message translates to:
+  /// **'Statistika'**
+  String get storeStatsTitle;
+
+  /// No description provided for @storeStatsHint.
+  ///
+  /// In az, this message translates to:
+  /// **'Mağaza səhifəsinin açılması və əlaqə düymələrinin istifadəsi. Sizin öz baxışlarınız sayılmır.'**
+  String get storeStatsHint;
+
+  /// No description provided for @storeStatFollowers.
+  ///
+  /// In az, this message translates to:
+  /// **'İzləyici'**
+  String get storeStatFollowers;
+
+  /// No description provided for @storeStatViews7.
+  ///
+  /// In az, this message translates to:
+  /// **'Mağaza baxışı (7 gün)'**
+  String get storeStatViews7;
+
+  /// No description provided for @storeStatViews30.
+  ///
+  /// In az, this message translates to:
+  /// **'Mağaza baxışı (30 gün)'**
+  String get storeStatViews30;
+
+  /// No description provided for @storeStatListingViews.
+  ///
+  /// In az, this message translates to:
+  /// **'Elanların baxışı'**
+  String get storeStatListingViews;
+
+  /// No description provided for @storeStatFavorites.
+  ///
+  /// In az, this message translates to:
+  /// **'Elanlar seçilmişlərdə'**
+  String get storeStatFavorites;
+
+  /// No description provided for @storeStatCalls.
+  ///
+  /// In az, this message translates to:
+  /// **'Zəng düyməsi'**
+  String get storeStatCalls;
+
+  /// No description provided for @storeStatWhatsApp.
+  ///
+  /// In az, this message translates to:
+  /// **'WhatsApp'**
+  String get storeStatWhatsApp;
+
+  /// No description provided for @storeStatMessages.
+  ///
+  /// In az, this message translates to:
+  /// **'Mağazaya yazılan'**
+  String get storeStatMessages;
+
+  /// No description provided for @storeContactEdit.
+  ///
+  /// In az, this message translates to:
+  /// **'Əlaqə, şəbəkələr, iş saatları'**
+  String get storeContactEdit;
+
+  /// No description provided for @storeContactEditHint.
+  ///
+  /// In az, this message translates to:
+  /// **'İstənilən vaxt dəyişə bilərsiniz, mağaza yoxlamaya qayıtmır.'**
+  String get storeContactEditHint;
+
+  /// No description provided for @storeContactSaved.
+  ///
+  /// In az, this message translates to:
+  /// **'Yadda saxlanıldı'**
+  String get storeContactSaved;
+
+  /// No description provided for @storeYoutube.
+  ///
+  /// In az, this message translates to:
+  /// **'YouTube linki (istəyə görə)'**
+  String get storeYoutube;
+
+  /// No description provided for @storeWhatsApp.
+  ///
+  /// In az, this message translates to:
+  /// **'WhatsApp nömrəsi (istəyə görə)'**
+  String get storeWhatsApp;
+
+  /// No description provided for @storeWhatsAppMessage.
+  ///
+  /// In az, this message translates to:
+  /// **'WhatsApp-da ilk mesaj'**
+  String get storeWhatsAppMessage;
+
+  /// No description provided for @storeWhatsAppHint.
+  ///
+  /// In az, this message translates to:
+  /// **'Ziyarətçi WhatsApp düyməsinə basanda bu mətn yazılmış halda açılır.'**
+  String get storeWhatsAppHint;
+
+  /// No description provided for @storeErrNumber.
+  ///
+  /// In az, this message translates to:
+  /// **'Düzgün nömrə yazın (məs. 050 123 45 67)'**
+  String get storeErrNumber;
+
+  /// No description provided for @storeErrHours.
+  ///
+  /// In az, this message translates to:
+  /// **'Bağlanış açılışdan sonra olmalıdır'**
+  String get storeErrHours;
+
+  /// No description provided for @storeFirstMessage.
+  ///
+  /// In az, this message translates to:
+  /// **'Salam! Mağazanızla maraqlanıram. Ünvanınızı deyə bilərsiniz?'**
+  String get storeFirstMessage;
+
+  /// No description provided for @storeHoursCopyAll.
+  ///
+  /// In az, this message translates to:
+  /// **'İlk açıq günün saatını hamısına yaz'**
+  String get storeHoursCopyAll;
+
+  /// No description provided for @weekdayMon.
+  ///
+  /// In az, this message translates to:
+  /// **'Bazar ertəsi'**
+  String get weekdayMon;
+
+  /// No description provided for @weekdayTue.
+  ///
+  /// In az, this message translates to:
+  /// **'Çərşənbə axşamı'**
+  String get weekdayTue;
+
+  /// No description provided for @weekdayWed.
+  ///
+  /// In az, this message translates to:
+  /// **'Çərşənbə'**
+  String get weekdayWed;
+
+  /// No description provided for @weekdayThu.
+  ///
+  /// In az, this message translates to:
+  /// **'Cümə axşamı'**
+  String get weekdayThu;
+
+  /// No description provided for @weekdayFri.
+  ///
+  /// In az, this message translates to:
+  /// **'Cümə'**
+  String get weekdayFri;
+
+  /// No description provided for @weekdaySat.
+  ///
+  /// In az, this message translates to:
+  /// **'Şənbə'**
+  String get weekdaySat;
+
+  /// No description provided for @weekdaySun.
+  ///
+  /// In az, this message translates to:
+  /// **'Bazar'**
+  String get weekdaySun;
+
+  /// No description provided for @storeTodayClosed.
+  ///
+  /// In az, this message translates to:
+  /// **'Bu gün bağlıdır'**
+  String get storeTodayClosed;
+
+  /// No description provided for @storeVipBuy.
+  ///
+  /// In az, this message translates to:
+  /// **'VIP et'**
+  String get storeVipBuy;
+
+  /// No description provided for @storeVipExtend.
+  ///
+  /// In az, this message translates to:
+  /// **'Müddəti uzat'**
+  String get storeVipExtend;
+
+  /// No description provided for @storeVipPaid.
+  ///
+  /// In az, this message translates to:
+  /// **'Ödəniş keçdi. Mağazanız ana səhifədə göstəriləcək.'**
+  String get storeVipPaid;
+
+  /// No description provided for @storeVipDefaultOffer.
+  ///
+  /// In az, this message translates to:
+  /// **'Mağazanızı ana səhifədə göstərin və daha çox müştəri qazanın.'**
+  String get storeVipDefaultOffer;
+
+  /// No description provided for @storeVipDays.
+  ///
+  /// In az, this message translates to:
+  /// **'{days} gün'**
+  String storeVipDays(int days);
+
+  /// No description provided for @storeVipActiveUntil.
+  ///
+  /// In az, this message translates to:
+  /// **'Mağazanız ana səhifədə göstərilir: {date} tarixinədək'**
+  String storeVipActiveUntil(String date);
+
+  /// No description provided for @storeVipLeftHours.
+  ///
+  /// In az, this message translates to:
+  /// **'{hours} saat qalıb'**
+  String storeVipLeftHours(int hours);
+
+  /// No description provided for @storeVipLeft.
+  ///
+  /// In az, this message translates to:
+  /// **'{days} gün {hours} saat qalıb'**
+  String storeVipLeft(int days, int hours);
+
+  /// No description provided for @storeVipInfo.
+  ///
+  /// In az, this message translates to:
+  /// **'VIP mağaza ana səhifədə, bütün elanlardan əvvəl göstərilir. Müddət bitəndən sonra adi mağaza kimi qalır; vaxtında uzatsanız fasilə olmur.'**
+  String get storeVipInfo;
+
+  /// No description provided for @storeVipBadge.
+  ///
+  /// In az, this message translates to:
+  /// **'VIP mağaza'**
+  String get storeVipBadge;
+
+  /// No description provided for @storeSearchHint.
+  ///
+  /// In az, this message translates to:
+  /// **'Mağazada axtar'**
+  String get storeSearchHint;
+
+  /// No description provided for @storePriceFilter.
+  ///
+  /// In az, this message translates to:
+  /// **'Qiymət'**
+  String get storePriceFilter;
+
+  /// No description provided for @storeInfoEdit.
+  ///
+  /// In az, this message translates to:
+  /// **'Ad və təsviri dəyiş'**
+  String get storeInfoEdit;
+
+  /// No description provided for @storeInfoSave.
+  ///
+  /// In az, this message translates to:
+  /// **'Saxla'**
+  String get storeInfoSave;
 }
 
 class _AppL10nDelegate extends LocalizationsDelegate<AppL10n> {

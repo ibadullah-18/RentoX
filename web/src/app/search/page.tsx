@@ -5,7 +5,7 @@ import { ChevronRight, SearchX } from "lucide-react";
 import { CategoryTiles } from "@/components/CategoryTiles";
 import { FilterForm } from "@/components/FilterForm";
 import { ListingGrid } from "@/components/ListingGrid";
-import { Pagination } from "@/components/Pagination";
+import { MoreButton } from "@/components/MoreButton";
 import { categoryChain, getCategories, getCities, getFilterFields, getListings } from "@/lib/api";
 import { redirect } from "next/navigation";
 import { fieldFiltersJson, isUntidy, parseSearch, toQuery } from "@/lib/search-params";
@@ -49,7 +49,9 @@ export default async function SearchPage({ searchParams }: PageProps<"/search">)
   const fields = p.category ? await getFilterFields(p.category) : [];
   const periods = picked?.rentalPeriods?.length ? picked.rentalPeriods : [1, 2, 3, 4, 5, 6];
 
-  const result = await getListings({
+  // "Show more" asks for the next page of the same address: the pages so far are shown one under the other.
+  const upTo = Math.min(p.page, 10);
+  const base = {
     search: p.q,
     categoryId: p.category,
     minPrice: p.minPrice,
@@ -59,8 +61,9 @@ export default async function SearchPage({ searchParams }: PageProps<"/search">)
     cityId: p.city,
     rentalPeriod: p.period,
     fieldFilters: fieldFiltersJson(p, fields),
-    page: p.page,
-  });
+  };
+  const pages = await Promise.all(Array.from({ length: upTo }, (_, i) => getListings({ ...base, page: i + 1 })));
+  const result = { ...pages[0], items: pages.flatMap((x) => x.items), page: upTo };
 
   // Inside a category the strip shows what is in it, with a "back" card one
   // level up. The last category has nothing inside, so only "back" is left.
@@ -108,14 +111,7 @@ export default async function SearchPage({ searchParams }: PageProps<"/search">)
         ) : (
           <>
             <ListingGrid items={result.items} />
-            <Pagination
-              page={result.page}
-              totalPages={result.totalPages}
-              hrefFor={(n) => {
-                const q = toQuery(p, { page: n > 1 ? String(n) : undefined });
-                return q.size > 0 ? `/search?${q}` : "/search";
-              }}
-            />
+            <MoreButton href={result.page < result.totalPages && result.page < 10 ? `/search?${toQuery(p, { page: String(result.page + 1) })}` : null} />
           </>
         )}
       </div>

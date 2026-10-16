@@ -1460,4 +1460,175 @@ class AppL10nAz extends AppL10n {
   String infoUpdated(String date) {
     return 'Son yenilənmə: $date';
   }
+
+  @override
+  String get storeWriteTo => 'Mağazaya yaz';
+
+  @override
+  String get storeCall => 'Zəng et';
+
+  @override
+  String get storeHoursTitle => 'İş saatları';
+
+  @override
+  String get storeOpenNow => 'İndi açıqdır';
+
+  @override
+  String get storeClosedNow => 'İndi bağlıdır';
+
+  @override
+  String get storeDayClosed => 'Bağlıdır';
+
+  @override
+  String get storeVipTitle => 'VIP elanlar';
+
+  @override
+  String get storeShowAll => 'Hamısını göstər';
+
+  @override
+  String get storeShowLess => 'Daha az göstər';
+
+  @override
+  String get storeStatsTitle => 'Statistika';
+
+  @override
+  String get storeStatsHint =>
+      'Mağaza səhifəsinin açılması və əlaqə düymələrinin istifadəsi. Sizin öz baxışlarınız sayılmır.';
+
+  @override
+  String get storeStatFollowers => 'İzləyici';
+
+  @override
+  String get storeStatViews7 => 'Mağaza baxışı (7 gün)';
+
+  @override
+  String get storeStatViews30 => 'Mağaza baxışı (30 gün)';
+
+  @override
+  String get storeStatListingViews => 'Elanların baxışı';
+
+  @override
+  String get storeStatFavorites => 'Elanlar seçilmişlərdə';
+
+  @override
+  String get storeStatCalls => 'Zəng düyməsi';
+
+  @override
+  String get storeStatWhatsApp => 'WhatsApp';
+
+  @override
+  String get storeStatMessages => 'Mağazaya yazılan';
+
+  @override
+  String get storeContactEdit => 'Əlaqə, şəbəkələr, iş saatları';
+
+  @override
+  String get storeContactEditHint =>
+      'İstənilən vaxt dəyişə bilərsiniz, mağaza yoxlamaya qayıtmır.';
+
+  @override
+  String get storeContactSaved => 'Yadda saxlanıldı';
+
+  @override
+  String get storeYoutube => 'YouTube linki (istəyə görə)';
+
+  @override
+  String get storeWhatsApp => 'WhatsApp nömrəsi (istəyə görə)';
+
+  @override
+  String get storeWhatsAppMessage => 'WhatsApp-da ilk mesaj';
+
+  @override
+  String get storeWhatsAppHint =>
+      'Ziyarətçi WhatsApp düyməsinə basanda bu mətn yazılmış halda açılır.';
+
+  @override
+  String get storeErrNumber => 'Düzgün nömrə yazın (məs. 050 123 45 67)';
+
+  @override
+  String get storeErrHours => 'Bağlanış açılışdan sonra olmalıdır';
+
+  @override
+  String get storeFirstMessage =>
+      'Salam! Mağazanızla maraqlanıram. Ünvanınızı deyə bilərsiniz?';
+
+  @override
+  String get storeHoursCopyAll => 'İlk açıq günün saatını hamısına yaz';
+
+  @override
+  String get weekdayMon => 'Bazar ertəsi';
+
+  @override
+  String get weekdayTue => 'Çərşənbə axşamı';
+
+  @override
+  String get weekdayWed => 'Çərşənbə';
+
+  @override
+  String get weekdayThu => 'Cümə axşamı';
+
+  @override
+  String get weekdayFri => 'Cümə';
+
+  @override
+  String get weekdaySat => 'Şənbə';
+
+  @override
+  String get weekdaySun => 'Bazar';
+
+  @override
+  String get storeTodayClosed => 'Bu gün bağlıdır';
+
+  @override
+  String get storeVipBuy => 'VIP et';
+
+  @override
+  String get storeVipExtend => 'Müddəti uzat';
+
+  @override
+  String get storeVipPaid =>
+      'Ödəniş keçdi. Mağazanız ana səhifədə göstəriləcək.';
+
+  @override
+  String get storeVipDefaultOffer =>
+      'Mağazanızı ana səhifədə göstərin və daha çox müştəri qazanın.';
+
+  @override
+  String storeVipDays(int days) {
+    return '$days gün';
+  }
+
+  @override
+  String storeVipActiveUntil(String date) {
+    return 'Mağazanız ana səhifədə göstərilir: $date tarixinədək';
+  }
+
+  @override
+  String storeVipLeftHours(int hours) {
+    return '$hours saat qalıb';
+  }
+
+  @override
+  String storeVipLeft(int days, int hours) {
+    return '$days gün $hours saat qalıb';
+  }
+
+  @override
+  String get storeVipInfo =>
+      'VIP mağaza ana səhifədə, bütün elanlardan əvvəl göstərilir. Müddət bitəndən sonra adi mağaza kimi qalır; vaxtında uzatsanız fasilə olmur.';
+
+  @override
+  String get storeVipBadge => 'VIP mağaza';
+
+  @override
+  String get storeSearchHint => 'Mağazada axtar';
+
+  @override
+  String get storePriceFilter => 'Qiymət';
+
+  @override
+  String get storeInfoEdit => 'Ad və təsviri dəyiş';
+
+  @override
+  String get storeInfoSave => 'Saxla';
 }

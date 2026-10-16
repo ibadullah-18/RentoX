@@ -15,7 +15,8 @@ export default async function StoresAdminPage({ searchParams }: PageProps<"/admi
   const sp = await searchParams;
   const one = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v);
   const page = Math.max(1, Number.parseInt(one(sp.page) ?? "1", 10) || 1);
-  const status = one(sp.status) ?? "2";
+  // Every store is the first view; the ones waiting for a decision are one chip away (and counted on the menu).
+  const status = one(sp.status) ?? "all";
   const q = (one(sp.q) ?? "").trim();
 
   const result = await authed<Paged<AdminStoreItem>>("/api/admin/stores", {
@@ -27,7 +28,7 @@ export default async function StoresAdminPage({ searchParams }: PageProps<"/admi
   const link = (over: { status?: string; page?: number }) => {
     const query = new URLSearchParams();
     const s = over.status ?? status;
-    if (s !== "2") query.set("status", s);
+    if (s !== "all") query.set("status", s);
     if (q) query.set("q", q);
     if (over.page && over.page > 1) query.set("page", String(over.page));
     const text = query.toString();
@@ -35,8 +36,8 @@ export default async function StoresAdminPage({ searchParams }: PageProps<"/admi
   };
 
   const chips = [
-    { label: "Yoxlamada", href: link({ status: "2" }), value: "2" },
     { label: "Hamısı", href: link({ status: "all" }), value: "all" },
+    { label: "Yoxlamada", href: link({ status: "2" }), value: "2" },
     ...Object.entries(storeStatusLabel)
       .filter(([v]) => v !== "2")
       .map(([v, label]) => ({ label, href: link({ status: v }), value: v })),
@@ -46,7 +47,7 @@ export default async function StoresAdminPage({ searchParams }: PageProps<"/admi
     <div className="space-y-5">
       <PageHead
         title="Mağazalar"
-        hint="Mağaza adı, sahibin adı və ya telefonu ilə axtarın; statusa görə süzün. CSV düyməsi cari süzgəcin nəticəsini fayla yazır."
+        hint="Bütün mağazalar: ad, sahibin adı və ya telefonu ilə axtarın, statusa görə süzün. Hər sətirdə izləyici, aktiv elan və mağaza səhifəsinin baxış sayı var. CSV düyməsi cari süzgəcin nəticəsini fayla yazır."
         actions={
           <a
             href={`/bff/admin-export/stores${exportQuery}`}
@@ -59,7 +60,7 @@ export default async function StoresAdminPage({ searchParams }: PageProps<"/admi
       />
 
       <form action={adminHref("/magazalar")} className="no-print flex gap-2">
-        {status !== "2" && <input type="hidden" name="status" value={status} />}
+        {status !== "all" && <input type="hidden" name="status" value={status} />}
         <div className="flex h-10 min-w-0 flex-1 items-center gap-2 rounded-lg border border-line bg-surface px-3 focus-within:border-primary">
           <Search className="size-4 shrink-0 text-muted" aria-hidden />
           <input name="q" defaultValue={q} placeholder="Ad, sahib və ya telefon" className="min-w-0 flex-1 bg-transparent text-[15px] outline-none" />
@@ -92,6 +93,17 @@ export default async function StoresAdminPage({ searchParams }: PageProps<"/admi
                     <span className="block truncate text-sm text-ink-2">
                       {s.ownerName}
                       {s.ownerPhone ? ` · ${s.ownerPhone}` : ""} · {dateTime(s.createdAtUtc)}
+                    </span>
+                  </span>
+                  <span className="hidden shrink-0 gap-5 text-center text-xs text-ink-2 sm:flex">
+                    <span>
+                      <b className="block text-base text-ink">{s.followers ?? 0}</b>izləyici
+                    </span>
+                    <span>
+                      <b className="block text-base text-ink">{s.activeListings ?? 0}</b>aktiv elan
+                    </span>
+                    <span>
+                      <b className="block text-base text-ink">{s.profileViews ?? 0}</b>baxış
                     </span>
                   </span>
                 </Link>

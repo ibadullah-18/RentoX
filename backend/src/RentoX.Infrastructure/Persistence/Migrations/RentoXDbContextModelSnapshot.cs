@@ -643,6 +643,95 @@ namespace RentoX.Infrastructure.Persistence.Migrations
                     b.ToTable("favorites", "engagement");
                 });
 
+            modelBuilder.Entity("RentoX.Domain.Finance.FinanceExpense", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("Amount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<int>("Category")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateOnly>("Day")
+                        .HasColumnType("date");
+
+                    b.Property<string>("Note")
+                        .HasMaxLength(400)
+                        .HasColumnType("character varying(400)");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .HasColumnType("character varying(120)");
+
+                    b.Property<string>("VoidReason")
+                        .HasMaxLength(400)
+                        .HasColumnType("character varying(400)");
+
+                    b.Property<DateTimeOffset?>("VoidedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("VoidedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Day");
+
+                    b.ToTable("expenses", "finance", t =>
+                        {
+                            t.HasCheckConstraint("CK_expenses_Amount", "\"Amount\" > 0");
+                        });
+                });
+
+            modelBuilder.Entity("RentoX.Domain.Finance.FinanceProfile", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Address")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("Email")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("FullName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("Phone")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<DateTimeOffset?>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("UpdatedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Voen")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("profile", "finance");
+                });
+
             modelBuilder.Entity("RentoX.Domain.Hr.AttendanceAlert", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1738,6 +1827,31 @@ namespace RentoX.Infrastructure.Persistence.Migrations
                     b.ToTable("settings_versions", "admin");
                 });
 
+            modelBuilder.Entity("RentoX.Domain.Stores.StoreDayStat", b =>
+                {
+                    b.Property<Guid>("StoreId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateOnly>("Day")
+                        .HasColumnType("date");
+
+                    b.Property<int>("Calls")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Messages")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Views")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("WhatsApp")
+                        .HasColumnType("integer");
+
+                    b.HasKey("StoreId", "Day");
+
+                    b.ToTable("store_day_stats", "stores");
+                });
+
             modelBuilder.Entity("RentoX.Domain.Stores.StoreFollower", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1846,6 +1960,22 @@ namespace RentoX.Infrastructure.Persistence.Migrations
                         .HasMaxLength(300)
                         .HasColumnType("character varying(300)");
 
+                    b.Property<string>("WhatsAppMessage")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.Property<string>("WhatsAppNumber")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("WorkingHours")
+                        .HasMaxLength(400)
+                        .HasColumnType("character varying(400)");
+
+                    b.Property<string>("YoutubeUrl")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
                     b.HasKey("Id");
 
                     b.HasIndex("OwnerId")
@@ -1857,6 +1987,88 @@ namespace RentoX.Infrastructure.Persistence.Migrations
                     b.HasIndex("Status", "CreatedAtUtc");
 
                     b.ToTable("store_profiles", "stores");
+                });
+
+            modelBuilder.Entity("RentoX.Domain.Stores.StoreVipPlan", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("DurationDays")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("IsEnabled")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(60)
+                        .HasColumnType("character varying(60)");
+
+                    b.Property<int>("OfferIntervalHours")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("OfferMessage")
+                        .IsRequired()
+                        .HasMaxLength(400)
+                        .HasColumnType("character varying(400)");
+
+                    b.Property<decimal>("Price")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedAtUtc");
+
+                    b.ToTable("store_vip_plans", "stores");
+                });
+
+            modelBuilder.Entity("RentoX.Domain.Stores.StoreVipPurchase", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("ChargedAmount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<DateTimeOffset>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset>("EndsAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("PlanName")
+                        .IsRequired()
+                        .HasMaxLength(60)
+                        .HasColumnType("character varying(60)");
+
+                    b.Property<DateTimeOffset>("StartsAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("StoreId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("WalletTransactionId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("WalletTransactionId")
+                        .IsUnique();
+
+                    b.HasIndex("StoreId", "EndsAtUtc");
+
+                    b.ToTable("store_vip_purchases", "stores");
                 });
 
             modelBuilder.Entity("RentoX.Domain.Support.SupportTicket", b =>
@@ -2632,6 +2844,15 @@ namespace RentoX.Infrastructure.Persistence.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("RentoX.Domain.Stores.StoreDayStat", b =>
+                {
+                    b.HasOne("RentoX.Domain.Stores.StoreProfile", null)
+                        .WithMany()
+                        .HasForeignKey("StoreId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("RentoX.Domain.Stores.StoreFollower", b =>
                 {
                     b.HasOne("RentoX.Domain.Stores.StoreProfile", null)
@@ -2652,6 +2873,21 @@ namespace RentoX.Infrastructure.Persistence.Migrations
                     b.HasOne("RentoX.Infrastructure.Identity.AppUser", null)
                         .WithOne()
                         .HasForeignKey("RentoX.Domain.Stores.StoreProfile", "OwnerId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("RentoX.Domain.Stores.StoreVipPurchase", b =>
+                {
+                    b.HasOne("RentoX.Domain.Stores.StoreProfile", null)
+                        .WithMany()
+                        .HasForeignKey("StoreId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("RentoX.Domain.Wallets.WalletTransaction", null)
+                        .WithMany()
+                        .HasForeignKey("WalletTransactionId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });

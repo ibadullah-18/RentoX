@@ -9,9 +9,12 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_icons.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../shared/widgets/async_states.dart';
+import '../../../shared/widgets/brand_icon.dart';
 import '../../../shared/widgets/sub_page.dart';
 import '../../listing_create/data/photo_source.dart';
 import '../../listing_create/domain/photo.dart';
+import '../../wallet/presentation/payment_sheet.dart';
+import '../../wallet/data/wallet_repository.dart';
 import '../data/store_repository.dart';
 import '../domain/store_models.dart';
 import 'store_controller.dart';
@@ -114,6 +117,29 @@ class _StoreViewState extends ConsumerState<_StoreView> {
     } finally {
       if (mounted) setState(() => _busy = false);
     }
+  }
+
+  /// A live store keeps its name and description editable: a sheet with both, saved straight away.
+  Future<void> _editInfo(MyStore store) async {
+    final result = await showModalBottomSheet<({String name, String about})>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      showDragHandle: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.xl)),
+      ),
+      builder: (_) =>
+          _InfoSheet(name: store.name, description: store.description),
+    );
+    if (result == null || !mounted) return;
+    final l10n = AppL10n.of(context);
+    await _run(
+      () => ref
+          .read(myStoreProvider.notifier)
+          .saveInfo(result.name, result.about),
+      success: l10n.storeSaved,
+    );
   }
 
   Future<void> _pickImage(StoreImageKind kind) async {
@@ -326,11 +352,31 @@ class _StoreViewState extends ConsumerState<_StoreView> {
             onPressed: _busy ? null : () => context.push(Routes.myStoreEdit),
             child: Text(l10n.editAction),
           ),
-        if (store.status == StoreStatus.active)
+        if (store.status != StoreStatus.suspended &&
+            store.status != StoreStatus.deleted) ...[
+          const SizedBox(height: AppSpacing.sm),
+          OutlinedButton.icon(
+            onPressed: _busy ? null : () => context.push(Routes.myStoreContact),
+            icon: const Icon(AppIcons.call, size: 18),
+            label: Text(l10n.storeContactEdit),
+          ),
+        ],
+        if (store.status == StoreStatus.active) ...[
+          const SizedBox(height: AppSpacing.sm),
+          OutlinedButton.icon(
+            onPressed: _busy ? null : () => _editInfo(store),
+            icon: const Icon(AppIcons.edit, size: 18),
+            label: Text(l10n.storeInfoEdit),
+          ),
+          const SizedBox(height: AppSpacing.sm),
           FilledButton(
             onPressed: () => context.push(Routes.store(store.slug)),
             child: Text(l10n.storeView),
           ),
+          const SizedBox(height: AppSpacing.lg),
+          const _VipCard(),
+          const _StatsCard(),
+        ],
         const SizedBox(height: AppSpacing.xl),
 
         // --- details ---
@@ -347,14 +393,38 @@ class _StoreViewState extends ConsumerState<_StoreView> {
                 _Info(icon: AppIcons.mail, text: store.email),
               if (store.address.isNotEmpty)
                 _Info(icon: AppIcons.place, text: store.address),
+              if (store.whatsApp.isNotEmpty)
+                _Info(
+                  icon: AppIcons.call,
+                  brand: Brand.whatsapp,
+                  text: '+${store.whatsApp}',
+                ),
               if (store.website.isNotEmpty)
                 _Info(icon: AppIcons.link, text: store.website),
               if (store.instagram.isNotEmpty)
-                _Info(icon: AppIcons.link, text: store.instagram),
+                _Info(
+                  icon: AppIcons.link,
+                  brand: Brand.instagram,
+                  text: store.instagram,
+                ),
               if (store.tiktok.isNotEmpty)
-                _Info(icon: AppIcons.link, text: store.tiktok),
+                _Info(
+                  icon: AppIcons.link,
+                  brand: Brand.tiktok,
+                  text: store.tiktok,
+                ),
+              if (store.youtube.isNotEmpty)
+                _Info(
+                  icon: AppIcons.link,
+                  brand: Brand.youtube,
+                  text: store.youtube,
+                ),
               if (store.facebook.isNotEmpty)
-                _Info(icon: AppIcons.link, text: store.facebook),
+                _Info(
+                  icon: AppIcons.link,
+                  brand: Brand.facebook,
+                  text: store.facebook,
+                ),
             ],
           ),
         ),
@@ -364,10 +434,13 @@ class _StoreViewState extends ConsumerState<_StoreView> {
 }
 
 class _Info extends StatelessWidget {
-  const _Info({required this.icon, required this.text});
+  const _Info({required this.icon, required this.text, this.brand});
 
   final IconData icon;
   final String text;
+
+  /// The real logo of the network, when the line is one.
+  final Brand? brand;
 
   @override
   Widget build(BuildContext context) {
@@ -379,7 +452,13 @@ class _Info extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Icon(icon, size: 20, color: scheme.primary),
+          brand == null
+              ? Icon(icon, size: 20, color: scheme.primary)
+              : BrandIcon(
+                  brand!,
+                  size: 20,
+                  color: brand == Brand.tiktok ? scheme.onSurface : null,
+                ),
           const SizedBox(width: AppSpacing.md),
           Expanded(child: Text(text)),
         ],
@@ -455,6 +534,323 @@ class _Pic extends StatelessWidget {
                   errorWidget: (_, _, _) => placeholder,
                 ),
         ),
+      ),
+    );
+  }
+}
+
+/// What the owner wants to know: followers, views of the page and of the listings, and how often the store was contacted.
+class _StatsCard extends ConsumerWidget {
+  const _StatsCard();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppL10n.of(context);
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final stats = ref.watch(myStoreStatsProvider);
+
+    return stats.when(
+      loading: () => const SizedBox.shrink(),
+      error: (_, _) => const SizedBox.shrink(),
+      data: (s) {
+        final peak = s.last30Views.fold<int>(1, (a, b) => b > a ? b : a);
+        final figures = <(String, int)>[
+          (l10n.storeStatFollowers, s.followers),
+          (l10n.storeStatViews7, s.viewsLast7Days),
+          (l10n.storeStatViews30, s.viewsLast30Days),
+          (l10n.storeStatListingViews, s.listingViews),
+          (l10n.storeStatFavorites, s.listingFavorites),
+          (l10n.storeStatCalls, s.calls),
+          (l10n.storeStatWhatsApp, s.whatsApp),
+          (l10n.storeStatMessages, s.messages),
+        ];
+        return Card(
+          child: Padding(
+            padding: const EdgeInsets.all(AppSpacing.lg),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  l10n.storeStatsTitle,
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  l10n.storeStatsHint,
+                  style: TextStyle(
+                    color: scheme.onSurfaceVariant,
+                    fontSize: 13,
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.md),
+                Wrap(
+                  spacing: AppSpacing.sm,
+                  runSpacing: AppSpacing.sm,
+                  children: [
+                    for (final (label, value) in figures)
+                      Container(
+                        width: 148,
+                        padding: const EdgeInsets.all(AppSpacing.md),
+                        decoration: BoxDecoration(
+                          color: scheme.primary.withValues(alpha: 0.07),
+                          borderRadius: BorderRadius.circular(AppRadius.lg),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              '$value',
+                              style: theme.textTheme.titleLarge?.copyWith(
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                            Text(
+                              label,
+                              style: TextStyle(
+                                color: scheme.onSurfaceVariant,
+                                fontSize: 12.5,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                  ],
+                ),
+                if (s.last30Views.isNotEmpty) ...[
+                  const SizedBox(height: AppSpacing.lg),
+                  SizedBox(
+                    height: 72,
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        for (final v in s.last30Views)
+                          Expanded(
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 1,
+                              ),
+                              child: FractionallySizedBox(
+                                heightFactor: (v / peak).clamp(0.05, 1.0),
+                                child: DecoratedBox(
+                                  decoration: BoxDecoration(
+                                    color: scheme.primary.withValues(
+                                      alpha: v == 0 ? 0.2 : 0.85,
+                                    ),
+                                    borderRadius: BorderRadius.circular(2),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+/// The offer to put the store on the home page: price and time set by the admin, paid from the wallet.
+class _VipCard extends ConsumerWidget {
+  const _VipCard();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppL10n.of(context);
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final offer = ref.watch(myStoreVipProvider).value;
+    if (offer == null || (!offer.isOnSale && !offer.isVip)) {
+      return const SizedBox.shrink();
+    }
+    final locale = Localizations.localeOf(context).toString();
+    final until = offer.vipUntil;
+    final hoursLeft = until == null
+        ? 0
+        : until.difference(DateTime.now()).inHours.clamp(0, 100000);
+
+    Future<void> buy() async {
+      final messenger = ScaffoldMessenger.of(context);
+      final ok = await showPaymentSheet(
+        context,
+        kind: PaymentKind.vip,
+        amount: offer.price,
+        title: '${offer.name} (${l10n.storeVipDays(offer.durationDays)})',
+        pay: (key) => ref.read(storeRepositoryProvider).buyVip(key),
+      );
+      if (ok == true) {
+        ref.invalidate(myStoreVipProvider);
+        ref.invalidate(homeStoresProvider);
+        ref.invalidate(walletBalanceProvider);
+        messenger.showSnackBar(SnackBar(content: Text(l10n.storeVipPaid)));
+      }
+    }
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.lg),
+      child: Card(
+        child: Padding(
+          padding: const EdgeInsets.all(AppSpacing.lg),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(AppIcons.vip, color: scheme.primary),
+                  const SizedBox(width: AppSpacing.sm),
+                  Expanded(
+                    child: Text(
+                      offer.name,
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 6),
+              Text(
+                offer.isVip && until != null
+                    ? l10n.storeVipActiveUntil(
+                        '${until.day.toString().padLeft(2, '0')}.'
+                        '${until.month.toString().padLeft(2, '0')}.${until.year}',
+                      )
+                    : (offer.offerMessage.isEmpty
+                          ? l10n.storeVipDefaultOffer
+                          : offer.offerMessage),
+                style: TextStyle(
+                  color: offer.isVip
+                      ? AppColors.successInk
+                      : scheme.onSurfaceVariant,
+                  fontWeight: offer.isVip ? FontWeight.w700 : null,
+                ),
+              ),
+              if (offer.isVip) ...[
+                const SizedBox(height: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.warning.withValues(alpha: 0.16),
+                    borderRadius: BorderRadius.circular(AppRadius.sm),
+                  ),
+                  child: Text(
+                    hoursLeft >= 24
+                        ? l10n.storeVipLeft(hoursLeft ~/ 24, hoursLeft % 24)
+                        : l10n.storeVipLeftHours(hoursLeft),
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w800,
+                      fontSize: 13,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  l10n.storeVipInfo,
+                  style: TextStyle(
+                    color: scheme.onSurfaceVariant,
+                    fontSize: 13,
+                  ),
+                ),
+              ],
+              if (offer.isOnSale) ...[
+                const SizedBox(height: AppSpacing.md),
+                FilledButton(
+                  onPressed: buy,
+                  child: Text(
+                    '${offer.isVip ? l10n.storeVipExtend : l10n.storeVipBuy}'
+                    ' · ${formatMoney(locale, offer.price)}'
+                    ' · ${l10n.storeVipDays(offer.durationDays)}',
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// The name and the description of a live store.
+class _InfoSheet extends StatefulWidget {
+  const _InfoSheet({required this.name, required this.description});
+
+  final String name;
+  final String description;
+
+  @override
+  State<_InfoSheet> createState() => _InfoSheetState();
+}
+
+class _InfoSheetState extends State<_InfoSheet> {
+  late final _name = TextEditingController(text: widget.name);
+  late final _about = TextEditingController(text: widget.description);
+
+  @override
+  void dispose() {
+    _name.dispose();
+    _about.dispose();
+    super.dispose();
+  }
+
+  bool get _valid =>
+      _name.text.trim().length >= 2 && _about.text.trim().length >= 10;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppL10n.of(context);
+    return SingleChildScrollView(
+      padding: EdgeInsets.fromLTRB(
+        AppSpacing.lg,
+        0,
+        AppSpacing.lg,
+        MediaQuery.viewInsetsOf(context).bottom + AppSpacing.xl,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            l10n.storeInfoEdit,
+            style: Theme.of(context).textTheme.titleLarge
+                ?.copyWith(fontWeight: FontWeight.w800),
+          ),
+          const SizedBox(height: AppSpacing.lg),
+          TextField(
+            controller: _name,
+            maxLength: 100,
+            onChanged: (_) => setState(() {}),
+            decoration: InputDecoration(labelText: l10n.storeName),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          TextField(
+            controller: _about,
+            maxLength: 2000,
+            minLines: 3,
+            maxLines: 6,
+            onChanged: (_) => setState(() {}),
+            decoration: InputDecoration(labelText: l10n.storeDescription),
+          ),
+          const SizedBox(height: AppSpacing.md),
+          FilledButton(
+            onPressed: _valid
+                ? () => Navigator.of(context)
+                      .pop((name: _name.text.trim(), about: _about.text.trim()))
+                : null,
+            child: Text(l10n.storeInfoSave),
+          ),
+        ],
       ),
     );
   }

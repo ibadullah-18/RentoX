@@ -2,33 +2,28 @@
   "@@locale": "ru",
   "appName": "RentoX",
   "tagline": "Всё для аренды",
-
   "loginTitle": "Добро пожаловать",
   "loginSubtitle": "Введите номер телефона, чтобы продолжить. Мы отправим код подтверждения.",
   "phoneLabel": "Номер телефона",
   "phoneHint": "50 123 45 67",
   "phoneInvalid": "Номер должен содержать 9 цифр",
   "continueAction": "Продолжить",
-
   "otpTitle": "Введите код",
   "otpSubtitle": "Введите 6-значный код, отправленный на {phone}.",
   "otpResendIn": "Отправить снова через {seconds} с",
   "otpResend": "Отправить код снова",
   "accountBlocked": "Ваш аккаунт заблокирован. Подробности — в службе поддержки.",
   "otpWrong": "Код неверный или истёк",
-
   "registerTitle": "Создать аккаунт",
   "registerSubtitle": "Аккаунт с этим номером не найден. Введите имя, чтобы завершить регистрацию.",
   "fullNameLabel": "Имя и фамилия",
   "fullNameHint": "Имя Фамилия",
   "fullNameRequired": "Введите имя",
   "registerAction": "Завершить регистрацию",
-
   "errorNetwork": "Нет подключения к интернету. Попробуйте снова.",
   "errorTooManyRequests": "Слишком много попыток. Подождите немного и повторите.",
   "errorGeneric": "Что-то пошло не так. Попробуйте чуть позже.",
   "retry": "Повторить",
-
   "navHome": "Главная",
   "navFavorites": "Избранное",
   "favoritesTitle": "Избранное",
@@ -43,7 +38,6 @@
   "navCreate": "Объявление",
   "navMessages": "Сообщения",
   "navProfile": "Профиль",
-
   "searchHint": "Что хотите арендовать?",
   "categories": "Категории",
   "seeAll": "Смотреть все",
@@ -59,7 +53,6 @@
   "filters": "Фильтры",
   "trustTitle": "Проверенные пользователи",
   "trustSubtitle": "Безопасная аренда, надёжные люди",
-
   "listingNotFound": "Объявление не найдено",
   "listingNotFoundHint": "Возможно, оно удалено или срок истёк.",
   "descriptionTitle": "Описание",
@@ -82,7 +75,6 @@
   "messageFailed": "Не удалось отправить сообщение. Попробуйте снова.",
   "callFailed": "Не удалось начать звонок",
   "photoCounter": "{current} / {total}",
-
   "searchRecent": "Недавние запросы",
   "clearAll": "Очистить всё",
   "allCategories": "Все",
@@ -98,7 +90,6 @@
   "resetAction": "Сбросить",
   "priceRangeInvalid": "Минимальная цена не может быть выше максимальной",
   "backAction": "Назад",
-
   "createTitle": "Новое объявление",
   "stepOf": "Шаг {current} из {total}",
   "stepPhotos": "Фото",
@@ -189,9 +180,7 @@
   "paymentSuccessVip": "Оплата прошла. Объявление стало VIP.",
   "paymentFailed": "Оплата не прошла. Попробуйте снова.",
   "walletTitle": "Кошелёк",
-
   "vipActive": "VIP-объявление активно",
-
   "messagesTitle": "Сообщения",
   "messagesAll": "Все",
   "messagesUnreadFilter": "Непрочитанные",
@@ -230,13 +219,10 @@
   "reportProhibited": "Запрещённый контент",
   "reportOther": "Другое",
   "chatReconnecting": "Восстанавливаем соединение…",
-
   "notificationsMarkAll": "Прочитать все",
   "notificationsEmpty": "Уведомлений нет",
   "notificationsEmptyHint": "Здесь появятся новости по вашим объявлениям и аккаунту.",
-
   "notificationView": "Открыть",
-
   "profileEditTitle": "Редактировать профиль",
   "profileAddName": "Добавьте своё имя",
   "profileName": "Имя и фамилия",
@@ -255,7 +241,6 @@
   "logoutAllTitle": "Выйти на всех устройствах",
   "logoutAllMessage": "Вы выйдете из аккаунта на всех устройствах и должны будете войти снова.",
   "logoutAllConfirm": "Выйти",
-
   "editListingTitle": "Редактирование объявления",
   "editAction": "Редактировать",
   "editSave": "Сохранить",
@@ -278,7 +263,6 @@
   "bumpAction": "Поднять наверх",
   "payForBump": "Поднять объявление в списке",
   "paymentSuccessBump": "Объявление поднято",
-
   "storeMine": "Мой магазин",
   "storeFollowing": "Магазины, на которые я подписан",
   "storeNone": "У вас пока нет магазина",
@@ -325,7 +309,6 @@
   "storeListingsCount": "Объявлений: {count}",
   "storeViews": "Просмотров: {count}",
   "openLinkFailed": "Не удалось открыть ссылку",
-
   "supportTitle": "Поддержка",
   "supportNew": "Новое обращение",
   "supportEmpty": "Обращений пока нет",
@@ -360,19 +343,23 @@
   "reportStoreHint": "Проблема с этим магазином? Сообщите нам.",
   "supportRefListing": "Объявление: {title}",
   "supportRefStore": "Магазин: {title}",
-
   "unitHour": "час",
   "unitDay": "день",
   "unitWeek": "неделя",
   "unitMonth": "месяц",
   "unitEvent": "мероприятие",
   "unitNegotiable": "договорная",
-
   "signOut": "Выйти",
   "searchTabListings": "Объявления",
   "searchTabStores": "Магазины",
   "storesFound": "Найдено магазинов: {count}",
-  "@storesFound": { "placeholders": { "count": { "type": "int" } } },
+  "@storesFound": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "noStoresFound": "Магазины не найдены",
   "noStoresHint": "Попробуйте другое слово.",
   "ownerStoreLabel": "Магазин",
@@ -410,7 +397,13 @@
   "deleteAccountTitle": "Удалить аккаунт?",
   "deleteAccountMessage": "Все ваши объявления и магазин будут удалены, избранное и подписки пропадут, остаток на балансе не возвращается. Переписки останутся у собеседника, но ваше имя скрыто. Это действие нельзя отменить.",
   "deleteAccountType": "Для подтверждения введите «{word}»",
-  "@deleteAccountType": { "placeholders": { "word": { "type": "String" } } },
+  "@deleteAccountType": {
+    "placeholders": {
+      "word": {
+        "type": "String"
+      }
+    }
+  },
   "deleteAccountWord": "УДАЛИТЬ",
   "deleteAccountConfirm": "Удалить навсегда",
   "deleteAccountFailed": "Аккаунт не удалён. Попробуйте снова.",
@@ -457,7 +450,13 @@
   "walletHistoryEmpty": "Операций пока нет",
   "walletHistoryEmptyHint": "Пополнения и платежи появятся здесь.",
   "walletAfter": "Остаток: {amount}",
-  "@walletAfter": {"placeholders": {"amount": {"type": "String"}}},
+  "@walletAfter": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
   "walletTopUpAndHistory": "Пополнить · История",
   "txTopUp": "Пополнение",
   "txListingFee": "Активация объявления",
@@ -476,5 +475,88 @@
   "termsTitle": "Условия использования",
   "privacyTitle": "Политика конфиденциальности",
   "consentText": "Продолжая, вы принимаете документы: {terms} и {privacy}.",
-  "infoUpdated": "Последнее обновление: {date}"
+  "infoUpdated": "Последнее обновление: {date}",
+  "storeWriteTo": "Написать магазину",
+  "storeCall": "Позвонить",
+  "storeHoursTitle": "Часы работы",
+  "storeOpenNow": "Сейчас открыто",
+  "storeClosedNow": "Сейчас закрыто",
+  "storeDayClosed": "Закрыто",
+  "storeVipTitle": "VIP-объявления",
+  "storeShowAll": "Показать все",
+  "storeShowLess": "Показать меньше",
+  "storeStatsTitle": "Статистика",
+  "storeStatsHint": "Сколько раз открывали страницу магазина и нажимали кнопки связи. Ваши просмотры не считаются.",
+  "storeStatFollowers": "Подписчики",
+  "storeStatViews7": "Просмотры магазина (7 дней)",
+  "storeStatViews30": "Просмотры магазина (30 дней)",
+  "storeStatListingViews": "Просмотры объявлений",
+  "storeStatFavorites": "Объявления в избранном",
+  "storeStatCalls": "Кнопка звонка",
+  "storeStatWhatsApp": "WhatsApp",
+  "storeStatMessages": "Сообщения магазину",
+  "storeContactEdit": "Контакты, сети, часы работы",
+  "storeContactEditHint": "Это можно менять в любое время, магазин не возвращается на проверку.",
+  "storeContactSaved": "Сохранено",
+  "storeYoutube": "Ссылка на YouTube (необязательно)",
+  "storeWhatsApp": "Номер WhatsApp (необязательно)",
+  "storeWhatsAppMessage": "Первое сообщение в WhatsApp",
+  "storeWhatsAppHint": "Когда посетитель нажимает WhatsApp, чат открывается с этим текстом.",
+  "storeErrNumber": "Введите корректный номер (напр. 050 123 45 67)",
+  "storeErrHours": "Закрытие должно быть позже открытия",
+  "storeFirstMessage": "Здравствуйте! Меня интересует ваш магазин. Подскажите, пожалуйста, адрес?",
+  "storeHoursCopyAll": "Скопировать часы первого рабочего дня на все",
+  "weekdayMon": "Понедельник",
+  "weekdayTue": "Вторник",
+  "weekdayWed": "Среда",
+  "weekdayThu": "Четверг",
+  "weekdayFri": "Пятница",
+  "weekdaySat": "Суббота",
+  "weekdaySun": "Воскресенье",
+  "storeTodayClosed": "Сегодня закрыто",
+  "storeVipBuy": "Сделать VIP",
+  "storeVipExtend": "Продлить",
+  "storeVipPaid": "Оплата прошла. Магазин будет показан на главной.",
+  "storeVipDefaultOffer": "Покажите магазин на главной и привлеките больше клиентов.",
+  "storeVipDays": "{days} дн.",
+  "@storeVipDays": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "storeVipActiveUntil": "Ваш магазин показан на главной до {date}",
+  "@storeVipActiveUntil": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "storeVipLeftHours": "Осталось {hours} ч.",
+  "@storeVipLeftHours": {
+    "placeholders": {
+      "hours": {
+        "type": "int"
+      }
+    }
+  },
+  "storeVipLeft": "Осталось {days} дн. {hours} ч.",
+  "@storeVipLeft": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      },
+      "hours": {
+        "type": "int"
+      }
+    }
+  },
+  "storeVipInfo": "VIP-магазин показан на главной выше всех объявлений. После окончания срока он остаётся обычным магазином; продлите вовремя — перерыва не будет.",
+  "storeVipBadge": "VIP-магазин",
+  "storeSearchHint": "Поиск в магазине",
+  "storePriceFilter": "Цена",
+  "storeInfoEdit": "Изменить название и описание",
+  "storeInfoSave": "Сохранить"
 }

@@ -44,9 +44,12 @@ function Row({
 export function StoreForm({
   initial,
   mode,
+  contactSeparate = false,
 }: {
   initial: StoreFormValues;
   mode: "create" | "edit";
+  /** The contact side has its own card (changeable any time): this form is only for the name and the description. */
+  contactSeparate?: boolean;
 }) {
   const t = useT();
   const router = useRouter();
@@ -106,6 +109,8 @@ export function StoreForm({
         />
       </Row>
 
+      {!contactSeparate && (
+      <>
       <div className="grid gap-4 sm:grid-cols-2">
         <Row label={t("Telefon")} error={errors.phone}>
           <input
@@ -148,6 +153,8 @@ export function StoreForm({
           <input value={values.facebook} onChange={set("facebook")} placeholder={t("https://facebook.com/…")} disabled={busy} className={input} />
         </Row>
       </div>
+      </>
+      )}
 
       {message && (
         <p

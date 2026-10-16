@@ -8,6 +8,7 @@ import '../../../core/l10n/app_localizations.dart';
 import '../../../core/theme/app_icons.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../shared/widgets/async_states.dart';
+import '../../../shared/widgets/brand_icon.dart';
 import '../../../shared/widgets/sub_page.dart';
 import '../data/info_repository.dart';
 import '../domain/info_models.dart';
@@ -92,11 +93,15 @@ class InfoPage extends ConsumerWidget {
 
   /// Only the channels that are filled in.
   List<Widget> _contactTiles(BuildContext context, AppL10n l10n, SiteInfo s) {
-    final items = <({IconData icon, String title, String value, Uri uri})>[];
+    final items =
+        <
+          ({IconData icon, Brand? brand, String title, String value, Uri uri})
+        >[];
     String digits(String v) => v.replaceAll(RegExp(r'[^\d+]'), '');
     if (s.phone != null) {
       items.add((
         icon: AppIcons.phone,
+        brand: null,
         title: l10n.contactPhone,
         value: s.phone!,
         uri: Uri(scheme: 'tel', path: digits(s.phone!)),
@@ -105,6 +110,7 @@ class InfoPage extends ConsumerWidget {
     if (s.hotline != null) {
       items.add((
         icon: AppIcons.hotline,
+        brand: null,
         title: l10n.contactHotline,
         value: s.hotline!,
         uri: Uri(scheme: 'tel', path: digits(s.hotline!)),
@@ -113,6 +119,7 @@ class InfoPage extends ConsumerWidget {
     if (s.email != null) {
       items.add((
         icon: AppIcons.mail,
+        brand: null,
         title: l10n.contactEmail,
         value: s.email!,
         uri: Uri(scheme: 'mailto', path: s.email!),
@@ -121,6 +128,7 @@ class InfoPage extends ConsumerWidget {
     if (s.whatsApp != null) {
       items.add((
         icon: AppIcons.messages,
+        brand: Brand.whatsapp,
         title: 'WhatsApp',
         value: s.whatsApp!,
         uri: Uri.https(
@@ -129,14 +137,20 @@ class InfoPage extends ConsumerWidget {
         ),
       ));
     }
-    for (final (title, value, icon) in [
-      ('Instagram', s.instagram, AppIcons.camera),
-      ('TikTok', s.tikTok, AppIcons.music),
-      ('Facebook', s.facebook, AppIcons.group),
+    for (final (title, value, brand) in [
+      ('Instagram', s.instagram, Brand.instagram),
+      ('TikTok', s.tikTok, Brand.tiktok),
+      ('Facebook', s.facebook, Brand.facebook),
     ]) {
       final uri = value == null ? null : safeLink(value);
       if (uri != null) {
-        items.add((icon: icon, title: title, value: '', uri: uri));
+        items.add((
+          icon: AppIcons.link,
+          brand: brand,
+          title: title,
+          value: '',
+          uri: uri,
+        ));
       }
     }
 
@@ -145,6 +159,7 @@ class InfoPage extends ConsumerWidget {
         if (i > 0) const Divider(indent: 56),
         _Tile(
           icon: items[i].icon,
+          brand: items[i].brand,
           title: items[i].title,
           trailingText: items[i].value.isEmpty ? null : items[i].value,
           onTap: () =>
@@ -161,9 +176,13 @@ class _Tile extends StatelessWidget {
     required this.title,
     required this.onTap,
     this.trailingText,
+    this.brand,
   });
 
   final IconData icon;
+
+  /// The real logo of the network, when the line is one.
+  final Brand? brand;
   final String title;
   final String? trailingText;
   final VoidCallback onTap;
@@ -174,7 +193,13 @@ class _Tile extends StatelessWidget {
     return ListTile(
       onTap: onTap,
       contentPadding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-      leading: Icon(icon, color: scheme.primary),
+      leading: brand == null
+          ? Icon(icon, color: scheme.primary)
+          : BrandIcon(
+              brand!,
+              size: 24,
+              color: brand == Brand.tiktok ? scheme.onSurface : null,
+            ),
       title: Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
       trailing: Row(
         mainAxisSize: MainAxisSize.min,

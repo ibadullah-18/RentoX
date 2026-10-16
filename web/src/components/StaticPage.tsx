@@ -1,3 +1,4 @@
+import { fmtDate } from "@/lib/dates";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Markdown } from "@/components/Markdown";
@@ -11,7 +12,7 @@ export async function StaticPage({ slug }: { slug: string }) {
 
   const t = await getT();
   const locale = await getLocale();
-  const date = new Date(page.updatedAtUtc).toLocaleDateString(locale, { year: "numeric", month: "long", day: "numeric" });
+  const date = fmtDate(page.updatedAtUtc, locale);
 
   return (
     <article className="mx-auto max-w-3xl pb-6">

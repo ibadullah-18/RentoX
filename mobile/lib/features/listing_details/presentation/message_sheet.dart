@@ -12,6 +12,7 @@ import '../../messages/data/conversations_repository.dart';
 Future<String?> showMessageSheet(
   BuildContext context, {
   required String listingId,
+  String? initialText,
 }) {
   return showModalBottomSheet<String>(
     context: context,
@@ -21,14 +22,18 @@ Future<String?> showMessageSheet(
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.xl)),
     ),
-    builder: (_) => _MessageSheet(listingId: listingId),
+    builder: (_) =>
+        _MessageSheet(listingId: listingId, initialText: initialText),
   );
 }
 
 class _MessageSheet extends ConsumerStatefulWidget {
-  const _MessageSheet({required this.listingId});
+  const _MessageSheet({required this.listingId, this.initialText});
 
   final String listingId;
+
+  /// What the box starts with (the default greeting when null).
+  final String? initialText;
 
   @override
   ConsumerState<_MessageSheet> createState() => _MessageSheetState();
@@ -49,7 +54,7 @@ class _MessageSheetState extends ConsumerState<_MessageSheet> {
   void didChangeDependencies() {
     super.didChangeDependencies();
     if (_text.text.isEmpty) {
-      _text.text = AppL10n.of(context).messageDefault;
+      _text.text = widget.initialText ?? AppL10n.of(context).messageDefault;
       _text.selection = TextSelection(
         baseOffset: 0,
         extentOffset: _text.text.length,

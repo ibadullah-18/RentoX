@@ -50,8 +50,20 @@ class FakeStores extends StoreRepository {
     followerCount: 3,
   );
 
+  final events = <String>[];
+
   @override
   Future<MyStore?> mine() async => mineValue;
+
+  @override
+  Future<StoreStats> stats() async => const StoreStats(followers: 5);
+
+  @override
+  Future<StoreVipOffer?> vipOffer() async => null;
+
+  @override
+  Future<void> reportEvent(String slug, String kind) async =>
+      events.add('$slug:$kind');
 
   @override
   Future<void> create(StoreForm form) async {
@@ -103,6 +115,9 @@ class FakeStores extends StoreRepository {
     required String language,
     int page = 1,
     int pageSize = 20,
+    String search = '',
+    double? minPrice,
+    double? maxPrice,
   }) async => const Paged(items: [], page: 1, totalPages: 1, totalCount: 0);
 
   @override
@@ -452,8 +467,11 @@ void main() {
     expect(find.text('Auto Rent'), findsOneWidget);
     expect(find.text('Premium cars'), findsOneWidget);
     expect(find.text('+994551112233'), findsOneWidget);
-    expect(find.text('Website'), findsOneWidget);
-    expect(find.text('Instagram'), findsOneWidget);
+    expect(find.text('https://autorent.az'), findsOneWidget);
+    // The page counts itself as opened; a network with a link has its round button, one without has none.
+    expect(repo.events, ['auto-rent:view']);
+    expect(find.bySemanticsLabel('Instagram'), findsOneWidget);
+    expect(find.bySemanticsLabel('TikTok'), findsNothing);
     expect(find.text(az.storeNoListings), findsOneWidget);
 
     await tester.tap(find.text(az.storeFollow));

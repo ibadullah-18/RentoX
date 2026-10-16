@@ -57,6 +57,18 @@ public sealed class StoreProfileConfiguration
         builder.Property(store => store.WebsiteUrl)
             .HasMaxLength(300);
 
+        builder.Property(store => store.YoutubeUrl)
+            .HasMaxLength(300);
+
+        builder.Property(store => store.WhatsAppNumber)
+            .HasMaxLength(20);
+
+        builder.Property(store => store.WhatsAppMessage)
+            .HasMaxLength(300);
+
+        builder.Property(store => store.WorkingHours)
+            .HasMaxLength(400);
+
         builder.Property(store => store.RejectionReason)
             .HasMaxLength(1000);
 

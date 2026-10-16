@@ -5,6 +5,7 @@ import { UserAvatar } from "@/components/messages/UserAvatar";
 import { ThemeSwitcher } from "@/components/ThemeSwitcher";
 import { getTheme } from "@/lib/theme-server";
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { ChevronRight, Heart, LifeBuoy, ShieldCheck, ListChecks, LogOut, MessageCircle, Plus, Store, Wallet, Pencil } from "lucide-react";
@@ -38,6 +39,36 @@ export default async function CabinetPage() {
     <div className="mx-auto max-w-2xl space-y-6">
       <h1 className="text-2xl font-extrabold">{t("Kabinet")}</h1>
 
+      {store.ok ? (
+        // With a store, the store takes the place of the personal card (the personal profile stays one tap away).
+        <div className="space-y-2">
+          <Link href="/magaza" className="flex items-center gap-4 rounded-xl border border-line bg-surface p-4 hover:border-primary">
+            <span className="relative flex size-16 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-primary-soft text-primary">
+              {store.data.logoImageUrl ? (
+                <Image src={store.data.logoImageUrl} alt="" fill unoptimized sizes="64px" className="object-cover" />
+              ) : (
+                <Store className="size-7" aria-hidden />
+              )}
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-lg font-extrabold">{store.data.name}</p>
+              <p className="text-sm text-ink-2">
+                {{ 1: t("Qaralama"), 2: t("Yoxlamada"), 3: t("Aktiv"), 4: t("Rədd edilib"), 5: t("Dayandırılıb") }[store.data.status] ?? ""}
+                {store.data.phoneNumber ? ` · ${store.data.phoneNumber}` : ""}
+              </p>
+            </div>
+            <span className="flex items-center gap-1 text-sm font-bold text-primary">
+              <Pencil className="size-4" aria-hidden />
+              {t("Redaktə et")}
+            </span>
+          </Link>
+          <Link href="/kabinet/profil" className="flex items-center gap-2 px-1 text-sm font-semibold text-ink-2 hover:text-primary">
+            <UserAvatar userId={session.userId} size={24} />
+            <span className="truncate">{name || phone}</span>
+            <ChevronRight className="size-4" aria-hidden />
+          </Link>
+        </div>
+      ) : (
       <Link
         href="/kabinet/profil"
         className="flex items-center gap-4 rounded-xl border border-line bg-surface p-4 hover:border-primary"
@@ -53,6 +84,7 @@ export default async function CabinetPage() {
           {t("Redaktə et")}
         </span>
       </Link>
+      )}
 
       <nav aria-label={t("Kabinet")} className="overflow-hidden rounded-xl border border-line bg-surface">
         <Link href="/yeni-elan" className={row}>
@@ -73,16 +105,13 @@ export default async function CabinetPage() {
           )}
           <ChevronRight className="size-5 text-ink-2" aria-hidden />
         </Link>
-        <Link href="/magaza" className={row}>
-          <Store className="size-5 text-primary" aria-hidden />
-          <span className="flex-1 font-semibold">{store.ok ? t("Mağazam") : t("Mağaza yarat")}</span>
-          {store.ok && (
-            <span className="text-sm font-semibold text-ink-2">
-              {{ 1: "Qaralama", 2: "Yoxlamada", 3: "Aktiv", 4: t("Rədd edilib"), 5: t("Dayandırılıb") }[store.data.status] ?? ""}
-            </span>
-          )}
-          <ChevronRight className="size-5 text-ink-2" aria-hidden />
-        </Link>
+        {!store.ok && (
+          <Link href="/magaza" className={row}>
+            <Store className="size-5 text-primary" aria-hidden />
+            <span className="flex-1 font-semibold">{t("Mağaza yarat")}</span>
+            <ChevronRight className="size-5 text-ink-2" aria-hidden />
+          </Link>
+        )}
         <Link href="/secilmisler" className={row}>
           <Heart className="size-5 text-primary" aria-hidden />
           <span className="flex-1 font-semibold">{t("Seçilmişlər")}</span>

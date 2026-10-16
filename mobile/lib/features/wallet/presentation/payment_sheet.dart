@@ -26,6 +26,8 @@ Future<bool?> showPaymentSheet(
   BuildContext context, {
   required PaymentKind kind,
   required Future<PaymentResult> Function(String idempotencyKey) pay,
+  double? amount,
+  String? title,
 }) {
   return showModalBottomSheet<bool>(
     context: context,
@@ -35,15 +37,25 @@ Future<bool?> showPaymentSheet(
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.xl)),
     ),
-    builder: (_) => _PaymentSheet(kind: kind, pay: pay),
+    builder: (_) =>
+        _PaymentSheet(kind: kind, pay: pay, amount: amount, title: title),
   );
 }
 
 class _PaymentSheet extends ConsumerStatefulWidget {
-  const _PaymentSheet({required this.kind, required this.pay});
+  const _PaymentSheet({
+    required this.kind,
+    required this.pay,
+    this.amount,
+    this.title,
+  });
 
   final PaymentKind kind;
   final Future<PaymentResult> Function(String key) pay;
+
+  /// Set when the price is not one of the listing prices (the VIP store place).
+  final double? amount;
+  final String? title;
 
   @override
   ConsumerState<_PaymentSheet> createState() => _PaymentSheetState();
@@ -54,12 +66,14 @@ class _PaymentSheetState extends ConsumerState<_PaymentSheet> {
   bool _paying = false;
   bool _failed = false;
 
-  double get _amount => switch (widget.kind) {
-    PaymentKind.vip => Pricing.vipPrice,
-    PaymentKind.bump => Pricing.bumpPrice,
-    PaymentKind.renewal => Pricing.renewalFee,
-    PaymentKind.activation => Pricing.activationFee,
-  };
+  double get _amount =>
+      widget.amount ??
+      switch (widget.kind) {
+        PaymentKind.vip => Pricing.vipPrice,
+        PaymentKind.bump => Pricing.bumpPrice,
+        PaymentKind.renewal => Pricing.renewalFee,
+        PaymentKind.activation => Pricing.activationFee,
+      };
 
   Future<void> _pay() async {
     if (_paying) return;
@@ -93,12 +107,14 @@ class _PaymentSheetState extends ConsumerState<_PaymentSheet> {
     final balance = wallet.value?.balance;
     final enough = balance != null && balance >= _amount;
 
-    final title = switch (widget.kind) {
-      PaymentKind.vip => l10n.payForVip(Pricing.vipDays),
-      PaymentKind.bump => l10n.payForBump,
-      PaymentKind.renewal => l10n.payForRenewal,
-      PaymentKind.activation => l10n.payForActivation,
-    };
+    final title =
+        widget.title ??
+        switch (widget.kind) {
+          PaymentKind.vip => l10n.payForVip(Pricing.vipDays),
+          PaymentKind.bump => l10n.payForBump,
+          PaymentKind.renewal => l10n.payForRenewal,
+          PaymentKind.activation => l10n.payForActivation,
+        };
 
     return SingleChildScrollView(
       padding: EdgeInsets.fromLTRB(

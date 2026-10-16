@@ -32,6 +32,22 @@ class MyStoreController extends AsyncNotifier<MyStore?> {
     state = AsyncData(fresh?.withImageVersion(before?.imageVersion ?? 0));
   }
 
+  /// The name and description of a live store, any time. Throws on failure.
+  Future<void> saveInfo(String name, String description) async {
+    final before = state.value;
+    await _repo.updateInfo(name, description);
+    final fresh = await _repo.mine();
+    state = AsyncData(fresh?.withImageVersion(before?.imageVersion ?? 0));
+  }
+
+  /// The contact side, any time. Throws on failure (the form shows it).
+  Future<void> saveContact(StoreContactForm form) async {
+    final before = state.value;
+    await _repo.updateContact(form);
+    final fresh = await _repo.mine();
+    state = AsyncData(fresh?.withImageVersion(before?.imageVersion ?? 0));
+  }
+
   Future<void> submit() async {
     await _repo.submit();
     final before = state.value;
@@ -67,10 +83,34 @@ final myStoreProvider = AsyncNotifierProvider<MyStoreController, MyStore?>(
   MyStoreController.new,
 );
 
+/// How the owner store is doing.
+final myStoreStatsProvider = FutureProvider.autoDispose<StoreStats>(
+  (ref) => ref.watch(storeRepositoryProvider).stats(),
+);
+
 /// A live store by its slug (public).
 final publicStoreProvider = FutureProvider.autoDispose
     .family<PublicStore, String>(
       (ref, slug) => ref.watch(storeRepositoryProvider).bySlug(slug),
+    );
+
+/// What a visitor typed over the listings of one store: words and a price range.
+typedef StoreListingFilter = ({String search, double? min, double? max});
+
+class StoreListingFilterNotifier extends Notifier<StoreListingFilter> {
+  StoreListingFilterNotifier(this.slug);
+
+  final String slug;
+
+  @override
+  StoreListingFilter build() => (search: '', min: null, max: null);
+
+  void set(StoreListingFilter value) => state = value;
+}
+
+final storeListingFilterProvider = NotifierProvider.autoDispose
+    .family<StoreListingFilterNotifier, StoreListingFilter, String>(
+      StoreListingFilterNotifier.new,
     );
 
 /// The listings of a store, loaded page by page.
@@ -78,16 +118,25 @@ class StoreListingsController extends AsyncNotifier<PagedListings> {
   StoreListingsController(this.slug);
 
   final String slug;
-  static const _pageSize = 20;
+  // 50 at once: the page shows the VIP ones and the ordinary ones apart, so it needs enough of both.
+  static const _pageSize = 50;
 
   String get _language => ref.read(localeProvider).languageCode;
 
   @override
   Future<PagedListings> build() async {
     ref.watch(localeProvider);
+    final filter = ref.watch(storeListingFilterProvider(slug));
     final page = await ref
         .read(storeRepositoryProvider)
-        .listings(slug, language: _language, pageSize: _pageSize);
+        .listings(
+          slug,
+          language: _language,
+          pageSize: _pageSize,
+          search: filter.search,
+          minPrice: filter.min,
+          maxPrice: filter.max,
+        );
     return PagedListings.first(page);
   }
 
@@ -103,6 +152,9 @@ class StoreListingsController extends AsyncNotifier<PagedListings> {
             language: _language,
             page: current.page + 1,
             pageSize: _pageSize,
+            search: ref.read(storeListingFilterProvider(slug)).search,
+            minPrice: ref.read(storeListingFilterProvider(slug)).min,
+            maxPrice: ref.read(storeListingFilterProvider(slug)).max,
           );
       state = AsyncData(current.appended(next));
     } catch (_) {
@@ -158,10 +210,12 @@ final followedStoresProvider = FutureProvider.autoDispose<List<FollowedStore>>((
   return page.items;
 });
 
-/// A few stores for the home page strip (most active first).
-final homeStoresProvider = FutureProvider.autoDispose<List<FollowedStore>>((
-  ref,
-) async {
-  final page = await ref.watch(storeRepositoryProvider).search(pageSize: 10);
-  return page.items;
-});
+/// The stores that paid for a place on the home page (most active first).
+final homeStoresProvider = FutureProvider.autoDispose<List<FollowedStore>>(
+  (ref) => ref.watch(storeRepositoryProvider).vipStores(take: 10),
+);
+
+/// The VIP place offer shown to the owner of a live store.
+final myStoreVipProvider = FutureProvider.autoDispose<StoreVipOffer?>(
+  (ref) => ref.watch(storeRepositoryProvider).vipOffer(),
+);

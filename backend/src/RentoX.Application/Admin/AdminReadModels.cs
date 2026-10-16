@@ -149,7 +149,10 @@ public sealed record AdminStoreItem(
     string Slug,
     int Status,
     string? RejectionReason,
-    DateTimeOffset CreatedAtUtc);
+    DateTimeOffset CreatedAtUtc,
+    long Followers = 0,
+    long ActiveListings = 0,
+    long ProfileViews = 0);
 
 /// <summary>All stores, whatever their status, found by status and text (name, owner name or phone).</summary>
 public interface IAdminStoreSearchService

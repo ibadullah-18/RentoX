@@ -1,3 +1,4 @@
+import { fmtDate, fmtDateTime, fmtTime } from "./dates";
 import { intlTag, translator, tx, type Locale, type T } from "./i18n/locales";
 import type { ListingField, RentalPeriodId } from "./types";
 
@@ -9,14 +10,6 @@ function numberFormat(locale: Locale) {
   if (!formats.has(key)) formats.set(key, new Intl.NumberFormat(intlTag[locale], { maximumFractionDigits: 2 }));
   return formats.get(key) as Intl.NumberFormat;
 }
-function dateFormat(locale: Locale) {
-  const key = `d-${locale}`;
-  if (!formats.has(key)) {
-    formats.set(key, new Intl.DateTimeFormat(intlTag[locale], { day: "numeric", month: "long", year: "numeric" }));
-  }
-  return formats.get(key) as Intl.DateTimeFormat;
-}
-
 /** The label of a rental period; translate it where it is shown. */
 export const unitLabel: Record<number, string> = {
   1: tx("saat"),
@@ -52,7 +45,7 @@ export function formatPublished(iso?: string | null, t: T = az, locale: Locale =
   );
   if (days === 0) return t("Bu gün");
   if (days === 1) return t("Dünən");
-  return dateFormat(locale).format(date);
+  return fmtDate(date, locale);
 }
 
 /** What to show for one field of a listing, or null when it is empty. */
@@ -67,7 +60,7 @@ export function fieldValue(field: ListingField, t: T = az, locale: Locale = "az"
   if (field.flagValue != null) return field.flagValue ? t("Bəli") : t("Xeyr");
   if (field.calendarValue) {
     const d = new Date(field.calendarValue);
-    return Number.isNaN(d.getTime()) ? null : dateFormat(locale).format(d);
+    return Number.isNaN(d.getTime()) ? null : fmtDate(d, locale);
   }
   return null;
 }
@@ -90,16 +83,22 @@ export function siteUrl(): string {
   );
 }
 
-const dateCache = new Map<string, Intl.DateTimeFormat>();
-/** A cached Intl date formatter for the language, e.g. dateFmt(locale, { hour: "2-digit" }). */
-export function dateFmt(locale: Locale, options: Intl.DateTimeFormatOptions): Intl.DateTimeFormat {
-  const key = `${locale}${JSON.stringify(options)}`;
-  let f = dateCache.get(key);
-  if (!f) {
-    f = new Intl.DateTimeFormat(intlTag[locale], options);
-    dateCache.set(key, f);
-  }
-  return f;
+/**
+ * A date formatter for the language in Baku time, e.g. dateFmt(locale, { hour: "2-digit" }). It has the shape of an
+ * Intl formatter (`.format(date)`) but is written by hand (see lib/dates.ts), so the server and the browser agree.
+ */
+export function dateFmt(
+  locale: Locale,
+  options: { day?: string; month?: string; year?: string; hour?: string; minute?: string; timeZone?: string },
+): { format: (date: Date | string | number) => string } {
+  return {
+    format(date) {
+      const short = options.month === "short";
+      if (options.hour && !options.day) return fmtTime(date);
+      if (options.hour) return fmtDateTime(date, locale, { short, year: options.year !== undefined });
+      return fmtDate(date, locale, { short, year: options.year !== undefined });
+    },
+  };
 }
 
 /** A number written the way the language writes it (1 500,5 / 1,500.5). */

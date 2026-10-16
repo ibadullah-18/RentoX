@@ -108,7 +108,10 @@ void _toast(Ref ref, NotificationArrived event) {
       MaterialBanner(
         backgroundColor: scheme.surface,
         elevation: 6,
-        leading: Icon(Icons.notifications_active_rounded, color: scheme.primary),
+        leading: Icon(
+          Icons.notifications_active_rounded,
+          color: scheme.primary,
+        ),
         content: GestureDetector(
           behavior: HitTestBehavior.opaque,
           onTap: () {

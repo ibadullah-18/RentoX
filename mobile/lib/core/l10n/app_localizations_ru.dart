@@ -1497,4 +1497,175 @@ class AppL10nRu extends AppL10n {
   String infoUpdated(String date) {
     return 'Последнее обновление: $date';
   }
+
+  @override
+  String get storeWriteTo => 'Написать магазину';
+
+  @override
+  String get storeCall => 'Позвонить';
+
+  @override
+  String get storeHoursTitle => 'Часы работы';
+
+  @override
+  String get storeOpenNow => 'Сейчас открыто';
+
+  @override
+  String get storeClosedNow => 'Сейчас закрыто';
+
+  @override
+  String get storeDayClosed => 'Закрыто';
+
+  @override
+  String get storeVipTitle => 'VIP-объявления';
+
+  @override
+  String get storeShowAll => 'Показать все';
+
+  @override
+  String get storeShowLess => 'Показать меньше';
+
+  @override
+  String get storeStatsTitle => 'Статистика';
+
+  @override
+  String get storeStatsHint =>
+      'Сколько раз открывали страницу магазина и нажимали кнопки связи. Ваши просмотры не считаются.';
+
+  @override
+  String get storeStatFollowers => 'Подписчики';
+
+  @override
+  String get storeStatViews7 => 'Просмотры магазина (7 дней)';
+
+  @override
+  String get storeStatViews30 => 'Просмотры магазина (30 дней)';
+
+  @override
+  String get storeStatListingViews => 'Просмотры объявлений';
+
+  @override
+  String get storeStatFavorites => 'Объявления в избранном';
+
+  @override
+  String get storeStatCalls => 'Кнопка звонка';
+
+  @override
+  String get storeStatWhatsApp => 'WhatsApp';
+
+  @override
+  String get storeStatMessages => 'Сообщения магазину';
+
+  @override
+  String get storeContactEdit => 'Контакты, сети, часы работы';
+
+  @override
+  String get storeContactEditHint =>
+      'Это можно менять в любое время, магазин не возвращается на проверку.';
+
+  @override
+  String get storeContactSaved => 'Сохранено';
+
+  @override
+  String get storeYoutube => 'Ссылка на YouTube (необязательно)';
+
+  @override
+  String get storeWhatsApp => 'Номер WhatsApp (необязательно)';
+
+  @override
+  String get storeWhatsAppMessage => 'Первое сообщение в WhatsApp';
+
+  @override
+  String get storeWhatsAppHint =>
+      'Когда посетитель нажимает WhatsApp, чат открывается с этим текстом.';
+
+  @override
+  String get storeErrNumber => 'Введите корректный номер (напр. 050 123 45 67)';
+
+  @override
+  String get storeErrHours => 'Закрытие должно быть позже открытия';
+
+  @override
+  String get storeFirstMessage =>
+      'Здравствуйте! Меня интересует ваш магазин. Подскажите, пожалуйста, адрес?';
+
+  @override
+  String get storeHoursCopyAll =>
+      'Скопировать часы первого рабочего дня на все';
+
+  @override
+  String get weekdayMon => 'Понедельник';
+
+  @override
+  String get weekdayTue => 'Вторник';
+
+  @override
+  String get weekdayWed => 'Среда';
+
+  @override
+  String get weekdayThu => 'Четверг';
+
+  @override
+  String get weekdayFri => 'Пятница';
+
+  @override
+  String get weekdaySat => 'Суббота';
+
+  @override
+  String get weekdaySun => 'Воскресенье';
+
+  @override
+  String get storeTodayClosed => 'Сегодня закрыто';
+
+  @override
+  String get storeVipBuy => 'Сделать VIP';
+
+  @override
+  String get storeVipExtend => 'Продлить';
+
+  @override
+  String get storeVipPaid => 'Оплата прошла. Магазин будет показан на главной.';
+
+  @override
+  String get storeVipDefaultOffer =>
+      'Покажите магазин на главной и привлеките больше клиентов.';
+
+  @override
+  String storeVipDays(int days) {
+    return '$days дн.';
+  }
+
+  @override
+  String storeVipActiveUntil(String date) {
+    return 'Ваш магазин показан на главной до $date';
+  }
+
+  @override
+  String storeVipLeftHours(int hours) {
+    return 'Осталось $hours ч.';
+  }
+
+  @override
+  String storeVipLeft(int days, int hours) {
+    return 'Осталось $days дн. $hours ч.';
+  }
+
+  @override
+  String get storeVipInfo =>
+      'VIP-магазин показан на главной выше всех объявлений. После окончания срока он остаётся обычным магазином; продлите вовремя — перерыва не будет.';
+
+  @override
+  String get storeVipBadge => 'VIP-магазин';
+
+  @override
+  String get storeSearchHint => 'Поиск в магазине';
+
+  @override
+  String get storePriceFilter => 'Цена';
+
+  @override
+  String get storeInfoEdit => 'Изменить название и описание';
+
+  @override
+  String get storeInfoSave => 'Сохранить';
 }

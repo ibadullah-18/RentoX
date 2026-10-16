@@ -20,7 +20,8 @@ public enum NotificationType
     StaffLeaveDecided = 13,
     StaffRequestReceived = 14,
     StaffRequestAnswered = 15,
-    StaffPayrollChanged = 16
+    StaffPayrollChanged = 16,
+    StoreVipOffer = 17
 }
 
 public sealed class Notification : Entity

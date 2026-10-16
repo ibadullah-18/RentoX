@@ -104,6 +104,57 @@ public sealed class StoreProfileService(
         return MapResult(store);
     }
 
+    public async Task<StoreProfileResult> UpdateInfoAsync(
+        Guid ownerId,
+        string name,
+        string description,
+        CancellationToken cancellationToken = default)
+    {
+        StoreProfile store =
+            await dbContext.StoreProfiles
+                .SingleOrDefaultAsync(item => item.OwnerId == ownerId, cancellationToken)
+            ?? throw new DomainException("Store was not found.");
+
+        store.UpdateInfo(name, description);
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        return MapResult(store);
+    }
+
+    public async Task<StoreProfileResult> UpdateContactAsync(
+        UpdateStoreContactCommand command,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(command);
+
+        StoreProfile store =
+            await dbContext.StoreProfiles
+                .SingleOrDefaultAsync(
+                    item => item.OwnerId == command.OwnerId,
+                    cancellationToken)
+            ?? throw new DomainException(
+                "Store was not found.");
+
+        store.UpdateContact(
+            command.PhoneNumber,
+            command.Email,
+            command.Address,
+            command.InstagramUrl,
+            command.TiktokUrl,
+            command.FacebookUrl,
+            command.YoutubeUrl,
+            command.WebsiteUrl,
+            command.WhatsAppNumber,
+            command.WhatsAppMessage,
+            command.WorkingHours?
+                .Select(day => new StoreOpenDay(day.Day, day.OpenMinute, day.CloseMinute))
+                .ToArray());
+
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        return MapResult(store);
+    }
+
     public async Task<StoreProfileResult?> GetMineAsync(
         Guid ownerId,
         CancellationToken cancellationToken = default)
@@ -229,6 +280,12 @@ public sealed class StoreProfileService(
             (int)store.Status,
             store.RejectionReason,
             store.CreatedAtUtc,
-            store.UpdatedAtUtc);
+            store.UpdatedAtUtc,
+            store.YoutubeUrl,
+            store.WhatsAppNumber,
+            store.WhatsAppMessage,
+            StoreWorkingHours.Read(store.WorkingHours)
+                .Select(day => new StoreHoursDay(day.Day, day.OpenMinute, day.CloseMinute))
+                .ToArray());
     }
 }

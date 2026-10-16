@@ -768,7 +768,8 @@ public sealed class PublicListingQueryService(
                     bumpedCount,
                     plainCount,
                     (query.Page - 1) * query.PageSize,
-                    query.PageSize);
+                    query.PageSize,
+                    query.WideFeed ? ListingFeedInterleaver.WideRound : null);
 
             IQueryable<Listing>[] kinds =
                 [vipQuery, bumpedQuery, plainQuery];

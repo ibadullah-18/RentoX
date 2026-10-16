@@ -1,3 +1,4 @@
+import { fmtNumeric } from "@/lib/dates";
 import Link from "next/link";
 import { BackLink } from "./BackLink";
 import type { LucideIcon } from "lucide-react";
@@ -90,7 +91,7 @@ export function Card({ title, children }: { title?: string; children: React.Reac
 }
 
 export const dateTime = (iso?: string | null) =>
-  iso ? new Date(iso).toLocaleString("az", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" }) : "—";
+  fmtNumeric(iso);
 
 export const shortId = (id?: string | null) => (id ? id.slice(0, 8) : "—");
 

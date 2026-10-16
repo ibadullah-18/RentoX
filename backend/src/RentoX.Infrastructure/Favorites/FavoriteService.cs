@@ -42,12 +42,6 @@ public sealed class FavoriteService(
                 "Listing was not found.");
         }
 
-        if (listing.OwnerId == userId)
-        {
-            throw new DomainException(
-                "You cannot add your own listing to favorites.");
-        }
-
         Guid favoriteId = Guid.NewGuid();
 
         await dbContext.Database

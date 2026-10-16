@@ -166,6 +166,12 @@ public sealed class AdminStoresController(
             result.Status,
             result.RejectionReason,
             result.CreatedAtUtc,
-            result.UpdatedAtUtc);
+            result.UpdatedAtUtc,
+            result.YoutubeUrl,
+            result.WhatsAppNumber,
+            result.WhatsAppMessage,
+            result.WorkingHours?
+                .Select(d => new StoreHoursDayDto(d.Day, d.OpenMinute, d.CloseMinute))
+                .ToArray());
     }
 }

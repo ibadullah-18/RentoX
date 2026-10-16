@@ -89,6 +89,8 @@ export type ListingQuery = {
   fieldFilters?: string;
   page?: number;
   pageSize?: number;
+  /** "wide": the feed for a computer screen (rows of five: 2 of VIP, 3 moved up, 3 ordinary). */
+  feed?: "wide";
 };
 
 export async function getListings(
@@ -107,6 +109,7 @@ export async function getListings(
     cityId: query.cityId,
     rentalPeriod: query.rentalPeriod,
     filters: query.fieldFilters,
+    feed: query.feed,
   });
   return result ?? { items: [], page: 1, totalPages: 0, totalCount: 0 };
 }
@@ -160,13 +163,22 @@ export async function getStoreListings(
   slug: string,
   page = 1,
   pageSize = 20,
+  filter: { search?: string; minPrice?: string; maxPrice?: string } = {},
 ): Promise<Paged<ListingSummary>> {
   const result = await get<Paged<ListingSummary>>(`/api/stores/${encodeURIComponent(slug)}/listings`, {
     language: await lang(),
     page,
     pageSize,
+    search: filter.search,
+    minPrice: filter.minPrice,
+    maxPrice: filter.maxPrice,
   });
   return result ?? { items: [], page: 1, totalPages: 0, totalCount: 0 };
+}
+
+/** The stores that paid for a place on the home page (running VIP). */
+export async function getVipStores(take = 6): Promise<StoreCard[]> {
+  return (await get<StoreCard[]>("/api/stores/vip", { take })) ?? [];
 }
 
 export async function getStores(search?: string, page = 1, pageSize = 24): Promise<Paged<StoreCard>> {

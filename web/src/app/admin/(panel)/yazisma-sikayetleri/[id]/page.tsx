@@ -1,3 +1,4 @@
+import { fmtDate, fmtTime } from "@/lib/dates";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ExternalLink } from "lucide-react";
@@ -12,8 +13,8 @@ import { authed } from "@/lib/authed";
 import { ago, reportStatusTone } from "@/lib/report-view";
 import { getSections } from "@/lib/session";
 
-const timeOnly = (iso: string) => new Date(iso).toLocaleTimeString("az", { hour: "2-digit", minute: "2-digit" });
-const dayOnly = (iso: string) => new Date(iso).toLocaleDateString("az", { day: "numeric", month: "long", year: "numeric" });
+const timeOnly = (iso: string) => fmtTime(iso);
+const dayOnly = (iso: string) => fmtDate(iso, "az");
 
 /** A report about a conversation: the messages with who wrote them, the evidence marked, and the decision. */
 export default async function ChatReportPage({ params }: PageProps<"/admin/yazisma-sikayetleri/[id]">) {

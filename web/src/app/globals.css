@@ -182,3 +182,8 @@ body {
 }
 .toast-in { animation: toast-in 220ms ease-out both; }
 @media (prefers-reduced-motion: reduce) { .toast-in { animation: none; } }
+
+/* The active banner dot fills from left to right while its banner is shown. */
+@keyframes dot-fill { from { width: 0; } to { width: 100%; } }
+.dot-fill { animation: dot-fill cubic-bezier(0.37, 0, 0.63, 1) forwards; }
+@media (prefers-reduced-motion: reduce) { .dot-fill { animation: none; width: 100%; } }

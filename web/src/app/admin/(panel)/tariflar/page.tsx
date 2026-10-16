@@ -1,5 +1,7 @@
 import { Card, LoadProblem, PageHead, dateTime, shortId } from "@/components/admin/ui";
 import { TariffForm } from "@/components/admin/TariffForm";
+import { StoreVipForm } from "@/components/admin/StoreVipForm";
+import type { StoreVipInput } from "@/app/admin/(panel)/tariff-actions";
 import type { TariffInput } from "@/app/admin/(panel)/tariff-actions";
 import { authed } from "@/lib/authed";
 
@@ -9,9 +11,10 @@ const money = new Intl.NumberFormat("az", { minimumFractionDigits: 2, maximumFra
 
 /** The prices of the paid services, and every change made to them. */
 export default async function TariffsPage() {
-  const [current, history] = await Promise.all([
+  const [current, history, storeVip] = await Promise.all([
     authed<TariffInput>("/api/admin/tariffs"),
     authed<History>("/api/admin/tariffs/history", { query: { take: 20 } }),
+    authed<StoreVipInput>("/api/admin/store-vip"),
   ]);
   if (!current.ok) return <LoadProblem what="Tariflər" status={current.status} />;
 
@@ -23,6 +26,8 @@ export default async function TariffsPage() {
       />
 
       <TariffForm key={JSON.stringify(current.data)} current={current.data} />
+
+      {storeVip.ok && <StoreVipForm key={JSON.stringify(storeVip.data)} current={storeVip.data} />}
 
       <Card title="Dəyişikliklərin tarixçəsi">
         <div className="overflow-x-auto">
