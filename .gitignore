@@ -480,3 +480,7 @@ $RECYCLE.BIN/
 
 # Vim temporary swap files
 *.swp
+
+# Deploy: secrets that never go to Git
+deploy/secrets/
+deploy/.env

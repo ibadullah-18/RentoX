@@ -1,0 +1,81 @@
+name: CI
+
+# Every push and pull request is checked: if something breaks, it shows up here before it reaches the server.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    name: Backend (build + tests)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      # The integration tests start a real PostgreSQL in Docker (Testcontainers); the runner has Docker.
+      - run: dotnet test RentoX.slnx --nologo
+
+  web:
+    name: Web (types, lint, texts, tests, build)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - run: npm ci
+      - run: npx next typegen
+      - run: npx tsc --noEmit
+      - run: npm run lint
+      - run: npm run i18n:check
+      - run: npm test
+      - run: npm run build
+
+  mobile:
+    name: Mobile (analyze + tests)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: mobile
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - run: flutter gen-l10n
+      - run: flutter analyze
+      - run: flutter test
+
+  docker:
+    name: Docker images build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      # Release builds need the ImageSharp licence key; here the images are built in Debug only to prove the files work.
+      - name: API, worker and migrations
+        run: |
+          docker build backend --target api     --build-arg BUILD_CONFIGURATION=Debug -t rentox-api
+          docker build backend --target worker  --build-arg BUILD_CONFIGURATION=Debug -t rentox-worker
+          docker build backend --target migrate --build-arg BUILD_CONFIGURATION=Debug -t rentox-migrate
+      - name: Website
+        run: docker build web --build-arg API_BASE_URL=http://api:8080 -t rentox-web
+      - name: Backup tool
+        run: docker build deploy/backup -t rentox-backup

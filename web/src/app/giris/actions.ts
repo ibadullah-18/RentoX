@@ -2,6 +2,7 @@
 
 import { getT } from "@/lib/i18n/server";
 import { redirect } from "next/navigation";
+import { clientIpHeaders } from "@/lib/client-ip";
 import { problem } from "@/lib/authed";
 import { isValidPhone, normalizePhone } from "@/lib/phone";
 import {
@@ -33,7 +34,7 @@ type Challenge = { challengeId: string; resendAvailableAtUtc: string };
 async function post(path: string, body: unknown) {
   return fetch(`${API_BASE}${path}`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", ...(await clientIpHeaders()) },
     body: JSON.stringify(body),
     cache: "no-store",
   });

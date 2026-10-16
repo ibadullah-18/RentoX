@@ -1,0 +1,51 @@
+# Two addresses:
+#   {$WEB_DOMAIN}  the website (and the live connections, which go straight to the API)
+#   {$API_DOMAIN}  the API, for the mobile app
+# Caddy gets and renews the HTTPS certificates by itself. The domains' DNS records must point to this server first.
+#
+# The visitor's real address is passed on (X-Real-IP / X-Forwarded-For): the API's per-address limits (one-time
+# codes, sign-in) need it. The headers from the visitor are replaced, never trusted.
+
+(common) {
+	encode zstd gzip
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		X-Frame-Options "SAMEORIGIN"
+		Permissions-Policy "camera=(), microphone=(), geolocation=()"
+		-Server
+	}
+}
+
+{$WEB_DOMAIN} {
+	import common
+
+	# Live connections (messages, typing, notifications): WebSocket straight to the API.
+	handle /hubs/* {
+		reverse_proxy api:8080 {
+			header_up X-Real-IP {remote_host}
+			header_up X-Forwarded-For {remote_host}
+		}
+	}
+
+	handle {
+		reverse_proxy web:3000 {
+			header_up X-Real-IP {remote_host}
+			header_up X-Forwarded-For {remote_host}
+		}
+	}
+}
+
+{$API_DOMAIN} {
+	import common
+
+	request_body {
+		max_size 25MB
+	}
+
+	reverse_proxy api:8080 {
+		header_up X-Real-IP {remote_host}
+		header_up X-Forwarded-For {remote_host}
+	}
+}

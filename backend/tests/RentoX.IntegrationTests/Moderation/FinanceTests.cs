@@ -58,6 +58,9 @@ public sealed class FinanceTests(AuditPostgresFixture database)
             StaffProfile staff = StaffProfile.Create(worker, Now.AddDays(-60));
             staff.Update(500_00, true, 540, 1080, 31, 3, null, Now.AddDays(-60));
             db.Set<StaffProfile>().Add(staff);
+            // 500 from August; a raise to 600 from November must not change October.
+            db.Set<StaffSalaryChange>().Add(StaffSalaryChange.Create(worker, new DateOnly(2026, 8, 1), 500_00, owner, Now.AddDays(-60)));
+            db.Set<StaffSalaryChange>().Add(StaffSalaryChange.Create(worker, new DateOnly(2026, 11, 1), 600_00, owner, Now));
             db.Set<PayrollEntry>().Add(PayrollEntry.Create(worker, new DateOnly(2026, 10, 1), PayrollKind.Bonus, 50_00, null, owner, Now));
             db.Set<PayrollEntry>().Add(PayrollEntry.Create(worker, new DateOnly(2026, 10, 1), PayrollKind.Deduction, 20_00, "gecikmə", owner, Now));
             await db.SaveChangesAsync();
@@ -78,6 +81,9 @@ public sealed class FinanceTests(AuditPostgresFixture database)
         Assert.Equal(new DateOnly(2026, 10, 1), report.Month);
         ReportStaffLine line = Assert.Single(report.Staff, s => s.Name == "İşçi Bir");
         Assert.Equal(530m, line.Cost); // 500 + 50 bonus - 20 deduction
+        // The months keep the pay they had: July is before the first change, November has the raise.
+        Assert.DoesNotContain((await service.GetMonthlyReportAsync(new DateOnly(2026, 7, 1))).Staff, x => x.Name == "İşçi Bir" && x.Salary != 0m);
+        Assert.Equal(600m, (await service.GetMonthlyReportAsync(new DateOnly(2026, 11, 1))).Staff.Single(x => x.Name == "İşçi Bir").Salary);
         Assert.Equal(40m, report.BudgetsTotal);
         Assert.Equal(15m, report.TaxesTotal);
         Assert.Equal(10m, report.OtherTotal); // the voided 999 is not counted

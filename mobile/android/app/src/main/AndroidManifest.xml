@@ -1,6 +1,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <!-- Android 13+: asked at runtime after sign-in. -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+    <!-- The release build talks to the API too (debug and profile get it from their own manifests). -->
+    <uses-permission android:name="android.permission.INTERNET"/>
     <application
         android:label="RentoX"
         android:name="${applicationName}"

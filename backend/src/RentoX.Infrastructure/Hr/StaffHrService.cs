@@ -220,7 +220,12 @@ public sealed class StaffHrService(
 
         int Sum(PayrollKind kind) => entries.Where(e => !e.IsVoid && e.Kind == kind).Sum(e => e.AmountInQepik);
 
-        int baseAmount = profile?.MonthlySalaryInQepik ?? 0;
+        // The pay in force in THAT month (a later raise does not rewrite earlier months).
+        List<StaffSalaryChange> salaryHistory = await dbContext.Set<StaffSalaryChange>()
+            .AsNoTracking()
+            .Where(c => c.UserId == userId)
+            .ToListAsync(cancellationToken);
+        int baseAmount = profile is null ? 0 : StaffSalaryChange.For(salaryHistory, first);
         int bonus = Sum(PayrollKind.Bonus);
         int deductions = Sum(PayrollKind.Deduction);
         int advances = Sum(PayrollKind.Advance);
@@ -317,6 +322,7 @@ public sealed class StaffHrService(
         DateTimeOffset now = clock.UtcNow;
         StaffProfile profile = await RequireProfileAsync(userId, cancellationToken);
         bool wasAllowed = profile.LoginAllowed;
+        bool salaryChanged = profile.MonthlySalaryInQepik != command.MonthlySalaryInQepik;
 
         profile.Update(
             command.MonthlySalaryInQepik,
@@ -327,6 +333,14 @@ public sealed class StaffHrService(
             command.MonthlyDayOffLimit,
             command.Note,
             now);
+
+        // A new salary counts from this month on; the months before keep the pay they had.
+        if (salaryChanged)
+        {
+            DateOnly today = HrTime.BakuDay(now);
+            dbContext.Set<StaffSalaryChange>().Add(StaffSalaryChange.Create(
+                userId, new DateOnly(today.Year, today.Month, 1), command.MonthlySalaryInQepik, actorUserId, now));
+        }
 
         // One entry per kind of change (the log keeps one entry per operation, action and person).
         dbContext.Set<AuditLogEntry>().Add(AuditLogEntry.ForStaffHr(Guid.NewGuid(), actorUserId, userId, AuditProfile, profile.Id, now));

@@ -31,14 +31,15 @@ type Outcome = { tokens: Tokens } | { rejected: true } | { failed: true };
 // shared with the others (and kept for a few seconds for late ones).
 const shared = new Map<string, Promise<Outcome>>();
 
-function refreshOnce(refresh: string): Promise<Outcome> {
+function refreshOnce(refresh: string, ip?: string): Promise<Outcome> {
   let call = shared.get(refresh);
   if (!call) {
     call = (async (): Promise<Outcome> => {
       try {
         const res = await fetch(`${API_BASE}/api/auth/refresh`, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          // The visitor's own address, so the API's per-address limit does not count everybody together.
+          headers: { "Content-Type": "application/json", ...(ip ? { "X-Forwarded-For": ip } : {}) },
           body: JSON.stringify({ refreshToken: refresh }),
           cache: "no-store",
         });
@@ -92,7 +93,8 @@ export async function proxy(request: NextRequest) {
   const stillGood = request.cookies.get(AT)?.value && expires - Date.now() > 30_000;
   if (stillGood) return answer();
 
-  const outcome = await refreshOnce(refresh);
+  const ip = request.headers.get("x-real-ip") ?? request.headers.get("x-forwarded-for")?.split(",")[0]?.trim();
+  const outcome = await refreshOnce(refresh, ip);
 
   if ("rejected" in outcome) {
     // The refresh token is finished: sign the person out.

@@ -988,6 +988,37 @@ namespace RentoX.Infrastructure.Persistence.Migrations
                         });
                 });
 
+            modelBuilder.Entity("RentoX.Domain.Hr.StaffSalaryChange", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("AmountInQepik")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateOnly>("EffectiveFrom")
+                        .HasColumnType("date");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId", "EffectiveFrom");
+
+                    b.ToTable("staff_salary_changes", "hr", t =>
+                        {
+                            t.HasCheckConstraint("CK_staff_salary_changes_Amount", "\"AmountInQepik\" BETWEEN 0 AND 10000000");
+                        });
+                });
+
             modelBuilder.Entity("RentoX.Domain.Listings.Billing.ListingBillingCycle", b =>
                 {
                     b.Property<Guid>("Id")
@@ -2586,6 +2617,15 @@ namespace RentoX.Infrastructure.Persistence.Migrations
                     b.HasOne("RentoX.Infrastructure.Identity.AppUser", null)
                         .WithMany()
                         .HasForeignKey("FromUserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("RentoX.Domain.Hr.StaffSalaryChange", b =>
+                {
+                    b.HasOne("RentoX.Infrastructure.Identity.AppUser", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });

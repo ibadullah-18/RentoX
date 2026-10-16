@@ -2,6 +2,7 @@
 
 import { isValidPhone, normalizePhone } from "@/lib/phone";
 import { redirect } from "next/navigation";
+import { clientIpHeaders } from "@/lib/client-ip";
 import { adminHref } from "@/lib/admin-path";
 import { clearSession, getAccessToken, getRefreshToken, rolesOf, saveSession, type AuthTokens } from "@/lib/session";
 
@@ -15,7 +16,7 @@ export type AdminVerified = { ok: true } | { ok: false; message: string };
 async function post(path: string, body: unknown) {
   return fetch(`${API_BASE}${path}`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", ...(await clientIpHeaders()) },
     body: JSON.stringify(body),
     cache: "no-store",
   });

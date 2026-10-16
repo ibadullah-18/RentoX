@@ -44,7 +44,8 @@ export function isUntidy(sp: Raw): boolean {
   return (
     one(sp.seller) === "all" ||
     one(sp.sort) === "date" ||
-    Object.values(sp).some((v) => many(v).some((x) => x === ""))
+    // A single empty value ("?q=") counts too: many() would drop it.
+    Object.values(sp).some((v) => (Array.isArray(v) ? v.includes("") : v === ""))
   );
 }
 

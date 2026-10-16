@@ -6,6 +6,8 @@ import type { NextConfig } from "next";
 const apiBase = process.env.API_BASE_URL ?? "http://localhost:5155";
 
 const nextConfig: NextConfig = {
+  // A self-contained server folder (.next/standalone) for the Docker image.
+  output: "standalone",
   // A second copy of the site (another port) needs its own build folder.
   distDir: process.env.NEXT_DIST_DIR ?? ".next",
   turbopack: {

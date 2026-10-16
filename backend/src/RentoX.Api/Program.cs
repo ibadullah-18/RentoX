@@ -53,6 +53,23 @@ builder.Logging.AddFilter(
     "Microsoft.AspNetCore.Hosting",
     LogLevel.Warning);
 
+// Error tracking: only when an address (DSN) is set in "Sentry:Dsn" (Sentry, or the self-hosted GlitchTip). Without it
+// nothing is sent anywhere. Expected "business rule" answers (400) are not errors and are left out; no personal data
+// (IP, phone, headers) is attached.
+string? sentryDsn = builder.Configuration["Sentry:Dsn"];
+if (!string.IsNullOrWhiteSpace(sentryDsn))
+{
+    builder.WebHost.UseSentry(options =>
+    {
+        options.Dsn = sentryDsn;
+        options.Environment = builder.Environment.EnvironmentName;
+        options.SendDefaultPii = false;
+        options.TracesSampleRate = 0;
+        options.SetBeforeSend(sentryEvent =>
+            sentryEvent.Exception is RentoX.Domain.Common.Exceptions.DomainException ? null : sentryEvent);
+    });
+}
+
 builder.Services.AddSingleton<
     RentoX.Api.Messaging.ConversationRateLimitFilter>();
 
@@ -102,6 +119,8 @@ builder.Services.AddScoped<
     RentoX.Api.Authentication.StaffAccessHandler>();
 
 builder.Services.AddHostedService<RentoX.Api.Hr.AttendanceMonitor>();
+
+RentoX.Api.Hosting.ForwardedHeadersSetup.Configure(builder.Services, builder.Configuration);
 
 builder.Services.AddControllers();
 
@@ -248,6 +267,9 @@ await using (AsyncServiceScope scope =
     await identitySeeder.SeedAsync();
 }
 
+// First: the real address of the visitor (from the proxy) is what the rate limits and the logs must see.
+app.UseForwardedHeaders();
+
 app.UseExceptionHandler();
 
 if (app.Environment.IsDevelopment())
@@ -305,5 +327,47 @@ app.MapGet(
         service = "RentoX.Api",
         timestampUtc = DateTimeOffset.UtcNow
     }));
+
+// "Ready" means the things the API cannot work without answer: the database and Redis. The plain /health only says the
+// process is running (for a restart check); this one is for monitoring and for the deploy to wait on.
+app.MapGet(
+    "/health/ready",
+    async (
+        RentoX.Infrastructure.Persistence.RentoXDbContext database,
+        StackExchange.Redis.IConnectionMultiplexer redis,
+        CancellationToken cancellationToken) =>
+    {
+        bool databaseUp;
+        try
+        {
+            databaseUp = await database.Database.CanConnectAsync(cancellationToken);
+        }
+        catch (Exception)
+        {
+            databaseUp = false;
+        }
+
+        bool redisUp;
+        try
+        {
+            await redis.GetDatabase().PingAsync();
+            redisUp = true;
+        }
+        catch (Exception)
+        {
+            redisUp = false;
+        }
+
+        object body = new
+        {
+            status = databaseUp && redisUp ? "Ready" : "NotReady",
+            database = databaseUp ? "up" : "down",
+            redis = redisUp ? "up" : "down"
+        };
+
+        return databaseUp && redisUp
+            ? Results.Ok(body)
+            : Results.Json(body, statusCode: StatusCodes.Status503ServiceUnavailable);
+    });
 
 await app.RunAsync();

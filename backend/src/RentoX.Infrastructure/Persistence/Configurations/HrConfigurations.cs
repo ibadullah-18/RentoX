@@ -95,3 +95,17 @@ public sealed class AttendanceAlertConfiguration : IEntityTypeConfiguration<Atte
         builder.HasOne<AppUser>().WithMany().HasForeignKey(a => a.UserId).OnDelete(DeleteBehavior.Cascade);
     }
 }
+
+public sealed class StaffSalaryChangeConfiguration : IEntityTypeConfiguration<StaffSalaryChange>
+{
+    public void Configure(EntityTypeBuilder<StaffSalaryChange> builder)
+    {
+        builder.ToTable("staff_salary_changes", "hr", t =>
+        {
+            t.HasCheckConstraint("CK_staff_salary_changes_Amount", "\"AmountInQepik\" BETWEEN 0 AND 10000000");
+        });
+        builder.HasKey(c => c.Id);
+        builder.HasIndex(c => new { c.UserId, c.EffectiveFrom });
+        builder.HasOne<AppUser>().WithMany().HasForeignKey(c => c.UserId).OnDelete(DeleteBehavior.Cascade);
+    }
+}

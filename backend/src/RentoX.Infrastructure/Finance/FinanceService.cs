@@ -243,7 +243,7 @@ public sealed class FinanceService(RentoXDbContext dbContext, IClock clock) : IF
         var profiles = await dbContext.Set<StaffProfile>()
             .AsNoTracking()
             .Where(p => p.CreatedAtUtc < monthEnd)
-            .Select(p => new { p.UserId, p.MonthlySalaryInQepik })
+            .Select(p => new { p.UserId })
             .ToListAsync(cancellationToken);
 
         if (profiles.Count == 0)
@@ -259,6 +259,12 @@ public sealed class FinanceService(RentoXDbContext dbContext, IClock clock) : IF
             .Select(e => new { e.UserId, e.Kind, e.AmountInQepik })
             .ToListAsync(cancellationToken);
 
+        // The salary in force in that month, from the history of changes (not today's salary).
+        List<StaffSalaryChange> changes = await dbContext.Set<StaffSalaryChange>()
+            .AsNoTracking()
+            .Where(c => ids.Contains(c.UserId))
+            .ToListAsync(cancellationToken);
+
         Dictionary<Guid, string> names = await NamesAsync(ids, cancellationToken);
 
         List<ReportStaffLine> result = profiles
@@ -266,7 +272,7 @@ public sealed class FinanceService(RentoXDbContext dbContext, IClock clock) : IF
             {
                 decimal bonus = lines.Where(l => l.UserId == p.UserId && l.Kind == PayrollKind.Bonus).Sum(l => l.AmountInQepik) / 100m;
                 decimal deductions = lines.Where(l => l.UserId == p.UserId && l.Kind == PayrollKind.Deduction).Sum(l => l.AmountInQepik) / 100m;
-                decimal salary = p.MonthlySalaryInQepik / 100m;
+                decimal salary = StaffSalaryChange.For(changes.Where(c => c.UserId == p.UserId), first) / 100m;
                 return new ReportStaffLine(names.GetValueOrDefault(p.UserId, "—"), salary, bonus, deductions, salary + bonus - deductions);
             })
             .Where(l => l.Cost != 0m || l.Salary != 0m)

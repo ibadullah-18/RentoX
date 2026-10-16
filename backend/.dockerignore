@@ -1,0 +1,8 @@
+**/bin/
+**/obj/
+**/.vs/
+tests/
+App_Data/
+*.user
+*.slnLaunch.user
+compose.presence.yml
