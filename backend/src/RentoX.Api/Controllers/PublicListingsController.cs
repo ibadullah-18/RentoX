@@ -1,7 +1,9 @@
 using System.Text.Json;
 using Microsoft.AspNetCore.Mvc;
+using RentoX.Api.Caching;
 using RentoX.Application.Abstractions.Authentication;
 using RentoX.Application.Common;
+using RentoX.Application.Favorites;
 using RentoX.Application.Listings;
 using RentoX.Contracts.Common;
 using RentoX.Contracts.Listings;
@@ -14,7 +16,9 @@ namespace RentoX.Api.Controllers;
 public sealed class PublicListingsController(
     IPublicListingQueryService queryService,
     IListingSuggestionService suggestionService,
-    ICurrentUserContext currentUserContext)
+    ICurrentUserContext currentUserContext,
+    AnonymousResponseCache responseCache,
+    IFavoriteService favoriteService)
     : ControllerBase
 {
     [HttpGet]
@@ -172,24 +176,49 @@ public sealed class PublicListingsController(
             WideFeed = string.Equals(feed, "wide", StringComparison.OrdinalIgnoreCase)
         };
 
-        PagedResult<PublicListingSummaryResult> result =
-        await queryService.SearchAsync(
-            query,
-            preferredLanguage.Value,
-            viewerUserId,
+        async Task<PagedResponse<PublicListingSummaryResponse>> LoadAsync(CancellationToken token)
+        {
+            // Always the signed-out answer: it is the same for everybody (the hearts are added below).
+            PagedResult<PublicListingSummaryResult> result =
+                await queryService.SearchAsync(
+                    query,
+                    preferredLanguage.Value,
+                    null,
+                    token);
+
+            return new PagedResponse<PublicListingSummaryResponse>(
+                result.Items.Select(ToSummary).ToArray(),
+                result.Page,
+                result.PageSize,
+                result.TotalCount,
+                result.TotalPages);
+        }
+
+        // The answer does not depend on who asks, so it is kept for a few seconds: a crowd opening the home page at once
+        // costs the database one set of queries, not one per person.
+        string cacheKey = Request.QueryString.Value ?? string.Empty;
+        PagedResponse<PublicListingSummaryResponse> answer =
+            cacheKey.Length <= 600
+                ? await responseCache.GetOrCreateAsync(cacheKey, () => LoadAsync(CancellationToken.None))
+                : await LoadAsync(cancellationToken);
+
+        if (viewerUserId is null || answer.Items.Count == 0)
+        {
+            return Ok(answer);
+        }
+
+        // A signed-in visitor also sees which of these listings are in their favourites (one small query).
+        IReadOnlySet<Guid> favorites = await favoriteService.GetFavoriteIdsAsync(
+            viewerUserId.Value,
+            answer.Items.Select(item => item.Id).ToArray(),
             cancellationToken);
 
-        PublicListingSummaryResponse[] items =
-            result.Items.Select(ToSummary).ToArray();
-
-        return Ok(
-            new PagedResponse<
-                PublicListingSummaryResponse>(
-                    items,
-                    result.Page,
-                    result.PageSize,
-                    result.TotalCount,
-                    result.TotalPages));
+        return Ok(answer with
+        {
+            Items = answer.Items
+                .Select(item => favorites.Contains(item.Id) ? item with { IsFavorite = true } : item)
+                .ToArray()
+        });
     }
 
     [HttpGet("suggestions")]
@@ -260,15 +289,34 @@ public sealed class PublicListingsController(
                 ? currentUserContext.UserId
                 : null;
 
-        IReadOnlyList<PublicListingSummaryResult> similar =
-            await queryService.GetSimilarAsync(
-                listingId,
-                preferredLanguage.Value,
-                viewerUserId,
-                limit,
-                cancellationToken);
+        // The same for everybody, kept for a few seconds (finding similar listings is the heaviest query of a listing
+        // page); the hearts of a signed-in visitor are added after.
+        IReadOnlyList<PublicListingSummaryResponse> similar =
+            await responseCache.GetOrCreateAsync(
+                $"similar:{listingId:N}:{preferredLanguage.Value}:{limit}",
+                async () => (IReadOnlyList<PublicListingSummaryResponse>)
+                    (await queryService.GetSimilarAsync(
+                        listingId,
+                        preferredLanguage.Value,
+                        null,
+                        limit,
+                        CancellationToken.None))
+                    .Select(ToSummary)
+                    .ToList());
 
-        return Ok(similar.Select(ToSummary).ToList());
+        if (viewerUserId is null || similar.Count == 0)
+        {
+            return Ok(similar);
+        }
+
+        IReadOnlySet<Guid> favorites = await favoriteService.GetFavoriteIdsAsync(
+            viewerUserId.Value,
+            similar.Select(item => item.Id).ToArray(),
+            cancellationToken);
+
+        return Ok(similar
+            .Select(item => favorites.Contains(item.Id) ? item with { IsFavorite = true } : item)
+            .ToList());
     }
 
     private static PublicListingSummaryResponse ToSummary(

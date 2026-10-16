@@ -23,6 +23,22 @@ services:
       POSTGRES_DB: rentox
       POSTGRES_USER: rentox
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+    # Settings for a server with 12 GB of memory (the default of PostgreSQL is made for a tiny machine). With another
+    # size: shared_buffers about a quarter of the memory, effective_cache_size about half of it.
+    command:
+      - "postgres"
+      - "-c"
+      - "shared_buffers=2GB"
+      - "-c"
+      - "effective_cache_size=6GB"
+      - "-c"
+      - "work_mem=16MB"
+      - "-c"
+      - "maintenance_work_mem=256MB"
+      - "-c"
+      - "max_connections=150"
+      - "-c"
+      - "random_page_cost=1.1"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:

@@ -11,7 +11,7 @@ export async function generateMetadata(): Promise<Metadata> {
 /** Only a path on this site: a link must never send people elsewhere. */
 function safeNext(value: string | string[] | undefined): string {
   const next = Array.isArray(value) ? value[0] : value;
-  return next && next.startsWith("/") && !next.startsWith("//") ? next : "/kabinet";
+  return next && next.startsWith("/") && !next.startsWith("//") && !next.includes("\\") ? next : "/kabinet";
 }
 
 export default async function LoginPage({ searchParams }: PageProps<"/giris">) {

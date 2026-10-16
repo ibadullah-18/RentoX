@@ -10,7 +10,7 @@ export const metadata: Metadata = { title: "Giriş", robots: { index: false, fol
 /** Only a path inside the panel: a link must never send people elsewhere. */
 function safeNext(value: string | string[] | undefined): string {
   const next = Array.isArray(value) ? value[0] : value;
-  return next && next.startsWith(`/${ADMIN_SEGMENT}`) && !next.startsWith("//") ? next : adminHref();
+  return next && next.startsWith(`/${ADMIN_SEGMENT}`) && !next.startsWith("//") && !next.includes("\\") ? next : adminHref();
 }
 
 export default async function AdminLoginPage({ searchParams }: PageProps<"/admin/giris">) {

@@ -122,6 +122,8 @@ builder.Services.AddHostedService<RentoX.Api.Hr.AttendanceMonitor>();
 
 RentoX.Api.Hosting.ForwardedHeadersSetup.Configure(builder.Services, builder.Configuration);
 
+builder.Services.AddSingleton<RentoX.Api.Caching.AnonymousResponseCache>();
+
 builder.Services.AddControllers();
 
 builder.Services

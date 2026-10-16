@@ -70,6 +70,30 @@ public sealed class FavoriteService(
                 cancellationToken);
     }
 
+    public async Task<IReadOnlySet<Guid>> GetFavoriteIdsAsync(
+        Guid userId,
+        IReadOnlyCollection<Guid> listingIds,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(listingIds);
+
+        if (listingIds.Count == 0)
+        {
+            return new HashSet<Guid>();
+        }
+
+        Guid[] wanted = [.. listingIds];
+
+        return (await dbContext.Favorites
+            .AsNoTracking()
+            .Where(favorite =>
+                favorite.UserId == userId &&
+                wanted.Contains(favorite.ListingId))
+            .Select(favorite => favorite.ListingId)
+            .ToListAsync(cancellationToken))
+            .ToHashSet();
+    }
+
     public Task<bool> IsFavoriteAsync(
         Guid userId,
         Guid listingId,
