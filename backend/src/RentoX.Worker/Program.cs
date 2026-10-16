@@ -32,9 +32,8 @@ builder.Services.AddDbContext<RentoXDbContext>(
 
 builder.Services.AddSingleton<IClock, SystemClock>();
 
-builder.Services.AddSingleton<
-    IFileStorage,
-    LocalFileStorage>();
+// The same place as the API (Storage:Provider): the worker deletes the files of removed listings.
+builder.Services.AddRentoXFileStorage();
 
 builder.Services.AddScoped<
     IListingMaintenanceService,

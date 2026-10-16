@@ -271,9 +271,8 @@ public static class DependencyInjection
             ICategoryFieldOptionManagementService,
             CategoryFieldOptionManagementService>();
 
-        services.AddSingleton<
-            IFileStorage,
-            LocalFileStorage>();
+        // The disk or Cloudflare R2, by the setting Storage:Provider.
+        services.AddRentoXFileStorage();
 
         services.AddScoped<
             IListingImageService,

@@ -77,6 +77,12 @@ services:
       Otp__HashingKey: ${OTP_HASHING_KEY:?set OTP_HASHING_KEY in .env}
       IdentitySeed__SuperAdminPhoneNumber: ${SUPER_ADMIN_PHONE:?set SUPER_ADMIN_PHONE in .env}
       Storage__RootPath: /data/storage
+      # Where the photos live: Disk (the volume below) or R2 (Cloudflare; the bucket and its own token).
+      Storage__Provider: ${STORAGE_PROVIDER:-Disk}
+      Storage__R2__ServiceUrl: ${R2_IMAGES_ENDPOINT:-}
+      Storage__R2__Bucket: ${R2_IMAGES_BUCKET:-rentox-images}
+      Storage__R2__AccessKeyId: ${R2_IMAGES_ACCESS_KEY_ID:-}
+      Storage__R2__SecretAccessKey: ${R2_IMAGES_SECRET_ACCESS_KEY:-}
       # Error tracking (optional): the address (DSN) from Sentry or GlitchTip. Empty = nothing is sent.
       Sentry__Dsn: ${SENTRY_DSN:-}
     volumes:
@@ -104,6 +110,12 @@ services:
     environment:
       ConnectionStrings__Database: "Host=postgres;Port=5432;Database=rentox;Username=rentox;Password=${POSTGRES_PASSWORD}"
       Storage__RootPath: /data/storage
+      # Where the photos live: Disk (the volume below) or R2 (Cloudflare; the bucket and its own token).
+      Storage__Provider: ${STORAGE_PROVIDER:-Disk}
+      Storage__R2__ServiceUrl: ${R2_IMAGES_ENDPOINT:-}
+      Storage__R2__Bucket: ${R2_IMAGES_BUCKET:-rentox-images}
+      Storage__R2__AccessKeyId: ${R2_IMAGES_ACCESS_KEY_ID:-}
+      Storage__R2__SecretAccessKey: ${R2_IMAGES_SECRET_ACCESS_KEY:-}
       # The Firebase service account file (push notifications), mounted below. Leave PushNotifications off until it exists.
       PushNotifications__Enabled: ${PUSH_ENABLED:-false}
       GOOGLE_APPLICATION_CREDENTIALS: /run/secrets/firebase.json

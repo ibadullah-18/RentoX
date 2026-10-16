@@ -20,13 +20,7 @@ public sealed class LocalFileStorage(
     {
         ArgumentNullException.ThrowIfNull(content);
 
-        string safeExtension =
-            NormalizeExtension(extension);
-
-        string folder = GetFolder(area);
-
-        string storageKey =
-            $"{folder}/{Guid.NewGuid():N}{safeExtension}";
+        string storageKey = StorageKeyRules.NewKey(area, extension);
 
         string fullPath = GetFullPath(storageKey);
 
@@ -107,37 +101,7 @@ public sealed class LocalFileStorage(
 
     private string GetFullPath(string storageKey)
     {
-        if (string.IsNullOrWhiteSpace(storageKey) ||
-            Path.IsPathRooted(storageKey) ||
-            storageKey.Contains('\\') ||
-            storageKey.Contains(':') ||
-            storageKey.Contains('\0'))
-        {
-            throw new DomainException(
-                "Storage key is invalid.");
-        }
-
-        foreach (string segment in storageKey.Split('/'))
-        {
-            if (segment.Length == 0 ||
-                segment is "." or ".." ||
-                segment.EndsWith('.') ||
-                segment.EndsWith(' '))
-            {
-                throw new DomainException(
-                    "Storage key is invalid.");
-            }
-
-            foreach (char character in segment)
-            {
-                if (char.IsControl(character) ||
-                    character is '<' or '>' or '"' or '|' or '?' or '*')
-                {
-                    throw new DomainException(
-                        "Storage key is invalid.");
-                }
-            }
-        }
+        StorageKeyRules.RequireValidKey(storageKey);
 
         string rootPath =
             ResolveRootPath();
@@ -191,63 +155,5 @@ public sealed class LocalFileStorage(
                 : Path.Combine(
                     environment.ContentRootPath,
                     configuredPath));
-    }
-
-    private static string GetFolder(
-    FileStorageArea area)
-    {
-        return area switch
-        {
-            FileStorageArea.ListingImages =>
-                "listing-images",
-
-            FileStorageArea.StoreLogos =>
-                "store-logos",
-
-            FileStorageArea.StoreCovers =>
-                "store-covers",
-
-            FileStorageArea.ProfileImages =>
-                "profile-images",
-
-            FileStorageArea.ChatAttachments =>
-                "chat-attachments",
-
-            FileStorageArea.Banners =>
-                "banners",
-
-            _ => throw new DomainException(
-                "Storage area is invalid.")
-        };
-    }
-
-    private static string NormalizeExtension(
-        string extension)
-    {
-        string normalized =
-            extension.Trim().ToLowerInvariant();
-
-        if (!normalized.StartsWith('.'))
-        {
-            normalized = $".{normalized}";
-        }
-
-        string[] allowedExtensions =
-        [
-            ".jpg",
-            ".jpeg",
-            ".png",
-            ".webp"
-        ];
-
-        if (!allowedExtensions.Contains(
-                normalized,
-                StringComparer.Ordinal))
-        {
-            throw new DomainException(
-                "Image extension is not supported.");
-        }
-
-        return normalized;
     }
 }

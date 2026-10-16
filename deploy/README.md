@@ -78,6 +78,30 @@ Bundan sonra hər gecə `BACKUP_HOUR` (standart 03:00, Bakı vaxtı) avtomatik i
 Saxlama qaydası: baza nüsxələrindən 30 gündəlik, 8 həftəlik, 12 aylıq; şəkillər artımlı göndərilir (yalnız yeniləri).
 `BACKUP_HEALTHCHECK_URL` doldurun (məsələn <https://healthchecks.io> pulsuz hesabı): yedək dayansa e-poçt gəlir.
 
+## 4b. Şəkilləri R2-də saxlamaq (istəyə görə, tövsiyə olunur)
+
+Standart halda şəkillər serverin diskindədir (`STORAGE_PROVIDER=Disk`) və gecə yedəyinə düşür. **R2 rejimində** şəkillər birbaşa Cloudflare R2-yə yazılır: server xarab olsa şəkillər itmir, disk dolmur.
+
+1. Cloudflare-də **ayrıca** bucket yaradın: `rentox-images` (yedək bucket-i ilə qarışdırmayın).
+2. Yalnız bu bucket-ə "Object Read & Write" icazəli **ayrıca token** yaradın.
+3. `.env`-də doldurun:
+   - `STORAGE_PROVIDER=R2`
+   - `R2_IMAGES_ENDPOINT=https://<account id>.r2.cloudflarestorage.com`
+   - `R2_IMAGES_BUCKET=rentox-images`
+   - `R2_IMAGES_ACCESS_KEY_ID=`, `R2_IMAGES_SECRET_ACCESS_KEY=`
+4. **Əvvəl** mövcud şəkilləri diskdən R2-yə köçürün (yeni serverdə şəkil yoxdursa bu addım lazım deyil). Açarlar yalnız bu əmrdə işlənir:
+
+```bash
+docker run --rm -v rentox_uploads:/data:ro   -e RCLONE_CONFIG_R2_TYPE=s3 -e RCLONE_CONFIG_R2_PROVIDER=Cloudflare   -e RCLONE_CONFIG_R2_ENDPOINT=https://<account id>.r2.cloudflarestorage.com   -e RCLONE_CONFIG_R2_ACCESS_KEY_ID=<açar> -e RCLONE_CONFIG_R2_SECRET_ACCESS_KEY=<gizli açar>   rclone/rclone copy /data r2:rentox-images --progress
+```
+
+   Fayl adları (`listing-images/....webp`) eynidir, ona görə bazada heç nə dəyişmir.
+5. `docker compose up -d api worker`. Sayta girib şəkillərin göründüyünü və yeni şəkil yükləndiyini yoxlayın.
+6. Köhnə şəkil qovluğunu (`rentox_uploads` volume) bir müddət saxlayın, hər şey işləyəndən sonra silin.
+
+Elan silinəndə şəkli 30 gün sonra worker R2-dən də silir (səhvən silinəni qaytarmaq üçün gecikmə).
+R2 rejimində **şəkillər gecə yedəyinə düşmür** (onlar artıq R2-dədir); baza yedəyi isə əvvəlki kimi gedir. Bir şeyi unutmayın: R2-dən səhvən silinən şəkli qaytarmaq olmur, ona görə 30 günlük gecikmə vacibdir.
+
 ## 5. Bərpa (server xarab olub, ya köçürürsünüz)
 
 Yeni serverdə 1–2-ci addımları edin. `.env`-də **əvvəlki ilə eyni** `JWT_SIGNING_KEY`, `OTP_HASHING_KEY`, `POSTGRES_PASSWORD` və R2/restic dəyərlərini yazın (yoxsa istifadəçilər çıxış edər və ya yedək açılmaz). Sonra:
