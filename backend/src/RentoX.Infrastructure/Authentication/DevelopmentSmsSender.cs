@@ -1,12 +1,20 @@
-﻿using Microsoft.Extensions.Hosting;
+﻿using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using RentoX.Application.Authentication;
 
 namespace RentoX.Infrastructure.Authentication;
 
+/// <summary>
+/// Does NOT send an SMS: it writes the code into the server log. Allowed in Development, and in a real server only
+/// when <c>Sms:LogCodes</c> is true, which is meant for the first private days before an SMS provider is connected:
+/// the owner reads the codes from the log (<c>docker compose logs api</c>) to sign in and try the site. Nobody else
+/// receives a code, so nobody else can sign in. Switch it off (and connect a real provider) before the site opens.
+/// </summary>
 public sealed partial class DevelopmentSmsSender(
     ILogger<DevelopmentSmsSender> logger,
-    IHostEnvironment environment)
+    IHostEnvironment environment,
+    IConfiguration configuration)
     : ISmsSender
 {
     public Task SendOtpAsync(
@@ -16,11 +24,11 @@ public sealed partial class DevelopmentSmsSender(
     {
         cancellationToken.ThrowIfCancellationRequested();
 
-        if (!environment.IsDevelopment())
+        if (!environment.IsDevelopment() && !configuration.GetValue<bool>("Sms:LogCodes"))
         {
             throw new InvalidOperationException(
-                "Development SMS delivery is disabled outside Development. " +
-                "Configure a real SMS provider.");
+                "No SMS provider is configured. Connect one, or (only for private tests) set Sms:LogCodes=true " +
+                "to write the codes into the server log.");
         }
 
         LogDevelopmentOtp(

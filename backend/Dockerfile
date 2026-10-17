@@ -33,7 +33,7 @@ ENV PATH="${PATH}:/root/.dotnet/tools"
 # The EF tool starts the configuration of the API to find the database model, so the settings the API insists on
 # need some value here. They are only used to build the bundle (nothing connects), never the real ones.
 RUN ConnectionStrings__Database="Host=build" ConnectionStrings__Redis="build:6379" \
-    Jwt__SigningKey="build-only-build-only-build-only-build-only" Otp__HashingKey="build-only-build-only" \
+    Jwt__SigningKey="build-only-build-only-build-only-build-only-build-only-build-only-1234" Otp__HashingKey="build-only-build-only-build-only-1234" \
     dotnet ef migrations bundle \
         --project src/RentoX.Infrastructure \
         --startup-project src/RentoX.Api \

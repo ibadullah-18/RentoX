@@ -12,6 +12,49 @@ Bu qovluq bütün sistemi (sayt, API, işçi proqram, baza, HTTPS, gecə yedəyi
 | `postgres`, `redis` | Baza və canlı bağlantılar |
 | `backup` | Hər gecə bazanı və şəkilləri şifrələyib Cloudflare R2-yə göndərir |
 
+## 0. Server alınan gün: qısa yol (təxminən 45 dəqiqə)
+
+Aşağıdakı addımlar ilk dəfə sistemi serverdə qaldırmaq üçündür. Ətraflı izahı sonrakı bölmələrdədir.
+
+1. **Serverə girin** (SSH): `ssh root@<serverin-IP>`. Provayderin verdiyi IP və parolu işlədin.
+2. **Təhlükəsizlik divarı** (yalnız lazım olan portlar açıq olsun):
+   ```bash
+   apt update && apt install -y ufw git
+   ufw allow 22/tcp && ufw allow 80/tcp && ufw allow 443/tcp && ufw allow 443/udp
+   ufw --force enable
+   ```
+3. **Docker qurun** (rəsmi skript): `curl -fsSL https://get.docker.com | sh`. Sonra `systemctl enable docker` (server yenidən açılanda Docker özü qalxsın; konteynerlər `restart: unless-stopped` ilə özü qayıdır).
+4. **Kodu yükləyin:**
+   ```bash
+   git clone https://github.com/ibadullah-18/RentoX.git
+   cd RentoX/deploy
+   cp .env.example .env
+   ```
+   Repo **gizlidirsə**, serverdə GitHub-a giriş lazımdır (Settings → Deploy keys və ya şəxsi token). Açıqdırsa, bu addım lazım deyil.
+5. **`.env` faylını doldurun** (`nano .env`). Gizli açarlar üçün `openssl rand -base64 48`:
+   - `POSTGRES_PASSWORD`, `JWT_SIGNING_KEY`, `OTP_HASHING_KEY` (üçü ayrı-ayrı, güclü, təsadüfi)
+     (`openssl rand -base64 48` düzgün uzunluq verir. API bu açarlar çox qısa olsa **başlamır** və logda səbəbini yazır: JWT açarı ən azı 64, OTP açarı ən azı 32 simvol.)
+   - `SUPER_ADMIN_PHONE=+994XXXXXXXXX` (sizin nömrəniz)
+   - **Domen hazırdırsa:** `WEB_DOMAIN`, `API_DOMAIN` (DNS "A" qeydləri serverin IP-sinə baxmalıdır).
+   - **Domen hələ yoxdursa (yalnız sınaq):** `WEB_DOMAIN=:80` və `API_DOMAIN=api.localhost`. Sayt `http://<serverin-IP>` ünvanında açılır, HTTPS və mobil tətbiq üçün isə domen lazımdır.
+   - **ImageSharp açarı hələ gəlməyibsə (yalnız şəxsi sınaq günləri):** `BUILD_CONFIGURATION=Debug` sətrini açın. Açar gələndən sonra bu sətri silin, açarı `SIXLABORS_LICENSE_KEY`-ə yazın.
+   - **SMS provayderi hələ yoxdursa:** `SMS_LOG_CODES=true`. Heç bir SMS getmir, giriş kodları API-nin loguna yazılır, yalnız siz oxuya bilirsiniz.
+   - R2 yedək dəyərləri (bölmə 4). Bunları əvvəlcədən sınamısınız.
+6. **Başladın:**
+   ```bash
+   docker compose build
+   docker compose up -d
+   docker compose ps          # hamısı "running"/"healthy", migrate "exited (0)"
+   ```
+   İlk build 5–15 dəqiqə çəkə bilər.
+7. **İlk giriş və admin olmaq:**
+   - Sayta girin, öz nömrənizlə qeydiyyatdan keçin. Kodu bu əmrlə oxuyun: `docker compose logs api | grep "OTP"` (axırıncı sətir).
+   - Sonra `docker compose restart api` edin: sistem `SUPER_ADMIN_PHONE` nömrəsini SuperAdmin edir.
+   - Admin panelinin ünvanı: `/RentoXAdminPanel/giris`.
+8. **Yoxlayın:** `curl http://localhost:8080/health/ready` (API konteynerində) və ya brauzerdə sayt açılır, şəkil yüklənir, admin panelinə girilir.
+9. **Yedəyi dərhal sınayın** (bölmə 4, 5-ci addım) və bərpanı bir dəfə yoxlayın.
+10. Sınaq günləri bitəndən sonra: `SMS_LOG_CODES=false`, real SMS və ödənişi qoşun, ImageSharp açarını yazıb Release build edin, saytı açın.
+
 ## 1. Serverə hazırlıq
 
 1. Ubuntu Server 24.04 qurun. Serverə SSH ilə girin (root və ya sudo hüququ lazımdır).

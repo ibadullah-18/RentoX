@@ -484,3 +484,6 @@ $RECYCLE.BIN/
 # Deploy: secrets that never go to Git
 deploy/secrets/
 deploy/.env
+
+# The backup scripts of the deploy folder must be in Git (the Visual Studio pattern above would hide any "Backup*" folder)
+!deploy/backup/

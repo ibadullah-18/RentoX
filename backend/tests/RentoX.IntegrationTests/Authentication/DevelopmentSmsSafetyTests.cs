@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -17,7 +18,8 @@ public sealed class DevelopmentSmsSafetyTests
 
         DevelopmentSmsSender sender = new(
             logger,
-            new TestEnvironment("Development"));
+            new TestEnvironment("Development"),
+            new ConfigurationBuilder().Build());
 
         await sender.SendOtpAsync(TestPhone, TestCode);
 
@@ -41,7 +43,8 @@ public sealed class DevelopmentSmsSafetyTests
 
         DevelopmentSmsSender sender = new(
             logger,
-            new TestEnvironment(environmentName));
+            new TestEnvironment(environmentName),
+            new ConfigurationBuilder().Build());
 
         await Assert.ThrowsAsync<InvalidOperationException>(
             () => sender.SendOtpAsync(TestPhone, TestCode));
@@ -57,7 +60,8 @@ public sealed class DevelopmentSmsSafetyTests
 
         DevelopmentSmsSender sender = new(
             logger,
-            new TestEnvironment("Development"));
+            new TestEnvironment("Development"),
+            new ConfigurationBuilder().Build());
 
         using CancellationTokenSource cancellation = new();
         await cancellation.CancelAsync();

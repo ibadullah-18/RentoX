@@ -35,6 +35,19 @@ string jwtSigningKey =
     ?? throw new InvalidOperationException(
         "JWT signing key is missing.");
 
+// A key that is too short only failed at the first sign-in, long after the start: say it at the start instead.
+if (jwtSigningKey.Length < 64)
+{
+    throw new InvalidOperationException(
+        "Jwt:SigningKey must contain at least 64 characters (make one with: openssl rand -base64 48).");
+}
+
+if (otpHashingKey.Length < 32)
+{
+    throw new InvalidOperationException(
+        "Otp:HashingKey must contain at least 32 characters (make one with: openssl rand -base64 48).");
+}
+
 JwtOptions jwtOptions = new()
 {
     Issuer = "RentoX.Api",
@@ -371,5 +384,15 @@ app.MapGet(
             ? Results.Ok(body)
             : Results.Json(body, statusCode: StatusCodes.Status503ServiceUnavailable);
     });
+
+if (!app.Environment.IsDevelopment() && app.Configuration.GetValue<bool>("Sms:LogCodes"))
+{
+    // Said once at the start: a plain call is fine here (the faster logger delegates are for hot paths).
+#pragma warning disable CA1848
+    app.Logger.LogWarning(
+        "Sms:LogCodes is ON: sign-in codes are written to this log instead of being sent by SMS. " +
+        "Use it only for private tests, and connect an SMS provider before the site opens.");
+#pragma warning restore CA1848
+}
 
 await app.RunAsync();

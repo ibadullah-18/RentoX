@@ -62,7 +62,7 @@ services:
       context: ../backend
       target: migrate
       args:
-        SIXLABORS_LICENSE_KEY: ${SIXLABORS_LICENSE_KEY:?set SIXLABORS_LICENSE_KEY in .env}
+        SIXLABORS_LICENSE_KEY: ${SIXLABORS_LICENSE_KEY:-}
         BUILD_CONFIGURATION: ${BUILD_CONFIGURATION:-Release}
     # The bundle starts the configuration of the API to find the database model, so it needs the same settings.
     environment:
@@ -83,7 +83,7 @@ services:
       context: ../backend
       target: api
       args:
-        SIXLABORS_LICENSE_KEY: ${SIXLABORS_LICENSE_KEY:?set SIXLABORS_LICENSE_KEY in .env}
+        SIXLABORS_LICENSE_KEY: ${SIXLABORS_LICENSE_KEY:-}
         BUILD_CONFIGURATION: ${BUILD_CONFIGURATION:-Release}
     restart: unless-stopped
     environment:
@@ -101,6 +101,8 @@ services:
       Storage__R2__SecretAccessKey: ${R2_IMAGES_SECRET_ACCESS_KEY:-}
       # Error tracking (optional): the address (DSN) from Sentry or GlitchTip. Empty = nothing is sent.
       Sentry__Dsn: ${SENTRY_DSN:-}
+      # true = sign-in codes go into the log of the API (no SMS is sent). ONLY for the private first days, see README.
+      Sms__LogCodes: ${SMS_LOG_CODES:-false}
     volumes:
       - uploads:/data/storage
     depends_on:
@@ -120,7 +122,7 @@ services:
       context: ../backend
       target: worker
       args:
-        SIXLABORS_LICENSE_KEY: ${SIXLABORS_LICENSE_KEY:?set SIXLABORS_LICENSE_KEY in .env}
+        SIXLABORS_LICENSE_KEY: ${SIXLABORS_LICENSE_KEY:-}
         BUILD_CONFIGURATION: ${BUILD_CONFIGURATION:-Release}
     restart: unless-stopped
     environment:
