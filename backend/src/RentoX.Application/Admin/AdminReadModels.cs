@@ -1,4 +1,4 @@
-using RentoX.Application.Common;
+﻿using RentoX.Application.Common;
 
 namespace RentoX.Application.Admin;
 
@@ -123,7 +123,9 @@ public sealed record AdminUserDetails(
     int PreferredLanguage,
     string? StatusReason,
     IReadOnlyList<AdminWalletTransactionItem> RecentTransactions,
-    AdminUserReportSummary? Reports = null);
+    AdminUserReportSummary? Reports = null,
+    /// <summary>RentoX pays for this person: listing fee, VIP, bump and VIP store are free for them.</summary>
+    int FreeServices = 0);
 
 /// <summary>Reading users for the admin: who they are, their listings count, their balance and recent money moves.</summary>
 public interface IAdminUserService

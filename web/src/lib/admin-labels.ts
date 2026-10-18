@@ -82,6 +82,11 @@ export const auditAction: Record<
   10: { label: "İşçinin sessiyaları bağlandı", format: (n) => `${n} sessiya`, target: "İstifadəçi" },
   9: { label: "Bildiriş göndərildi", format: (n) => `${n} nəfər`, target: "Mesaj" },
   6: { label: "Admin icazəsi dəyişdi", value: { 0: "Yoxdur", 1: "Admin" }, target: "İstifadəçi" },
+  13: {
+    label: "Pulsuz hədiyyə verildi",
+    value: { 1: "İrəli çəkmə (elan)", 2: "VIP (elan)", 3: "VIP mağaza" },
+    target: "İstifadəçi",
+  },
   12: {
     label: "İşçi ilə bağlı dəyişiklik",
     value: { 1: "Profil və ya maaş", 2: "Panelə giriş icazəsi", 3: "Maaş sətri əlavə edildi", 4: "Maaş sətri ləğv edildi", 5: "İcazə üzrə qərar", 6: "Müraciət üzrə qərar" },

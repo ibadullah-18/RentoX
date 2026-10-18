@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../features/auth/domain/auth_models.dart';
+import '../features/home/presentation/campaign_page.dart';
 import '../features/auth/presentation/auth_controller.dart';
 import '../features/auth/presentation/phone_page.dart';
 import '../features/auth/presentation/verify_page.dart';
@@ -45,6 +46,9 @@ abstract final class Routes {
   static const profileEdit = '/profile/edit';
   static const support = '/support';
   static const wallet = '/wallet';
+
+  /// The page of a campaign: `/campaign/<name>`.
+  static String campaign(String slug) => '/campaign/$slug';
 
   /// Terms, privacy, about, contact: open to everyone.
   static const info = '/info';
@@ -152,6 +156,11 @@ final routerProvider = Provider<GoRouter>((ref) {
       return null;
     },
     routes: [
+      GoRoute(
+        path: '/campaign/:slug',
+        builder: (_, state) =>
+            CampaignPage(slug: state.pathParameters['slug']!),
+      ),
       GoRoute(
         path: Routes.info,
         builder: (_, _) => const InfoPage(),

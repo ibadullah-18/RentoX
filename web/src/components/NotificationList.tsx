@@ -13,6 +13,7 @@ import {
   CheckCheck,
   CheckCircle2,
   Flag,
+  Gift,
   LifeBuoy,
   Megaphone,
   MessageSquareText,
@@ -27,6 +28,19 @@ import { markAllNotificationsRead, markNotificationRead } from "@/app/bildirisle
 import type { AppNotification } from "@/lib/types";
 
 const GUID = "[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}";
+
+/** The first parts of the addresses that exist on the site: a link anywhere else is shown but not followed. */
+const PLACES = new Set([
+  "destek", "elanlarim", "magaza", "magazalar", "mesajlar", "pul-kisesi", "bildirisler", "secilmisler", "kabinet",
+  "search", "yeni-elan", "kateqoriyalar", "sikayet", "suallar", "haqqimizda", "qaydalar", "sertler", "mexfilik",
+  "emekdasliq", "listing", "store",
+]);
+
+function knownPlace(url: string): boolean {
+  if (!url.startsWith("/") || url.startsWith("//")) return false;
+  if (url === "/") return true;
+  return PLACES.has(url.slice(1).split(/[/?#]/)[0] ?? "");
+}
 
 /** What each kind looks like and where it leads. */
 export function describe(n: AppNotification): { Icon: LucideIcon; tone: string; href: string | null } {
@@ -64,9 +78,21 @@ export function describe(n: AppNotification): { Icon: LucideIcon; tone: string; 
       return { Icon: Briefcase, tone: "text-primary", href: adminHref("/menim-isim") };
     case 10:
       return { Icon: Clock, tone: "text-warning", href: listing ? `/elanlarim/${listing}` : "/elanlarim" };
+    case 17:
+      return { Icon: Store, tone: "text-warning", href: "/magaza" };
+    case 18: {
+      // A gift for a listing, for the store, or the free services of the person: never guess from the related id.
+      const given = new RegExp(`/listings/(${GUID})`).exec(n.actionUrl ?? "")?.[1] ?? null;
+      const url = n.actionUrl ?? "";
+      return {
+        Icon: Gift,
+        tone: "text-warning",
+        href: url.startsWith("/stores/") ? "/magaza" : given ? `/elanlarim/${given}` : "/elanlarim",
+      };
+    }
     case 9: {
       const url = n.actionUrl ?? "";
-      return { Icon: Megaphone, tone: "text-primary", href: url.startsWith("/") && !url.startsWith("//") ? url : null };
+      return { Icon: Megaphone, tone: "text-primary", href: knownPlace(url) ? url : null };
     }
     default:
       return { Icon: AlertTriangle, tone: "text-ink-2", href: null };

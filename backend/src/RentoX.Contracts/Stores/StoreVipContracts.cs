@@ -1,4 +1,4 @@
-namespace RentoX.Contracts.Stores;
+﻿namespace RentoX.Contracts.Stores;
 
 /// <summary>The offer on the owner's store panel: the product, its price and length, and whether it is running.</summary>
 public sealed record StoreVipStatusResponse(
@@ -9,7 +9,9 @@ public sealed record StoreVipStatusResponse(
     bool IsOnSale,
     bool IsVip,
     DateTimeOffset? VipUntilUtc,
-    string Currency);
+    string Currency,
+    bool IsGift = false,
+    bool FreeServices = false);
 
 public sealed record StoreVipPurchaseRequest(string IdempotencyKey);
 
@@ -17,4 +19,5 @@ public sealed record StoreVipPurchaseResponse(
     DateTimeOffset StartsAtUtc,
     DateTimeOffset EndsAtUtc,
     decimal ChargedAmount,
-    decimal RemainingBalance);
+    decimal RemainingBalance,
+    bool IsGift = false);

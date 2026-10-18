@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using RentoX.Application.Abstractions.Authentication;
 using RentoX.Application.Stores;
@@ -54,7 +54,9 @@ public sealed class StoreVipController(
             status.Plan.IsEnabled,
             status.IsVip,
             status.VipUntilUtc,
-            status.Currency));
+            status.Currency,
+            status.IsGift,
+            status.FreeServices));
     }
 
     [Authorize]
@@ -70,7 +72,7 @@ public sealed class StoreVipController(
             RequiredUserId(), request.IdempotencyKey, cancellationToken);
 
         return Ok(new StoreVipPurchaseResponse(
-            result.StartsAtUtc, result.EndsAtUtc, result.ChargedAmount, result.RemainingBalance));
+            result.StartsAtUtc, result.EndsAtUtc, result.ChargedAmount, result.RemainingBalance, result.IsGift));
     }
 
     private Guid RequiredUserId()

@@ -23,6 +23,7 @@ export default async function TicketPage({
   const result = await getTicket(id);
   if (!result.ok) {
     if (result.status === 401) redirect(`/giris?next=/destek/${id}`);
+    if (result.status === 404 || result.status === 403) redirect("/destek");
     notFound();
   }
   const ticket = result.data;

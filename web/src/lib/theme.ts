@@ -3,5 +3,6 @@ export type Theme = (typeof THEMES)[number];
 export const THEME_COOKIE = "rx_theme";
 
 export function normalizeTheme(value?: string | null): Theme {
-  return THEMES.includes(value as Theme) ? (value as Theme) : "auto";
+  // Until the person chooses, the site opens in the day look; after that the choice stays.
+  return THEMES.includes(value as Theme) ? (value as Theme) : "light";
 }

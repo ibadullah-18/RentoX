@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using RentoX.Domain.Content;
 
@@ -25,6 +25,19 @@ public sealed class HomeBannerConfiguration : IEntityTypeConfiguration<HomeBanne
         builder.Property(b => b.CreatedByUserId).IsRequired();
         builder.Property(b => b.CreatedAtUtc).IsRequired();
 
+        builder.Property(b => b.PageSlug).HasMaxLength(HomeBanner.MaximumSlugLength);
+        builder.Property(b => b.PageBodyAz).HasMaxLength(HomeBanner.MaximumPageBodyLength);
+        builder.Property(b => b.PageBodyRu).HasMaxLength(HomeBanner.MaximumPageBodyLength);
+        builder.Property(b => b.PageBodyEn).HasMaxLength(HomeBanner.MaximumPageBodyLength);
+        builder.Property(b => b.PageButtonLabelAz).HasMaxLength(HomeBanner.MaximumButtonLabelLength);
+        builder.Property(b => b.PageButtonLabelRu).HasMaxLength(HomeBanner.MaximumButtonLabelLength);
+        builder.Property(b => b.PageButtonLabelEn).HasMaxLength(HomeBanner.MaximumButtonLabelLength);
+        builder.Property(b => b.PageButtonUrl).HasMaxLength(HomeBanner.MaximumLinkLength);
+        builder.Property(b => b.Platform).HasDefaultValue(3);
+        builder.Property(b => b.ShowText).HasDefaultValue(true);
+        builder.Property(b => b.DarkOverlay).HasDefaultValue(true);
+
         builder.HasIndex(b => new { b.IsActive, b.DisplayOrder });
+        builder.HasIndex(b => b.PageSlug).IsUnique().HasFilter("\"PageSlug\" IS NOT NULL");
     }
 }

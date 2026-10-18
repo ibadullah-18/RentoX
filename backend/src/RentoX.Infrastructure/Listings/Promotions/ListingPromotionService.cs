@@ -7,6 +7,7 @@ using RentoX.Domain.Common.Exceptions;
 using RentoX.Domain.Listings;
 using RentoX.Domain.Listings.Enums;
 using RentoX.Domain.Listings.Promotions;
+using RentoX.Domain.Users.Enums;
 using RentoX.Domain.Listings.Promotions.Enums;
 using RentoX.Domain.Wallets;
 using RentoX.Domain.Wallets.Enums;
@@ -153,6 +154,49 @@ public sealed class ListingPromotionService(
                 throw new DomainException(
                     "An active VIP promotion already exists for this listing.");
             }
+        }
+
+        // A person RentoX pays for gets it free: no wallet transaction, so it is never income.
+        FreeServiceKinds wanted =
+            type == ListingPromotionType.Vip ? FreeServiceKinds.Vip : FreeServiceKinds.Bump;
+
+        Guid? grantedBy =
+            await dbContext.UserProfiles
+                .AsNoTracking()
+                .Where(profile => profile.Id == command.OwnerId && (profile.FreeServices & wanted) != 0)
+                .Select(profile => profile.FreeServicesGrantedByUserId)
+                .SingleOrDefaultAsync(cancellationToken);
+
+        if (grantedBy.HasValue)
+        {
+            ListingPromotion gift =
+                type == ListingPromotionType.Bump
+                    ? ListingPromotion.CreateGiftBump(listing.Id, grantedBy.Value, now)
+                    : ListingPromotion.CreateGiftVip(listing.Id, grantedBy.Value, now, endsAtUtc!.Value, now);
+
+            dbContext.ListingPromotions.Add(gift);
+            await dbContext.SaveChangesAsync(cancellationToken);
+            await databaseTransaction.CommitAsync(cancellationToken);
+
+            decimal balance =
+                await dbContext.Wallets
+                    .AsNoTracking()
+                    .Where(wallet => wallet.UserId == command.OwnerId)
+                    .Select(wallet => wallet.Balance)
+                    .SingleOrDefaultAsync(cancellationToken);
+
+            return new PurchaseListingPromotionResult(
+                gift.Id,
+                listing.Id,
+                (int)type,
+                0m,
+                pricing.Currency,
+                balance,
+                null,
+                gift.StartsAtUtc,
+                gift.EndsAtUtc,
+                false,
+                true);
         }
 
         WalletOperationResult debit =

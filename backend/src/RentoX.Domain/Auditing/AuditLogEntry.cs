@@ -1,4 +1,4 @@
-using System.Globalization;
+﻿using System.Globalization;
 using RentoX.Domain.Common;
 using RentoX.Domain.Common.Exceptions;
 using RentoX.Domain.Users.Enums;
@@ -273,6 +273,33 @@ public sealed class AuditLogEntry : Entity
             AuditAction.StaffHrChanged,
             null,
             changeCode,
+            relatedEntityId,
+            occurredAtUtc);
+    }
+
+    /// <summary>The owner gave a free VIP or bump (1 listing bump, 2 listing VIP, 3 VIP store) to a person; 4 and 5 = all of the person's services switched free on / off.</summary>
+    public static AuditLogEntry ForGift(
+        Guid operationId,
+        Guid actorUserId,
+        Guid recipientUserId,
+        int kind,
+        Guid relatedEntityId,
+        DateTimeOffset occurredAtUtc)
+    {
+        if (kind is < 1 or > 5)
+        {
+            throw new DomainException("The kind of gift is not valid.");
+        }
+
+        RequireId(relatedEntityId, "Audit gift record id");
+
+        return new AuditLogEntry(
+            operationId,
+            actorUserId,
+            recipientUserId,
+            AuditAction.GiftGranted,
+            null,
+            kind,
             relatedEntityId,
             occurredAtUtc);
     }

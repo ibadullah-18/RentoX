@@ -59,6 +59,7 @@ public sealed class ListingPromotionsController(
                 result.WalletTransactionId,
                 result.StartsAtUtc,
                 result.EndsAtUtc,
-                result.WasAlreadyProcessed));
+                result.WasAlreadyProcessed,
+                result.IsGift));
     }
 }

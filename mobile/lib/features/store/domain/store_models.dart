@@ -641,6 +641,7 @@ class StoreVipOffer {
     this.offerMessage = '',
     this.isOnSale = false,
     this.isVip = false,
+    this.isGift = false,
     this.vipUntil,
     this.currency = 'AZN',
   });
@@ -653,6 +654,9 @@ class StoreVipOffer {
   /// False when the admin switched the product off: nothing is bought or shown.
   final bool isOnSale;
   final bool isVip;
+
+  /// The running VIP period was given for free by RentoX.
+  final bool isGift;
   final DateTime? vipUntil;
   final String currency;
 
@@ -663,6 +667,7 @@ class StoreVipOffer {
     offerMessage: (j['offerMessage'] as String?) ?? '',
     isOnSale: (j['isOnSale'] as bool?) ?? false,
     isVip: (j['isVip'] as bool?) ?? false,
+    isGift: (j['isGift'] as bool?) ?? false,
     vipUntil: j['vipUntilUtc'] == null
         ? null
         : DateTime.tryParse(j['vipUntilUtc'] as String)?.toLocal(),

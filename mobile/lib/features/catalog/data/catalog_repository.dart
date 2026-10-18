@@ -20,13 +20,23 @@ class CatalogRepository {
   Future<List<HomeBanner>> banners(String language) => guardApi(() async {
     final res = await _dio.get<List<dynamic>>(
       '/api/banners',
-      queryParameters: {'language': language},
+      queryParameters: {'language': language, 'platform': 'app'},
     );
     return res.data!
         .cast<Map<String, dynamic>>()
         .map(HomeBanner.fromJson)
         .toList(growable: false);
   });
+
+  /// The page of a campaign (a banner with its own page).
+  Future<CampaignPageData> campaignPage(String slug, String language) =>
+      guardApi(() async {
+        final res = await _dio.get<Map<String, dynamic>>(
+          '/api/banners/pages/${Uri.encodeComponent(slug)}',
+          queryParameters: {'language': language},
+        );
+        return CampaignPageData.fromJson(res.data!);
+      });
 
   Future<List<Category>> categories(String language) => guardApi(() async {
     final res = await _dio.get<List<dynamic>>(
@@ -126,6 +136,14 @@ final bannersProvider = FutureProvider<List<HomeBanner>>((ref) async {
     return const [];
   }
 });
+
+final campaignPageProvider = FutureProvider.autoDispose
+    .family<CampaignPageData, String>((ref, slug) {
+      final Locale locale = ref.watch(localeProvider);
+      return ref
+          .watch(catalogRepositoryProvider)
+          .campaignPage(slug, locale.languageCode);
+    });
 
 final categoriesProvider = FutureProvider<List<Category>>((ref) {
   final Locale locale = ref.watch(localeProvider);

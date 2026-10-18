@@ -144,6 +144,8 @@ export type AdminUserDetails = {
   bio?: string | null;
   preferredLanguage: number;
   statusReason?: string | null;
+  /** What RentoX pays for this person, as bits: 1 listing fee, 2 VIP, 4 bump, 8 VIP store. */
+  freeServices?: number;
   /** What others reported about this person (absent on an older API). */
   reports?: {
     total: number;

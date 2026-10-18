@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Identity;
+﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using RentoX.Application.Abstractions.Time;
@@ -169,6 +169,16 @@ public sealed class StaffHrTests(AuditPostgresFixture database)
         PayrollSheetDto after = await service.VoidPayrollLineAsync(boss, payment.Id);
         Assert.Equal(85000, after.RemainingInQepik);
         Assert.Contains(after.Lines, l => l.IsVoid);
+
+        // The money history shows the month with the same figures, the voided line counted apart, and the pay set.
+        PayrollHistoryDto history = await service.GetPayrollHistoryAsync(admin, 3);
+        PayrollMonthDto row = history.Months.Single(m => m.Month == month);
+        Assert.Equal(100000, row.BaseInQepik);
+        Assert.Equal(85000, row.RemainingInQepik);
+        Assert.Equal(1, row.VoidedCount);
+        Assert.Equal(85000, history.TotalRemainingInQepik);
+        Assert.Contains(history.SalaryChanges, c => c.AmountInQepik == 100000 && c.PreviousAmountInQepik is null);
+
         await using RentoXDbContext db = database.CreateContext();
         Assert.True(await db.Set<AuditLogEntry>().CountAsync(a => a.Action == AuditAction.StaffHrChanged && a.TargetId == admin && a.CurrentValue == 3) == 4);
     }

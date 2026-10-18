@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
 using RentoX.Application.Authorization;
 using RentoX.Application.Support;
@@ -14,6 +14,8 @@ public sealed class SupportHub(ISupportTicketService tickets) : Hub
 {
     public const string SupportGroup = "staff:support";
     public const string ReportsGroup = "staff:reports";
+    public const string ListingsGroup = "staff:listings";
+    public const string StoresGroup = "staff:stores";
 
     public override async Task OnConnectedAsync()
     {
@@ -28,6 +30,16 @@ public sealed class SupportHub(ISupportTicketService tickets) : Hub
             if (AdminSections.Allows(principal, AdminSections.Support))
             {
                 await Groups.AddToGroupAsync(Context.ConnectionId, SupportGroup);
+            }
+
+            if (AdminSections.Allows(principal, AdminSections.Listings))
+            {
+                await Groups.AddToGroupAsync(Context.ConnectionId, ListingsGroup);
+            }
+
+            if (AdminSections.Allows(principal, AdminSections.Stores))
+            {
+                await Groups.AddToGroupAsync(Context.ConnectionId, StoresGroup);
             }
 
             if (AdminSections.Allows(principal, AdminSections.Reports))

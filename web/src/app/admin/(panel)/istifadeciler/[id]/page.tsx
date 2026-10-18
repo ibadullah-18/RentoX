@@ -10,7 +10,8 @@ import { adminHref } from "@/lib/admin-path";
 import { chatReason, listingStatusLabel, reportReason, reportStatus, walletDirection, walletType } from "@/lib/admin-labels";
 import { userStatusLabel, type AdminListingItem, type AdminUserDetails } from "@/lib/admin-catalog";
 import { authed } from "@/lib/authed";
-import { getSections } from "@/lib/session";
+import { getRoles, getSections } from "@/lib/session";
+import { FreeServicesPanel } from "@/components/admin/FreeServicesPanel";
 import type { Paged } from "@/lib/types";
 
 const tone: Record<number, Tone> = { 1: "success", 2: "warning", 3: "danger", 4: "muted" };
@@ -30,6 +31,7 @@ export default async function UserAdminPage({ params }: PageProps<"/admin/istifa
   }
   const d = details.data;
   const sections = await getSections();
+  const isOwner = (await getRoles()).includes("SuperAdmin");
   const canAdjust = sections === null || sections.includes("finance");
   const u = d.user;
 
@@ -49,6 +51,8 @@ export default async function UserAdminPage({ params }: PageProps<"/admin/istifa
 
       {u.status === 1 && <BlockUserPanel block={blockUser.bind(null, u.id)} />}
       {(u.status === 2 || u.status === 3) && <UnblockPanel unblock={unblockUser.bind(null, u.id)} reason={d.statusReason} />}
+
+      {isOwner && u.status === 1 && <FreeServicesPanel userId={u.id} services={d.freeServices ?? 0} />}
 
       <div className="grid gap-3 sm:grid-cols-3">
         <Stat label="Balans" value={`${money.format(u.balance)} ${u.currency}`} />

@@ -1655,6 +1655,25 @@ class AppL10nRu extends AppL10n {
       'VIP-магазин показан на главной выше всех объявлений. После окончания срока он остаётся обычным магазином; продлите вовремя — перерыва не будет.';
 
   @override
+  String get campaignOver => 'Эта кампания завершена.';
+
+  @override
+  String get giftFreeFromRentox => 'Бесплатно (от RentoX)';
+
+  @override
+  String get giftFreeNote =>
+      'RentoX даёт это вам бесплатно. С кошелька ничего не спишется.';
+
+  @override
+  String get giftTakeFree => 'Получить бесплатно';
+
+  @override
+  String get giftGivenFree => 'RentoX дал вам это бесплатно';
+
+  @override
+  String get giftFromRentox => 'Подарок от RentoX';
+
+  @override
   String get storeVipBadge => 'VIP-магазин';
 
   @override

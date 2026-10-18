@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Identity;
+﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using RentoX.Application.Abstractions.Time;
@@ -244,6 +244,86 @@ public sealed class StaffHrService(
             entries.Select(e => new PayrollLineDto(
                 e.Id, (int)e.Kind, e.AmountInQepik, e.Note, e.CreatedAtUtc,
                 names.GetValueOrDefault(e.CreatedByUserId), e.IsVoid)).ToArray());
+    }
+
+    public async Task<PayrollHistoryDto> GetPayrollHistoryAsync(
+        Guid userId, int months, CancellationToken cancellationToken = default)
+    {
+        months = Math.Clamp(months, 1, 36);
+        string name = await NameOfAsync(userId, cancellationToken);
+
+        DateOnly today = DateOnly.FromDateTime(clock.UtcNow.UtcDateTime);
+        DateOnly current = new(today.Year, today.Month, 1);
+        DateOnly from = current.AddMonths(-(months - 1));
+
+        List<StaffSalaryChange> changes = await dbContext.Set<StaffSalaryChange>()
+            .AsNoTracking()
+            .Where(c => c.UserId == userId)
+            .OrderBy(c => c.EffectiveFrom).ThenBy(c => c.CreatedAtUtc)
+            .ToListAsync(cancellationToken);
+
+        List<PayrollEntry> entries = await dbContext.Set<PayrollEntry>()
+            .AsNoTracking()
+            .Where(e => e.UserId == userId && e.Month >= from && e.Month <= current)
+            .ToListAsync(cancellationToken);
+
+        // The first month with any pay or line: months before it say nothing, so they are not shown as empty rows.
+        DateOnly? firstKnown = changes.Count > 0 ? changes[0].EffectiveFrom : null;
+        if (entries.Count > 0)
+        {
+            DateOnly firstLine = entries.Min(e => e.Month);
+            firstKnown = firstKnown is null || firstLine < firstKnown ? firstLine : firstKnown;
+        }
+
+        List<PayrollMonthDto> rows = [];
+        for (DateOnly month = current; month >= from; month = month.AddMonths(-1))
+        {
+            if (firstKnown is null || month < firstKnown)
+            {
+                break;
+            }
+
+            List<PayrollEntry> of = entries.Where(e => e.Month == month).ToList();
+            int Sum(PayrollKind kind) => of.Where(e => !e.IsVoid && e.Kind == kind).Sum(e => e.AmountInQepik);
+
+            int baseAmount = StaffSalaryChange.For(changes, month);
+            int bonus = Sum(PayrollKind.Bonus);
+            int deductions = Sum(PayrollKind.Deduction);
+            int advances = Sum(PayrollKind.Advance);
+            int payments = Sum(PayrollKind.Payment);
+
+            rows.Add(new PayrollMonthDto(
+                month, baseAmount, bonus, deductions, advances, payments,
+                baseAmount + bonus - deductions - advances - payments,
+                of.Count(e => !e.IsVoid), of.Count(e => e.IsVoid)));
+        }
+
+        Dictionary<Guid, string> names = await NamesAsync(changes.Select(c => c.CreatedByUserId), cancellationToken);
+        List<SalaryChangeDto> changeRows = [];
+        for (int i = 0; i < changes.Count; i++)
+        {
+            changeRows.Add(new SalaryChangeDto(
+                changes[i].EffectiveFrom,
+                changes[i].AmountInQepik,
+                i == 0 ? null : changes[i - 1].AmountInQepik,
+                names.GetValueOrDefault(changes[i].CreatedByUserId),
+                changes[i].CreatedAtUtc));
+        }
+
+        changeRows.Reverse();
+
+        return new PayrollHistoryDto(
+            userId,
+            name,
+            rows.Count,
+            rows.Sum(r => r.BaseInQepik),
+            rows.Sum(r => r.BonusInQepik),
+            rows.Sum(r => r.DeductionsInQepik),
+            rows.Sum(r => r.AdvancesInQepik),
+            rows.Sum(r => r.PaymentsInQepik),
+            rows.Sum(r => r.RemainingInQepik),
+            rows,
+            changeRows);
     }
 
     public async Task<StaffRequestDto> SendRequestAsync(

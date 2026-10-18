@@ -139,14 +139,21 @@ class _BodyState extends ConsumerState<_Body> {
       ref.invalidate(myListingDetailsProvider(d.id));
       ref.invalidate(listingDetailsProvider(d.id));
       ref.invalidate(myListingsProvider);
+      final free = await ref
+          .read(walletBalanceProvider.future)
+          .then((w) => w.isFree(kind), onError: (_) => false);
       messenger.showSnackBar(
         SnackBar(
-          content: Text(switch (kind) {
-            PaymentKind.vip => l10n.paymentSuccessVip,
-            PaymentKind.bump => l10n.paymentSuccessBump,
-            PaymentKind.renewal => l10n.paymentSuccessRenew,
-            PaymentKind.activation => l10n.paymentSuccessActivation,
-          }),
+          content: Text(
+            free
+                ? l10n.giftGivenFree
+                : switch (kind) {
+                    PaymentKind.vip => l10n.paymentSuccessVip,
+                    PaymentKind.bump => l10n.paymentSuccessBump,
+                    PaymentKind.renewal => l10n.paymentSuccessRenew,
+                    PaymentKind.activation => l10n.paymentSuccessActivation,
+                  },
+          ),
         ),
       );
     }

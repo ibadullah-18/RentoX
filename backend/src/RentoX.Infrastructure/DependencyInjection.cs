@@ -178,6 +178,10 @@ public static class DependencyInjection
             RentoX.Infrastructure.Admin.StaffManagementService>();
 
         services.AddScoped<
+            RentoX.Application.Gifts.IGiftService,
+            RentoX.Infrastructure.Gifts.GiftService>();
+
+        services.AddScoped<
             RentoX.Application.Finance.IFinanceService,
             RentoX.Infrastructure.Finance.FinanceService>();
 

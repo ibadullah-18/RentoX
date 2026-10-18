@@ -554,6 +554,12 @@
     }
   },
   "storeVipInfo": "VIP-магазин показан на главной выше всех объявлений. После окончания срока он остаётся обычным магазином; продлите вовремя — перерыва не будет.",
+  "campaignOver": "Эта кампания завершена.",
+  "giftFreeFromRentox": "Бесплатно (от RentoX)",
+  "giftFreeNote": "RentoX даёт это вам бесплатно. С кошелька ничего не спишется.",
+  "giftTakeFree": "Получить бесплатно",
+  "giftGivenFree": "RentoX дал вам это бесплатно",
+  "giftFromRentox": "Подарок от RentoX",
   "storeVipBadge": "VIP-магазин",
   "storeSearchHint": "Поиск в магазине",
   "storePriceFilter": "Цена",

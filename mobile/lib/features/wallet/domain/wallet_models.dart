@@ -34,14 +34,31 @@ enum PromotionType {
 }
 
 class WalletBalance {
-  const WalletBalance({required this.balance, required this.currency});
+  const WalletBalance({
+    required this.balance,
+    required this.currency,
+    this.freeListingFee = false,
+    this.freeVip = false,
+    this.freeBump = false,
+    this.freeStoreVip = false,
+  });
 
   final double balance;
   final String currency;
 
+  /// What RentoX pays for this person (the owner picks them one by one).
+  final bool freeListingFee;
+  final bool freeVip;
+  final bool freeBump;
+  final bool freeStoreVip;
+
   factory WalletBalance.fromJson(Map<String, dynamic> json) => WalletBalance(
     balance: (json['balance'] as num).toDouble(),
     currency: (json['currency'] as String?) ?? Pricing.currency,
+    freeListingFee: (json['freeListingFee'] as bool?) ?? false,
+    freeVip: (json['freeVip'] as bool?) ?? false,
+    freeBump: (json['freeBump'] as bool?) ?? false,
+    freeStoreVip: (json['freeStoreVip'] as bool?) ?? false,
   );
 }
 

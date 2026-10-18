@@ -5,6 +5,8 @@ import { Store } from "lucide-react";
 import { approveStore, reinstateStore, rejectStore, suspendStore } from "@/app/admin/(panel)/actions";
 import { ModerationActions, ReinstateButton, TakeDownPanel } from "@/components/admin/AdminControls";
 import { authed } from "@/lib/authed";
+import { getRoles } from "@/lib/session";
+import { GiftPanel } from "@/components/admin/GiftPanel";
 import type { MyStore } from "@/lib/types";
 
 const days = ["B.e.", "Ç.a.", "Çər.", "C.a.", "Cümə", "Şən.", "Baz."];
@@ -16,6 +18,8 @@ export default async function ReviewStorePage({ params }: PageProps<"/admin/maga
   if (!result.ok) notFound();
   const s = result.data;
   const pending = s.status === 2;
+  const isOwner = (await getRoles()).includes("SuperAdmin");
+  const plan = isOwner && s.status === 3 ? await authed<{ durationDays: number }>("/api/admin/store-vip") : null;
 
   const rows: [string, string | null | undefined][] = [
     ["Telefon", s.phoneNumber],
@@ -70,7 +74,7 @@ export default async function ReviewStorePage({ params }: PageProps<"/admin/maga
           </dl>
         </div>
 
-        <aside className="md:sticky md:top-24 md:self-start">
+        <aside className="space-y-4 md:sticky md:top-24 md:self-start">
           {pending ? (
             <ModerationActions
               approve={approveStore.bind(null, s.id)}
@@ -87,6 +91,8 @@ export default async function ReviewStorePage({ params }: PageProps<"/admin/maga
               Bu mağaza yoxlamada deyil.
             </p>
           )}
+
+          {isOwner && s.status === 3 && <GiftPanel target="store" id={s.id} defaultDays={plan?.ok ? plan.data.durationDays : 30} />}
         </aside>
       </div>
     </div>

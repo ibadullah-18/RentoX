@@ -168,7 +168,15 @@ export type OwnedDetails = {
   fields: ListingField[];
 };
 
-export type Wallet = { balance: number; currency: string };
+export type Wallet = {
+  balance: number;
+  currency: string;
+  /** What RentoX pays for this person (the owner picks them one by one). */
+  freeListingFee?: boolean;
+  freeVip?: boolean;
+  freeBump?: boolean;
+  freeStoreVip?: boolean;
+};
 
 export type WalletTransaction = {
   id: string;
@@ -255,6 +263,10 @@ export type StoreVipStatus = {
   isVip: boolean;
   vipUntilUtc?: string | null;
   currency: string;
+  /** The VIP period now running was a gift from RentoX. */
+  isGift?: boolean;
+  /** RentoX pays for this owner: the VIP store costs nothing. */
+  freeServices?: boolean;
 };
 
 /** A store in a list (search, followed). */
@@ -318,6 +330,30 @@ export type Banner = {
   subtitle?: string | null;
   imageUrl: string;
   linkUrl?: string | null;
+  /** The name of the campaign page (rentox.az/name), when the banner has one. */
+  pageSlug?: string | null;
+  openInNewTab?: boolean;
+  /** Show the title and subtitle over the picture (default yes). */
+  showText?: boolean;
+  /** 0 left, 1 centre, 2 right. */
+  textAlign?: number;
+  /** A dark fade under the text (default yes). */
+  darkOverlay?: boolean;
+  /** 0 light text, 1 dark text. */
+  textTone?: number;
+};
+
+/** The page of a campaign (rentox.az/name). */
+export type CampaignPage = {
+  slug: string;
+  title: string;
+  subtitle?: string | null;
+  body?: string | null;
+  imageUrl: string;
+  buttonLabel?: string | null;
+  buttonUrl?: string | null;
+  /** The campaign has ended. */
+  isOver: boolean;
 };
 
 /** A fixed page (terms, privacy, about …) in the visitor's language. */

@@ -34,6 +34,8 @@ export function ManageActions({
   status,
   balance,
   prices,
+  freeVip = false,
+  freeBump = false,
 }: {
   id: string;
   /** The effective status (an unrenewed old listing is "expired"). */
@@ -41,6 +43,9 @@ export function ManageActions({
   balance: number;
   /** The prices in force (an admin can change them). */
   prices: Prices;
+  /** RentoX pays for this person's VIP / bump: they cost nothing. */
+  freeVip?: boolean;
+  freeBump?: boolean;
 }) {
   const t = useT();
   const locale = useLocale();
@@ -116,25 +121,32 @@ export function ManageActions({
         <>
           <button
             type="button"
-            disabled={disabled || lacking(prices.vip)}
+            disabled={disabled || (!freeVip && lacking(prices.vip))}
             onClick={() =>
-              run("vip", () => promote(id, 2, key()), t("Elan {n} gün VIP olaraq irəli çəkildi.", { n: prices.vipDays }))
+              run("vip", () => promote(id, 2, key()), freeVip ? t("VIP sizə RentoX tərəfindən pulsuz verildi: {n} gün.", { n: prices.vipDays }) : t("Elan {n} gün VIP olaraq irəli çəkildi.", { n: prices.vipDays }))
             }
             className={solid}
           >
             {spin("vip") || <Crown className="size-5" aria-hidden />}
-            {t("VIP et — {price} AZN / {days} gün", { price: prices.vip, days: prices.vipDays })}
+            {freeVip
+              ? t("VIP et — pulsuz (RentoX tərəfindən)")
+              : t("VIP et — {price} AZN / {days} gün", { price: prices.vip, days: prices.vipDays })}
           </button>
           <button
             type="button"
-            disabled={disabled || lacking(prices.bump)}
-            onClick={() => run("bump", () => promote(id, 1, key()), t("Elan siyahıda yuxarı qaldırıldı."))}
+            disabled={disabled || (!freeBump && lacking(prices.bump))}
+            onClick={() => run("bump", () => promote(id, 1, key()), freeBump ? t("Elan RentoX tərəfindən pulsuz yuxarı qaldırıldı.") : t("Elan siyahıda yuxarı qaldırıldı."))}
             className={outline}
           >
             {spin("bump") || <Rocket className="size-5" aria-hidden />}
-            {t("Yuxarı qaldır — {price} AZN", { price: prices.bump })}
+            {freeBump ? t("Yuxarı qaldır — pulsuz (RentoX tərəfindən)") : t("Yuxarı qaldır — {price} AZN", { price: prices.bump })}
           </button>
-          {(lacking(prices.bump) || lacking(prices.vip)) && (
+          {(freeVip || freeBump) && (
+            <p className="rounded-xl bg-primary-soft px-4 py-3 text-sm font-semibold text-primary">
+              {t("VIP və yuxarı qaldırma sizdə RentoX tərəfindən pulsuz verilir.")}
+            </p>
+          )}
+          {((!freeBump && lacking(prices.bump)) || (!freeVip && lacking(prices.vip))) && (
             <p className="text-sm text-ink-2">
               {t("Balansınız {balance} AZN.", { balance: formatNumber(balance, locale) })}{" "}
               <Link href="/pul-kisesi" className="font-bold text-primary hover:underline">

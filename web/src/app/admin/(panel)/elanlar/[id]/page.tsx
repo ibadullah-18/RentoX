@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { ExternalLink, Flag, Phone } from "lucide-react";
 import { approveListing, rejectListing, takeDownListing } from "@/app/admin/(panel)/actions";
 import { ModerationActions, TakeDownPanel } from "@/components/admin/AdminControls";
+import { GiftPanel } from "@/components/admin/GiftPanel";
 import { Avatar } from "@/components/admin/Avatar";
 import { Card, PageHead, Pill, dateTime, type Tone } from "@/components/admin/ui";
 import { adminHref } from "@/lib/admin-path";
@@ -12,7 +13,7 @@ import { getFlags } from "@/lib/banned-words";
 import type { ModerationListing, ReportSummary } from "@/lib/admin-types";
 import { reportReason, reportStatus } from "@/lib/admin-labels";
 import { fieldValue, formatPrice, ownerImage } from "@/lib/format";
-import { getSections } from "@/lib/session";
+import { getRoles, getSections } from "@/lib/session";
 import { statusLabel } from "@/lib/status";
 import type { RentalPeriodId } from "@/lib/types";
 
@@ -31,6 +32,10 @@ export default async function ReviewListingPage({ params }: PageProps<"/admin/el
   const flagged = (await getFlags([l.id]))[l.id] ?? [];
 
   const sections = await getSections();
+  // Only the owner gives free VIP or bumps; the length that is filled in is the one of the paid VIP.
+  const isOwner = (await getRoles()).includes("SuperAdmin");
+  const tariff = isOwner && l.status === 3 ? await authed<{ vipDurationDays: number }>("/api/admin/tariffs") : null;
+  const vipDays = tariff?.ok ? tariff.data.vipDurationDays : 7;
   const canSeeUsers = sections === null || sections.includes("users");
   // The reports on this listing (only for someone who may read reports; others simply do not see the card).
   const reports =
@@ -149,6 +154,8 @@ export default async function ReviewListingPage({ params }: PageProps<"/admin/el
               Bu elan yoxlamada deyil ({statusLabel[l.status] ?? l.status}), üzərində əməliyyat yoxdur.
             </p>
           )}
+
+          {l.status === 3 && isOwner && <GiftPanel target="listing" id={l.id} defaultDays={vipDays} />}
 
           {reportItems && (
             <Card title={`Şikayətlər (${reportItems.length})`}>

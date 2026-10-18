@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.SignalR;
+﻿using Microsoft.AspNetCore.SignalR;
 using RentoX.Application.Support;
 
 namespace RentoX.Api.Support;
@@ -39,6 +39,14 @@ public sealed class SignalRSupportEventPublisher(
             new { TicketId = ticketId, Status = status, Priority = priority },
             ownerId,
             SupportHub.SupportGroup,
+            cancellationToken);
+
+    public Task ReviewWaitingAsync(string kind, Guid id, string title, CancellationToken cancellationToken = default) =>
+        SendAsync(
+            "ReviewWaiting",
+            new { Kind = kind, Id = id, Title = title },
+            ownerId: null,
+            kind == "store" ? SupportHub.StoresGroup : SupportHub.ListingsGroup,
             cancellationToken);
 
     public Task ReportCreatedAsync(string kind, Guid reportId, CancellationToken cancellationToken = default) =>

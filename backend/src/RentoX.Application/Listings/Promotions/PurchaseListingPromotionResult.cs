@@ -7,7 +7,9 @@ public sealed record PurchaseListingPromotionResult(
     decimal ChargedAmount,
     string Currency,
     decimal RemainingBalance,
-    Guid WalletTransactionId,
+    Guid? WalletTransactionId,
     DateTimeOffset StartsAtUtc,
     DateTimeOffset? EndsAtUtc,
-    bool WasAlreadyProcessed);
+    bool WasAlreadyProcessed,
+    /// <summary>RentoX gave it for free: nothing was taken from the wallet.</summary>
+    bool IsGift = false);

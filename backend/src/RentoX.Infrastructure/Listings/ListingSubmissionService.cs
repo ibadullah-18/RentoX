@@ -11,7 +11,8 @@ namespace RentoX.Infrastructure.Listings;
 
 public sealed class ListingSubmissionService(
     RentoXDbContext dbContext,
-    ICategoryFieldQueryService fieldQueryService)
+    ICategoryFieldQueryService fieldQueryService,
+    RentoX.Application.Support.ISupportEventPublisher? live = null)
     : IListingSubmissionService
 {
     public async Task<SubmitListingResult> SubmitAsync(
@@ -78,6 +79,11 @@ public sealed class ListingSubmissionService(
 
         await dbContext.SaveChangesAsync(
             cancellationToken);
+
+        if (live is not null)
+        {
+            await live.ReviewWaitingAsync("listing", listing.Id, listing.Title, cancellationToken);
+        }
 
         return new SubmitListingResult(
             listing.Id,

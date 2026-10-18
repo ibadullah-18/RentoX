@@ -1,4 +1,4 @@
-namespace RentoX.Application.Support;
+﻿namespace RentoX.Application.Support;
 
 /// <summary>
 /// Tells the people who are looking at the screen right now: the owner of a request and the staff who answer
@@ -27,6 +27,15 @@ public interface ISupportEventPublisher
         Guid ownerId,
         int status,
         int priority,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// A listing (kind "listing") or a store (kind "store") now waits for a review: to the staff who review them.
+    /// </summary>
+    Task ReviewWaitingAsync(
+        string kind,
+        Guid id,
+        string title,
         CancellationToken cancellationToken = default);
 
     /// <summary>A new report (kind: "content" or "chat") came in: to the staff who review reports.</summary>

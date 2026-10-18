@@ -10,6 +10,8 @@ enum NotificationKind {
   supportStatusChanged(8),
   announcement(9),
   listingExpiring(10),
+  storeVipOffer(17),
+  giftReceived(18),
   other(0);
 
   const NotificationKind(this.id);

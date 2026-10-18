@@ -11,13 +11,26 @@ public sealed class StoreVipPurchase : Entity
     }
 
     private StoreVipPurchase(
-        Guid id, Guid storeId, string planName, decimal chargedAmount, Guid walletTransactionId,
-        DateTimeOffset startsAtUtc, DateTimeOffset endsAtUtc, DateTimeOffset createdAtUtc)
+        Guid id, Guid storeId, string planName, decimal chargedAmount, Guid? walletTransactionId,
+        DateTimeOffset startsAtUtc, DateTimeOffset endsAtUtc, DateTimeOffset createdAtUtc, Guid? grantedByUserId)
         : base(id)
     {
-        if (storeId == Guid.Empty || walletTransactionId == Guid.Empty)
+        if (storeId == Guid.Empty)
         {
-            throw new DomainException("Store and payment ids are required.");
+            throw new DomainException("The store id is required.");
+        }
+
+        if (grantedByUserId.HasValue)
+        {
+            // A gift from RentoX: nothing is paid, so there is no wallet transaction and no income.
+            if (grantedByUserId.Value == Guid.Empty || walletTransactionId.HasValue || chargedAmount != 0)
+            {
+                throw new DomainException("A gift is free, has no payment and needs the person who gave it.");
+            }
+        }
+        else if (walletTransactionId is null || walletTransactionId == Guid.Empty)
+        {
+            throw new DomainException("The payment id is required.");
         }
 
         if (endsAtUtc <= startsAtUtc)
@@ -32,6 +45,7 @@ public sealed class StoreVipPurchase : Entity
         StartsAtUtc = startsAtUtc;
         EndsAtUtc = endsAtUtc;
         CreatedAtUtc = createdAtUtc;
+        GrantedByUserId = grantedByUserId;
     }
 
     public Guid StoreId { get; private set; }
@@ -40,7 +54,13 @@ public sealed class StoreVipPurchase : Entity
 
     public decimal ChargedAmount { get; private set; }
 
-    public Guid WalletTransactionId { get; private set; }
+    /// <summary>Null for a gift (nothing was paid).</summary>
+    public Guid? WalletTransactionId { get; private set; }
+
+    /// <summary>The staff member who gave this period for free; null when it was paid for.</summary>
+    public Guid? GrantedByUserId { get; private set; }
+
+    public bool IsGift => GrantedByUserId.HasValue;
 
     public DateTimeOffset StartsAtUtc { get; private set; }
 
@@ -54,6 +74,15 @@ public sealed class StoreVipPurchase : Entity
     {
         return new StoreVipPurchase(
             Guid.NewGuid(), storeId, planName, chargedAmount, walletTransactionId, startsAtUtc, endsAtUtc,
-            createdAtUtc);
+            createdAtUtc, null);
+    }
+
+    /// <summary>A VIP period given for free by RentoX.</summary>
+    public static StoreVipPurchase CreateGift(
+        Guid storeId, string planName, Guid grantedByUserId,
+        DateTimeOffset startsAtUtc, DateTimeOffset endsAtUtc, DateTimeOffset createdAtUtc)
+    {
+        return new StoreVipPurchase(
+            Guid.NewGuid(), storeId, planName, 0m, null, startsAtUtc, endsAtUtc, createdAtUtc, grantedByUserId);
     }
 }

@@ -137,6 +137,13 @@ export default async function MonthlyActPage({ searchParams }: PageProps<"/admin
           />
         )}
 
+        {r.gifts.bumps + r.gifts.listingVip + r.gifts.storeVip > 0 && (
+          <p className="text-xs text-black/60">
+            Bu ay RentoX pulsuz hədiyyə etdi: {r.gifts.listingVip} VIP elan, {r.gifts.bumps} irəli çəkmə, {r.gifts.storeVip} VIP mağaza.
+            Bunlar üçün pul alınmayıb, ona görə gəlirə daxil deyil.
+          </p>
+        )}
+
         <footer className="grid gap-6 pt-6 sm:grid-cols-2">
           <div>
             <p className="font-semibold">{r.profile.fullName}</p>

@@ -3111,6 +3111,42 @@ abstract class AppL10n {
   /// **'VIP mağaza ana səhifədə, bütün elanlardan əvvəl göstərilir. Müddət bitəndən sonra adi mağaza kimi qalır; vaxtında uzatsanız fasilə olmur.'**
   String get storeVipInfo;
 
+  /// No description provided for @campaignOver.
+  ///
+  /// In az, this message translates to:
+  /// **'Bu kampaniya bitib.'**
+  String get campaignOver;
+
+  /// No description provided for @giftFreeFromRentox.
+  ///
+  /// In az, this message translates to:
+  /// **'Pulsuz (RentoX tərəfindən)'**
+  String get giftFreeFromRentox;
+
+  /// No description provided for @giftFreeNote.
+  ///
+  /// In az, this message translates to:
+  /// **'Bu sizə RentoX tərəfindən pulsuz verilir. Pul kisənizdən heç nə çıxılmayacaq.'**
+  String get giftFreeNote;
+
+  /// No description provided for @giftTakeFree.
+  ///
+  /// In az, this message translates to:
+  /// **'Pulsuz götür'**
+  String get giftTakeFree;
+
+  /// No description provided for @giftGivenFree.
+  ///
+  /// In az, this message translates to:
+  /// **'Sizə RentoX tərəfindən pulsuz verildi'**
+  String get giftGivenFree;
+
+  /// No description provided for @giftFromRentox.
+  ///
+  /// In az, this message translates to:
+  /// **'RentoX tərəfindən hədiyyə'**
+  String get giftFromRentox;
+
   /// No description provided for @storeVipBadge.
   ///
   /// In az, this message translates to:

@@ -73,6 +73,36 @@ export type PayrollSheet = {
   lines: { id: string; kind: number; amountInQepik: number; note?: string | null; createdAtUtc: string; createdByName?: string | null; isVoid: boolean }[];
 };
 
+export type PayrollHistory = {
+  userId: string;
+  fullName: string;
+  monthsShown: number;
+  totalBaseInQepik: number;
+  totalBonusInQepik: number;
+  totalDeductionsInQepik: number;
+  totalAdvancesInQepik: number;
+  totalPaymentsInQepik: number;
+  totalRemainingInQepik: number;
+  months: {
+    month: string;
+    baseInQepik: number;
+    bonusInQepik: number;
+    deductionsInQepik: number;
+    advancesInQepik: number;
+    paymentsInQepik: number;
+    remainingInQepik: number;
+    lineCount: number;
+    voidedCount: number;
+  }[];
+  salaryChanges: {
+    effectiveFrom: string;
+    amountInQepik: number;
+    previousAmountInQepik?: number | null;
+    changedByName?: string | null;
+    changedAtUtc: string;
+  }[];
+};
+
 export type StaffRequest = {
   id: string;
   fromUserId: string;

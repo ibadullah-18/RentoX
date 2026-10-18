@@ -690,7 +690,17 @@ class _VipCard extends ConsumerWidget {
         ref.invalidate(myStoreVipProvider);
         ref.invalidate(homeStoresProvider);
         ref.invalidate(walletBalanceProvider);
-        messenger.showSnackBar(SnackBar(content: Text(l10n.storeVipPaid)));
+        final free = await ref
+            .read(walletBalanceProvider.future)
+            .then(
+              (w) => w.isFree(PaymentKind.vip, store: true),
+              onError: (_) => false,
+            );
+        messenger.showSnackBar(
+          SnackBar(
+            content: Text(free ? l10n.giftGivenFree : l10n.storeVipPaid),
+          ),
+        );
       }
     }
 
@@ -733,6 +743,21 @@ class _VipCard extends ConsumerWidget {
                   fontWeight: offer.isVip ? FontWeight.w700 : null,
                 ),
               ),
+              if (offer.isVip && offer.isGift) ...[
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Icon(AppIcons.gift, size: 18, color: AppColors.warning),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        l10n.giftFromRentox,
+                        style: const TextStyle(fontWeight: FontWeight.w800),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
               if (offer.isVip) ...[
                 const SizedBox(height: 8),
                 Container(

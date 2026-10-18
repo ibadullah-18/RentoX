@@ -26,6 +26,8 @@ export default async function MyListingPage({ params }: PageProps<"/elanlarim/[i
   const [listing, wallet] = await Promise.all([getMyListing(id), getWallet()]);
   if (!listing.ok) {
     if (listing.status === 401) redirect(`/giris?next=/elanlarim/${id}`);
+    // A listing that is gone (deleted, or not yours): the list is the useful place, not "page not found".
+    if (listing.status === 404 || listing.status === 403) redirect("/elanlarim");
     notFound();
   }
   const l = listing.data;
@@ -116,7 +118,7 @@ export default async function MyListingPage({ params }: PageProps<"/elanlarim/[i
             <p className="text-sm text-ink-2">{t("Pul kisəsi")}</p>
             <p className="text-xl font-extrabold">{formatNumber(balance, locale)} {t("AZN")}</p>
           </div>
-          <ManageActions id={l.id} status={status} balance={balance} prices={prices} />
+          <ManageActions id={l.id} status={status} balance={balance} prices={prices} freeVip={wallet.ok && wallet.data.freeVip === true} freeBump={wallet.ok && wallet.data.freeBump === true} />
         </aside>
       </div>
     </div>

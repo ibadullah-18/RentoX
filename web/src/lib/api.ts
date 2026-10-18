@@ -5,6 +5,7 @@ import type {
   PublicStore,
   StoreCard,
   Banner,
+  CampaignPage,
   PageContent,
   PageSummary,
   SiteInfo,
@@ -67,7 +68,12 @@ export async function getSiteInfo(): Promise<SiteInfo> {
 
 /** The banners on show on the home page (none if the API cannot say). */
 export async function getBanners(): Promise<Banner[]> {
-  return (await get<Banner[]>("/api/banners", { language: await lang() }, 60, ["banners"])) ?? [];
+  return (await get<Banner[]>("/api/banners", { language: await lang(), platform: "web" }, 60, ["banners"])) ?? [];
+}
+
+/** The page of a campaign (rentox.az/name); nothing when there is none, or it is switched off. */
+export async function getCampaignPage(slug: string): Promise<CampaignPage | null> {
+  return get<CampaignPage>(`/api/banners/pages/${encodeURIComponent(slug)}`, { language: await lang() }, 60, ["banners"]);
 }
 
 export async function getCities(): Promise<City[]> {

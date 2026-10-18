@@ -41,6 +41,15 @@ public sealed class UserProfile : AuditableEntity
     /// <summary>Whether messages the staff send to groups (not to this person alone) reach them.</summary>
     public bool AnnouncementsEnabled { get; private set; } = true;
 
+    /// <summary>
+    /// RentoX pays for this person's listing fee, VIP, bump and VIP store: they are given free, nothing is taken from the
+    /// wallet and nothing counts as income. Only the owner switches it.
+    /// </summary>
+    public FreeServiceKinds FreeServices { get; private set; }
+
+    /// <summary>The owner who switched the free services on; the promotions given free carry this name.</summary>
+    public Guid? FreeServicesGrantedByUserId { get; private set; }
+
     public DateTimeOffset? LastSeenAtUtc { get; private set; }
 
     public static UserProfile Create(
@@ -89,6 +98,22 @@ public sealed class UserProfile : AuditableEntity
 
         RaiseDomainEvent(
             new UserProfileUpdatedDomainEvent(Id));
+    }
+
+    public void SetFreeServices(FreeServiceKinds kinds, Guid actorUserId)
+    {
+        if ((kinds & ~FreeServiceKinds.All) != 0)
+        {
+            throw new DomainException("The free services are not valid.");
+        }
+
+        if (kinds != FreeServiceKinds.None && actorUserId == Guid.Empty)
+        {
+            throw new DomainException("The person who gives the free services is required.");
+        }
+
+        FreeServices = kinds;
+        FreeServicesGrantedByUserId = kinds != FreeServiceKinds.None ? actorUserId : null;
     }
 
     public void SetAnnouncementsEnabled(bool enabled)

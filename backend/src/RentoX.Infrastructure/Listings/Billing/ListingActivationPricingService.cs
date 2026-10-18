@@ -1,8 +1,9 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using RentoX.Application.Abstractions.Time;
 using RentoX.Application.Listings.Billing;
 using RentoX.Domain.Common.Exceptions;
 using RentoX.Domain.Listings.Enums;
+using RentoX.Domain.Users.Enums;
 using RentoX.Infrastructure.Persistence;
 
 namespace RentoX.Infrastructure.Listings.Billing;
@@ -64,7 +65,16 @@ public sealed class ListingActivationPricingService(
                         listing.ExpiresAtUtc.Value > now,
                     cancellationToken);
 
+        // A person RentoX pays for never meets the limit fee, however many listings they post.
+        bool freeServices =
+            await dbContext.UserProfiles
+                .AsNoTracking()
+                .AnyAsync(
+                    profile => profile.Id == ownerId && (profile.FreeServices & FreeServiceKinds.ListingFee) != 0,
+                    cancellationToken);
+
         bool requiresPayment =
+            !freeServices &&
             otherActiveListingCount >=
             tariff.FreeActiveListingLimit;
 

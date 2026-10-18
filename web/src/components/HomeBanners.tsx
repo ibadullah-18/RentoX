@@ -11,22 +11,33 @@ const EVERY_MS = 5000;
 
 /** One banner: the picture with the text over a dark fade; a link when the banner has one. */
 function Slide({ banner, first }: { banner: Banner; first: boolean }) {
+  const dark = banner.textTone === 1;
+  const align = banner.textAlign === 1 ? "text-center" : banner.textAlign === 2 ? "text-right" : "text-left";
   const body = (
     <>
       <Image
         src={banner.imageUrl}
-        alt=""
+        alt={banner.showText === false ? banner.title : ""}
         fill
         unoptimized
         priority={first}
         sizes="(min-width: 1100px) 1100px, 100vw"
         className="object-cover"
       />
-      <span className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" aria-hidden />
-      <span className="absolute inset-x-0 bottom-0 p-4 text-white md:p-6">
-        <span className="block text-lg font-extrabold leading-tight drop-shadow md:text-3xl">{banner.title}</span>
-        {banner.subtitle && <span className="mt-1 block text-sm font-medium opacity-95 drop-shadow md:text-base">{banner.subtitle}</span>}
-      </span>
+      {banner.darkOverlay !== false && (
+        <span
+          className={`absolute inset-0 bg-gradient-to-t ${dark ? "from-white/80 via-white/25" : "from-black/70 via-black/20"} to-transparent`}
+          aria-hidden
+        />
+      )}
+      {banner.showText !== false && (
+        <span className={`absolute inset-x-0 bottom-0 p-4 md:p-6 ${align} ${dark ? "text-ink" : "text-white"}`}>
+          <span className={`block text-lg font-extrabold leading-tight md:text-3xl ${dark ? "" : "drop-shadow"}`}>{banner.title}</span>
+          {banner.subtitle && (
+            <span className={`mt-1 block text-sm font-medium opacity-95 md:text-base ${dark ? "" : "drop-shadow"}`}>{banner.subtitle}</span>
+          )}
+        </span>
+      )}
     </>
   );
   const box = "relative block aspect-[3/1] min-h-32 w-full shrink-0 snap-center overflow-hidden rounded-xl bg-primary-soft";
@@ -34,7 +45,11 @@ function Slide({ banner, first }: { banner: Banner; first: boolean }) {
 
   if (!url) return <div className={box}>{body}</div>;
   if (url.startsWith("/")) {
-    return (
+    return banner.openInNewTab ? (
+      <a href={url} target="_blank" rel="noopener" className={box}>
+        {body}
+      </a>
+    ) : (
       <Link href={url} className={box}>
         {body}
       </Link>

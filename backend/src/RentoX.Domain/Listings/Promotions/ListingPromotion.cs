@@ -15,10 +15,11 @@ public sealed class ListingPromotion : Entity
         Guid listingId,
         ListingPromotionType type,
         decimal chargedAmount,
-        Guid walletTransactionId,
+        Guid? walletTransactionId,
         DateTimeOffset startsAtUtc,
         DateTimeOffset? endsAtUtc,
-        DateTimeOffset purchasedAtUtc)
+        DateTimeOffset purchasedAtUtc,
+        Guid? grantedByUserId)
         : base(id)
     {
         if (listingId == Guid.Empty)
@@ -33,12 +34,28 @@ public sealed class ListingPromotion : Entity
                 "Listing promotion type is invalid.");
         }
 
-        ValidateAmount(chargedAmount);
+        bool isGift = grantedByUserId.HasValue;
 
-        if (walletTransactionId == Guid.Empty)
+        if (isGift)
         {
-            throw new DomainException(
-                "Wallet transaction id is required.");
+            // A gift from RentoX: nothing is paid, so there is no wallet transaction and no income.
+            if (grantedByUserId!.Value == Guid.Empty ||
+                walletTransactionId.HasValue ||
+                chargedAmount != 0)
+            {
+                throw new DomainException(
+                    "A gift is free, has no payment and needs the person who gave it.");
+            }
+        }
+        else
+        {
+            ValidateAmount(chargedAmount);
+
+            if (walletTransactionId is null || walletTransactionId == Guid.Empty)
+            {
+                throw new DomainException(
+                    "Wallet transaction id is required.");
+            }
         }
 
         if (startsAtUtc == default)
@@ -75,6 +92,7 @@ public sealed class ListingPromotion : Entity
         StartsAtUtc = startsAtUtc;
         EndsAtUtc = endsAtUtc;
         PurchasedAtUtc = purchasedAtUtc;
+        GrantedByUserId = grantedByUserId;
     }
 
     public Guid ListingId { get; private set; }
@@ -87,11 +105,17 @@ public sealed class ListingPromotion : Entity
 
     public decimal ChargedAmount { get; private set; }
 
-    public Guid WalletTransactionId
+    /// <summary>Null for a gift (nothing was paid).</summary>
+    public Guid? WalletTransactionId
     {
         get;
         private set;
     }
+
+    /// <summary>The staff member who gave this promotion for free; null when it was paid for.</summary>
+    public Guid? GrantedByUserId { get; private set; }
+
+    public bool IsGift => GrantedByUserId.HasValue;
 
     public DateTimeOffset StartsAtUtc
     {
@@ -137,7 +161,46 @@ public sealed class ListingPromotion : Entity
             walletTransactionId,
             occurredAtUtc,
             null,
-            occurredAtUtc);
+            occurredAtUtc,
+            null);
+    }
+
+    /// <summary>A bump given for free by RentoX.</summary>
+    public static ListingPromotion CreateGiftBump(
+        Guid listingId,
+        Guid grantedByUserId,
+        DateTimeOffset occurredAtUtc)
+    {
+        return new ListingPromotion(
+            Guid.NewGuid(),
+            listingId,
+            ListingPromotionType.Bump,
+            0m,
+            null,
+            occurredAtUtc,
+            null,
+            occurredAtUtc,
+            grantedByUserId);
+    }
+
+    /// <summary>A VIP period given for free by RentoX.</summary>
+    public static ListingPromotion CreateGiftVip(
+        Guid listingId,
+        Guid grantedByUserId,
+        DateTimeOffset startsAtUtc,
+        DateTimeOffset endsAtUtc,
+        DateTimeOffset occurredAtUtc)
+    {
+        return new ListingPromotion(
+            Guid.NewGuid(),
+            listingId,
+            ListingPromotionType.Vip,
+            0m,
+            null,
+            startsAtUtc,
+            endsAtUtc,
+            occurredAtUtc,
+            grantedByUserId);
     }
 
     public static ListingPromotion CreateVip(
@@ -156,7 +219,8 @@ public sealed class ListingPromotion : Entity
             walletTransactionId,
             startsAtUtc,
             endsAtUtc,
-            purchasedAtUtc);
+            purchasedAtUtc,
+            null);
     }
 
     private static void ValidateAmount(

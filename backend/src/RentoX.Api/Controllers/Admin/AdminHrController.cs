@@ -1,4 +1,4 @@
-using System.Globalization;
+﻿using System.Globalization;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -178,6 +178,12 @@ public sealed class AdminHrController(IStaffHrService hr) : ControllerBase
     public async Task<ActionResult<PayrollSheetDto>> PayrollAsync(
         Guid userId, [FromQuery] string? month, CancellationToken cancellationToken) =>
         Ok(await hr.GetPayrollAsync(userId, ParseMonth(month), cancellationToken));
+
+    [HttpGet("payroll/{userId:guid}/history")]
+    [Authorize(Policy = PolicyNames.AdminAccess, Roles = "SuperAdmin")]
+    public async Task<ActionResult<PayrollHistoryDto>> PayrollHistoryAsync(
+        Guid userId, [FromQuery] int months = 12, CancellationToken cancellationToken = default) =>
+        Ok(await hr.GetPayrollHistoryAsync(userId, months, cancellationToken));
 
     [HttpPost("payroll/{userId:guid}/lines")]
     [Authorize(Policy = PolicyNames.AdminAccess, Roles = "SuperAdmin")]

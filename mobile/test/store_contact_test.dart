@@ -8,6 +8,10 @@ import 'package:rentox/features/store/data/store_repository.dart';
 import 'package:rentox/features/store/domain/store_models.dart';
 import 'package:rentox/features/store/presentation/store_page.dart';
 
+/// The weekday after today in Baku (1 = Monday ... 7 = Sunday).
+int _tomorrow() =>
+    (DateTime.now().toUtc().add(const Duration(hours: 4)).weekday % 7) + 1;
+
 ListingSummary _listing(String id, {required bool vip}) => ListingSummary(
   id: id,
   title: 'Elan $id',
@@ -26,7 +30,7 @@ class _Stores extends StoreRepository {
   final events = <String>[];
 
   @override
-  Future<PublicStore> bySlug(String slug) async => const PublicStore(
+  Future<PublicStore> bySlug(String slug) async => PublicStore(
     id: 's9',
     name: 'Nümunə mağaza',
     slug: 'numune',
@@ -36,9 +40,10 @@ class _Stores extends StoreRepository {
     whatsAppMessage: 'Salam! Ünvanı deyin.',
     youtube: 'https://youtube.com/@numune',
     followerCount: 12,
+    // Never on today (Baku time): the page shows today's hours at once, and this test is about the closed week.
     hours: [
-      StoreHours(day: 1, openMinute: 540, closeMinute: 1080),
-      StoreHours(day: 6, openMinute: 600, closeMinute: 840),
+      StoreHours(day: _tomorrow(), openMinute: 540, closeMinute: 1080),
+      StoreHours(day: (_tomorrow() % 7) + 1, openMinute: 600, closeMinute: 840),
     ],
   );
 
@@ -69,27 +74,41 @@ class _Stores extends StoreRepository {
   Future<MyStore?> mine() async => null;
 
   @override
-  Future<void> reportEvent(String slug, String kind) async =>
-      events.add(kind);
+  Future<void> reportEvent(String slug, String kind) async => events.add(kind);
 }
 
 void main() {
   group('store hours', () {
     const hours = [StoreHours(day: 3, openMinute: 540, closeMinute: 1080)];
 
-    test('open inside the hours of the day in Baku time, closed outside them', () {
-      // Wednesday 14 October 2026: 10:00 in Baku is 06:00 UTC.
-      expect(StoreHours.openAt(hours, DateTime.utc(2026, 10, 14, 6)), isTrue);
-      // 08:30 in Baku: not yet open.
-      expect(StoreHours.openAt(hours, DateTime.utc(2026, 10, 14, 4, 30)), isFalse);
-      // 18:00 in Baku (14:00 UTC): closing time itself is closed.
-      expect(StoreHours.openAt(hours, DateTime.utc(2026, 10, 14, 14)), isFalse);
-      // Thursday is not listed.
-      expect(StoreHours.openAt(hours, DateTime.utc(2026, 10, 15, 6)), isFalse);
-    });
+    test(
+      'open inside the hours of the day in Baku time, closed outside them',
+      () {
+        // Wednesday 14 October 2026: 10:00 in Baku is 06:00 UTC.
+        expect(StoreHours.openAt(hours, DateTime.utc(2026, 10, 14, 6)), isTrue);
+        // 08:30 in Baku: not yet open.
+        expect(
+          StoreHours.openAt(hours, DateTime.utc(2026, 10, 14, 4, 30)),
+          isFalse,
+        );
+        // 18:00 in Baku (14:00 UTC): closing time itself is closed.
+        expect(
+          StoreHours.openAt(hours, DateTime.utc(2026, 10, 14, 14)),
+          isFalse,
+        );
+        // Thursday is not listed.
+        expect(
+          StoreHours.openAt(hours, DateTime.utc(2026, 10, 15, 6)),
+          isFalse,
+        );
+      },
+    );
 
     test('no hours means nothing to say', () {
-      expect(StoreHours.openAt(const [], DateTime.utc(2026, 10, 14, 6)), isNull);
+      expect(
+        StoreHours.openAt(const [], DateTime.utc(2026, 10, 14, 6)),
+        isNull,
+      );
     });
 
     test('a clock reads as 09:05', () {
@@ -99,7 +118,16 @@ void main() {
 
   group('store contact', () {
     test('a store without a WhatsApp number has no link, one with it opens with the owner text', () {
-      expect(const PublicStore(id: 'a', name: 'A', slug: 'a', description: 'd', phone: '1').whatsAppUri, isNull);
+      expect(
+        const PublicStore(
+          id: 'a',
+          name: 'A',
+          slug: 'a',
+          description: 'd',
+          phone: '1',
+        ).whatsAppUri,
+        isNull,
+      );
 
       final uri = const PublicStore(
         id: 'a',
@@ -125,7 +153,10 @@ void main() {
         instagram: 'https://instagram.com/a',
         youtube: 'https://youtube.com/@a',
       );
-      expect(s.links.map((e) => e.$1), [SocialKind.instagram, SocialKind.youtube]);
+      expect(s.links.map((e) => e.$1), [
+        SocialKind.instagram,
+        SocialKind.youtube,
+      ]);
     });
 
     test('the contact form checks the number, the links and the hours', () {
@@ -205,55 +236,58 @@ void main() {
     });
   });
 
-  testWidgets('the public page: VIP first (4 of 7), the ordinary ones (6 of 9), WhatsApp, hours', (tester) async {
-    tester.view.physicalSize = const Size(900, 4200);
-    tester.view.devicePixelRatio = 1;
-    addTearDown(tester.view.reset);
+  testWidgets(
+    'the public page: VIP first (4 of 7), the ordinary ones (6 of 9), WhatsApp, hours',
+    (tester) async {
+      tester.view.physicalSize = const Size(900, 4200);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
 
-    final repo = _Stores();
-    final container = ProviderContainer(
-      overrides: [storeRepositoryProvider.overrideWithValue(repo)],
-    );
-    addTearDown(container.dispose);
-    final az = await AppL10n.delegate.load(const Locale('az'));
+      final repo = _Stores();
+      final container = ProviderContainer(
+        overrides: [storeRepositoryProvider.overrideWithValue(repo)],
+      );
+      addTearDown(container.dispose);
+      final az = await AppL10n.delegate.load(const Locale('az'));
 
-    await tester.pumpWidget(
-      UncontrolledProviderScope(
-        container: container,
-        child: MaterialApp(
-          localizationsDelegates: AppL10n.localizationsDelegates,
-          supportedLocales: AppL10n.supportedLocales,
-          locale: const Locale('az'),
-          home: const StorePage(slug: 'numune'),
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: MaterialApp(
+            localizationsDelegates: AppL10n.localizationsDelegates,
+            supportedLocales: AppL10n.supportedLocales,
+            locale: const Locale('az'),
+            home: const StorePage(slug: 'numune'),
+          ),
         ),
-      ),
-    );
-    await tester.pumpAndSettle();
+      );
+      await tester.pumpAndSettle();
 
-    expect(find.text('${az.storeVipTitle} (7)'), findsOneWidget);
-    expect(find.text('${az.storeListingsTitle} (9)'), findsOneWidget);
-    // 4 VIP and 6 ordinary at first.
-    expect(find.textContaining('Elan v'), findsNWidgets(4));
-    expect(find.textContaining('Elan r'), findsNWidgets(6));
+      expect(find.text('${az.storeVipTitle} (7)'), findsOneWidget);
+      expect(find.text('${az.storeListingsTitle} (9)'), findsOneWidget);
+      // 4 VIP and 6 ordinary at first.
+      expect(find.textContaining('Elan v'), findsNWidgets(4));
+      expect(find.textContaining('Elan r'), findsNWidgets(6));
 
-    await tester.ensureVisible(find.text(az.storeShowAll).first);
-    await tester.tap(find.text(az.storeShowAll).first);
-    await tester.pumpAndSettle();
-    expect(find.textContaining('Elan v'), findsNWidgets(7));
+      await tester.ensureVisible(find.text(az.storeShowAll).first);
+      await tester.tap(find.text(az.storeShowAll).first);
+      await tester.pumpAndSettle();
+      expect(find.textContaining('Elan v'), findsNWidgets(7));
 
-    // The contact side: WhatsApp and YouTube have buttons, TikTok has none, the week is listed.
-    expect(find.bySemanticsLabel('WhatsApp'), findsOneWidget);
-    expect(find.bySemanticsLabel('YouTube'), findsOneWidget);
-    expect(find.bySemanticsLabel('TikTok'), findsNothing);
-    // The hours are one line; the week opens when it is tapped.
-    expect(find.text(az.storeHoursTitle), findsOneWidget);
-    expect(find.text('09:00 – 18:00'), findsNothing);
-    await tester.ensureVisible(find.text(az.storeHoursTitle));
-    await tester.tap(find.text(az.storeHoursTitle));
-    await tester.pumpAndSettle();
-    expect(find.text('09:00 – 18:00'), findsOneWidget);
-    expect(find.text(az.storeCall), findsOneWidget);
-    expect(find.text(az.storeFollowers(12)), findsOneWidget);
-    expect(repo.events, ['view']);
-  });
+      // The contact side: WhatsApp and YouTube have buttons, TikTok has none, the week is listed.
+      expect(find.bySemanticsLabel('WhatsApp'), findsOneWidget);
+      expect(find.bySemanticsLabel('YouTube'), findsOneWidget);
+      expect(find.bySemanticsLabel('TikTok'), findsNothing);
+      // The hours are one line; the week opens when it is tapped.
+      expect(find.text(az.storeHoursTitle), findsOneWidget);
+      expect(find.text('09:00 – 18:00'), findsNothing);
+      await tester.ensureVisible(find.text(az.storeHoursTitle));
+      await tester.tap(find.text(az.storeHoursTitle));
+      await tester.pumpAndSettle();
+      expect(find.text('09:00 – 18:00'), findsOneWidget);
+      expect(find.text(az.storeCall), findsOneWidget);
+      expect(find.text(az.storeFollowers(12)), findsOneWidget);
+      expect(repo.events, ['view']);
+    },
+  );
 }

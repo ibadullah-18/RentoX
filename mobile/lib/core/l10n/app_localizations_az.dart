@@ -1618,6 +1618,25 @@ class AppL10nAz extends AppL10n {
       'VIP mağaza ana səhifədə, bütün elanlardan əvvəl göstərilir. Müddət bitəndən sonra adi mağaza kimi qalır; vaxtında uzatsanız fasilə olmur.';
 
   @override
+  String get campaignOver => 'Bu kampaniya bitib.';
+
+  @override
+  String get giftFreeFromRentox => 'Pulsuz (RentoX tərəfindən)';
+
+  @override
+  String get giftFreeNote =>
+      'Bu sizə RentoX tərəfindən pulsuz verilir. Pul kisənizdən heç nə çıxılmayacaq.';
+
+  @override
+  String get giftTakeFree => 'Pulsuz götür';
+
+  @override
+  String get giftGivenFree => 'Sizə RentoX tərəfindən pulsuz verildi';
+
+  @override
+  String get giftFromRentox => 'RentoX tərəfindən hədiyyə';
+
+  @override
   String get storeVipBadge => 'VIP mağaza';
 
   @override

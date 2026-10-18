@@ -7,7 +7,8 @@ public sealed record PurchaseListingPromotionResponse(
     decimal ChargedAmount,
     string Currency,
     decimal RemainingBalance,
-    Guid WalletTransactionId,
+    Guid? WalletTransactionId,
     DateTimeOffset StartsAtUtc,
     DateTimeOffset? EndsAtUtc,
-    bool WasAlreadyProcessed);
+    bool WasAlreadyProcessed,
+    bool IsGift = false);

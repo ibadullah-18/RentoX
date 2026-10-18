@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { Crown, Loader2 } from "lucide-react";
+import { Crown, Gift, Loader2 } from "lucide-react";
 import { buyStoreVip } from "@/app/magaza/actions";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { useT } from "@/lib/i18n/client";
@@ -52,6 +52,12 @@ export function StoreVipPanel({ vip, leftMs }: { vip: StoreVipStatus; leftMs: nu
             <div className="space-y-1 text-sm">
               <p className="font-semibold text-success">{t("Mağazanız ana səhifədə göstərilir: {date} tarixinədək", { date: day(vip.vipUntilUtc) })}</p>
               <p className="inline-flex rounded-md bg-warning-soft px-2 py-0.5 font-extrabold text-warning">{left}</p>
+              {vip.isGift && (
+                <p className="inline-flex items-center gap-1.5 rounded-md bg-primary-soft px-2 py-0.5 font-bold text-primary">
+                  <Gift className="size-4" aria-hidden />
+                  {t("RentoX tərəfindən hədiyyə")}
+                </p>
+              )}
               <p className="text-ink-2">{t("VIP mağaza ana səhifədə, bütün elanlardan əvvəl göstərilir. Müddət bitəndən sonra adi mağaza kimi qalır; vaxtında uzatsanız fasilə olmur.")}</p>
             </div>
           ) : (
@@ -69,7 +75,7 @@ export function StoreVipPanel({ vip, leftMs }: { vip: StoreVipStatus; leftMs: nu
             className="flex h-11 items-center gap-2 rounded-xl bg-primary px-5 font-bold text-white hover:bg-primary-press disabled:opacity-60"
           >
             {busy && <Loader2 className="size-4 animate-spin" aria-hidden />}
-            {vip.isVip ? t("Müddəti uzat") : t("VIP et")} · {price}
+            {vip.isVip ? t("Müddəti uzat") : t("VIP et")} · {vip.freeServices ? t("Pulsuz (RentoX tərəfindən)") : price}
           </button>
           <span className="text-sm text-ink-2">{t("{days} gün", { days: vip.durationDays })}</span>
           <Link href="/pul-kisesi" className="text-sm font-bold text-primary hover:underline">
@@ -86,8 +92,12 @@ export function StoreVipPanel({ vip, leftMs }: { vip: StoreVipStatus; leftMs: nu
       <ConfirmDialog
         open={asking}
         title={vip.name}
-        message={t("Pul kisənizdən {price} çıxılacaq və mağaza {days} gün ana səhifədə göstəriləcək.", { price, days: vip.durationDays })}
-        confirmLabel={t("Ödə")}
+        message={
+          vip.freeServices
+            ? t("Bu sizə RentoX tərəfindən pulsuz verilir. Pul kisənizdən heç nə çıxılmayacaq, mağaza {days} gün ana səhifədə göstəriləcək.", { days: vip.durationDays })
+            : t("Pul kisənizdən {price} çıxılacaq və mağaza {days} gün ana səhifədə göstəriləcək.", { price, days: vip.durationDays })
+        }
+        confirmLabel={vip.freeServices ? t("Pulsuz götür") : t("Ödə")}
         busy={busy}
         onClose={() => setAsking(false)}
         onConfirm={() => void buy()}

@@ -22,6 +22,7 @@ public sealed class WalletController(
         StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<ActionResult<WalletBalanceResponse>> GetAsync(
+        [Microsoft.AspNetCore.Mvc.FromServices] RentoX.Application.Gifts.IGiftService giftService,
         CancellationToken cancellationToken)
     {
         if (!TryGetCurrentUserId(out Guid userId))
@@ -34,7 +35,15 @@ public sealed class WalletController(
                 userId,
                 cancellationToken);
 
-        return Ok(CreateBalanceResponse(result));
+        int free = await giftService.GetFreeServicesAsync(userId, cancellationToken);
+
+        return Ok(CreateBalanceResponse(result) with
+        {
+            FreeListingFee = (free & 1) != 0,
+            FreeVip = (free & 2) != 0,
+            FreeBump = (free & 4) != 0,
+            FreeStoreVip = (free & 8) != 0
+        });
     }
 
     [HttpGet("transactions")]

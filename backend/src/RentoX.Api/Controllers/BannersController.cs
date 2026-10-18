@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using RentoX.Application.Content;
 using RentoX.Domain.Users.Enums;
 
@@ -14,6 +14,7 @@ public sealed class BannersController(IHomeBannerService bannerService) : Contro
     [ProducesResponseType<IReadOnlyList<PublicBannerItem>>(StatusCodes.Status200OK)]
     public async Task<ActionResult<IReadOnlyList<PublicBannerItem>>> GetAsync(
         [FromQuery] string language = "az",
+        [FromQuery] string platform = "web",
         CancellationToken cancellationToken = default)
     {
         PreferredLanguage? preferred = language.ToLowerInvariant() switch
@@ -28,7 +29,35 @@ public sealed class BannersController(IHomeBannerService bannerService) : Contro
             return BadRequest("Language must be az, ru or en.");
         }
 
-        return Ok(await bannerService.GetLiveAsync(preferred.Value, cancellationToken));
+        int where = platform.ToLowerInvariant() switch
+        {
+            "app" => 2,
+            "web" => 1,
+            _ => 3
+        };
+
+        return Ok(await bannerService.GetLiveAsync(preferred.Value, where, cancellationToken));
+    }
+
+    /// <summary>The page of a campaign (rentox.az/slug).</summary>
+    [HttpGet("pages/{slug}")]
+    [ResponseCache(Duration = 60)]
+    [ProducesResponseType<CampaignPageItem>(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<CampaignPageItem>> PageAsync(
+        string slug,
+        [FromQuery] string language = "az",
+        CancellationToken cancellationToken = default)
+    {
+        PreferredLanguage preferred = language.ToLowerInvariant() switch
+        {
+            "ru" => PreferredLanguage.Russian,
+            "en" => PreferredLanguage.English,
+            _ => PreferredLanguage.Azerbaijani
+        };
+
+        CampaignPageItem? page = await bannerService.GetPageAsync(slug, preferred, cancellationToken);
+        return page is null ? NotFound() : Ok(page);
     }
 
     [HttpGet("{id:guid}/image")]

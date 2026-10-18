@@ -72,38 +72,3 @@ export function playMessageSound() {
     { at: 0.13, hz: 1174.66, length: 0.24, gain: 0.2 },
   ]);
 }
-
-// ---- the "sound on/off" choice, kept in this browser ---------------------------------------
-
-const KEY = "rx_admin_sound_off";
-const listeners = new Set<() => void>();
-// Kept here too, so the choice holds for this visit even where the browser will not store it.
-let remembered = false;
-
-export function subscribeMuted(listener: () => void): () => void {
-  listeners.add(listener);
-  window.addEventListener("storage", listener);
-  return () => {
-    listeners.delete(listener);
-    window.removeEventListener("storage", listener);
-  };
-}
-
-export function isMuted(): boolean {
-  try {
-    return localStorage.getItem(KEY) === "1" || remembered;
-  } catch {
-    return remembered;
-  }
-}
-
-export function setMuted(muted: boolean) {
-  remembered = muted;
-  try {
-    if (muted) localStorage.setItem(KEY, "1");
-    else localStorage.removeItem(KEY);
-  } catch {
-    // The choice just is not kept.
-  }
-  listeners.forEach((l) => l());
-}

@@ -737,6 +737,12 @@
     }
   },
   "storeVipInfo": "VIP mağaza ana səhifədə, bütün elanlardan əvvəl göstərilir. Müddət bitəndən sonra adi mağaza kimi qalır; vaxtında uzatsanız fasilə olmur.",
+  "campaignOver": "Bu kampaniya bitib.",
+  "giftFreeFromRentox": "Pulsuz (RentoX tərəfindən)",
+  "giftFreeNote": "Bu sizə RentoX tərəfindən pulsuz verilir. Pul kisənizdən heç nə çıxılmayacaq.",
+  "giftTakeFree": "Pulsuz götür",
+  "giftGivenFree": "Sizə RentoX tərəfindən pulsuz verildi",
+  "giftFromRentox": "RentoX tərəfindən hədiyyə",
   "storeVipBadge": "VIP mağaza",
   "storeSearchHint": "Mağazada axtar",
   "storePriceFilter": "Qiymət",

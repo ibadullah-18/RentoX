@@ -1648,6 +1648,25 @@ class AppL10nEn extends AppL10n {
       'A VIP store is shown on the home page before all listings. When the time ends it stays an ordinary store; extend in time and there is no gap.';
 
   @override
+  String get campaignOver => 'This campaign has ended.';
+
+  @override
+  String get giftFreeFromRentox => 'Free (from RentoX)';
+
+  @override
+  String get giftFreeNote =>
+      'RentoX gives this to you free. Nothing is taken from your wallet.';
+
+  @override
+  String get giftTakeFree => 'Take it free';
+
+  @override
+  String get giftGivenFree => 'RentoX gave this to you free';
+
+  @override
+  String get giftFromRentox => 'A gift from RentoX';
+
+  @override
   String get storeVipBadge => 'VIP store';
 
   @override

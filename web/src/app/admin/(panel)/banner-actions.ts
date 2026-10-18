@@ -21,6 +21,24 @@ export type BannerFormInput = {
   /** ISO UTC time, or empty. */
   startsAtUtc: string;
   endsAtUtc: string;
+  /** The name of the campaign page (rentox.az/name); empty: no page. */
+  pageSlug: string;
+  pageBodyAz: string;
+  pageBodyRu: string;
+  pageBodyEn: string;
+  pageButtonLabelAz: string;
+  pageButtonLabelRu: string;
+  pageButtonLabelEn: string;
+  pageButtonUrl: string;
+  openInNewTab: boolean;
+  /** 1 website, 2 apps, 3 both. */
+  platform: number;
+  showText: boolean;
+  /** 0 left, 1 centre, 2 right. */
+  textAlign: number;
+  darkOverlay: boolean;
+  /** 0 light text, 1 dark text. */
+  textTone: number;
 };
 
 const ID = /^[0-9a-f-]{36}$/i;
@@ -35,6 +53,12 @@ const known: [RegExp, string][] = [
   [/display order/i, "Sıra 0 ilə 10000 arasında olmalıdır."],
   [/more than \d+ banners/i, "Bannerlərin sayı həddə çatıb. Köhnələri silin."],
   [/banner was not found/i, "Banner tapılmadı."],
+  [/already has this page name/i, "Bu səhifə adı başqa kampaniyada işlədilir. Başqa ad seçin."],
+  [/reserved by the site/i, "Bu ad saytın öz səhifəsinə məxsusdur. Başqa ad seçin."],
+  [/name of the page must/i, "Səhifənin adı 2 ilə 60 simvol arasında olmalıdır."],
+  [/name of the page can have only/i, "Səhifənin adında yalnız a-z hərfləri, rəqəmlər və tək-tək defis ola bilər."],
+  [/page text/i, "Səhifənin mətni 6000 simvoldan uzun ola bilməz."],
+  [/button/i, "Düymənin yazısı üç dildə yazılmalı və 40 simvoldan uzun olmamalıdır."],
 ];
 
 async function allowed(): Promise<BannerSaved | null> {
@@ -65,12 +89,28 @@ function body(i: BannerFormInput) {
     isActive: i.isActive,
     startsAtUtc: i.startsAtUtc || null,
     endsAtUtc: i.endsAtUtc || null,
+    pageSlug: i.pageSlug.trim() || null,
+    pageBodyAz: i.pageBodyAz.trim() || null,
+    pageBodyRu: i.pageBodyRu.trim() || null,
+    pageBodyEn: i.pageBodyEn.trim() || null,
+    pageButtonLabelAz: i.pageButtonLabelAz.trim() || null,
+    pageButtonLabelRu: i.pageButtonLabelRu.trim() || null,
+    pageButtonLabelEn: i.pageButtonLabelEn.trim() || null,
+    pageButtonUrl: i.pageButtonUrl.trim() || null,
+    openInNewTab: i.openInNewTab,
+    platform: i.platform,
+    showText: i.showText,
+    textAlign: i.textAlign,
+    darkOverlay: i.darkOverlay,
+    textTone: i.textTone,
   };
 }
 
 function check(i: BannerFormInput): string | null {
   if (!i.titleAz.trim() || !i.titleRu.trim() || !i.titleEn.trim()) return "Başlığı üç dildə də yazın.";
   if (!Number.isInteger(i.displayOrder) || i.displayOrder < 0 || i.displayOrder > 10000) return "Sıra 0 ilə 10000 arasında tam ədəd olmalıdır.";
+  if (![1, 2, 3].includes(i.platform)) return "Harada göstərilməsini seçin.";
+  if (![0, 1, 2].includes(i.textAlign) || ![0, 1].includes(i.textTone)) return "Yazının görünüşü yanlışdır.";
   return null;
 }
 
@@ -78,6 +118,8 @@ function done() {
   // The site and the apps keep the list for a short time: drop that copy so the change shows now.
   updateTag("banners");
   revalidatePath("/admin/bannerler");
+  // A campaign page may have changed or gone: the cached copies of the pages go too.
+  revalidatePath("/", "layout");
 }
 
 export async function createBanner(input: BannerFormInput): Promise<BannerSaved> {

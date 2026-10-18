@@ -1,4 +1,4 @@
-using RentoX.Application.Abstractions.Authentication;
+﻿using RentoX.Application.Abstractions.Authentication;
 using RentoX.Application.Abstractions.Time;
 using RentoX.Application.Messaging;
 using RentoX.Application.Notifications;
@@ -180,6 +180,12 @@ public sealed class LiveSupportEventsTests(AuditPostgresFixture database)
         public Task TicketChangedAsync(Guid ticketId, Guid ownerId, int status, int priority, CancellationToken cancellationToken = default)
         {
             Lines.Add($"changed:{ticketId}:{ownerId}:{status}:{priority}");
+            return Task.CompletedTask;
+        }
+
+        public Task ReviewWaitingAsync(string kind, Guid id, string title, CancellationToken cancellationToken = default)
+        {
+            Lines.Add($"review:{kind}:{id}:{title}");
             return Task.CompletedTask;
         }
 

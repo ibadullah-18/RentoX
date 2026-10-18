@@ -1,14 +1,12 @@
 "use client";
 
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useRef, useState, useSyncExternalStore } from "react";
-import { Flag, LifeBuoy, MessageSquareText, Volume2, VolumeX } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { ClipboardCheck, Flag, LifeBuoy, MessageSquareText, Store } from "lucide-react";
 import { useSupportLive } from "@/components/support/SupportRealtime";
 import { ToastStack, type ToastItem } from "@/components/ui/ToastStack";
 import { adminHref } from "@/lib/admin-path";
-import { isMuted, playMessageSound, playNotificationSound, setMuted, subscribeMuted, unlockSound } from "@/lib/sounds";
-
-const useMuted = () => useSyncExternalStore(subscribeMuted, isMuted, () => false);
+import { playMessageSound, playNotificationSound, unlockSound } from "@/lib/sounds";
 
 type AdminToast = ToastItem & { href: string };
 
@@ -24,8 +22,6 @@ export function AdminLive() {
   const live = useSupportLive();
   const router = useRouter();
   const pathname = usePathname();
-  const off = useMuted();
-  const offRef = useRef(off);
   const pathRef = useRef(pathname);
   const refreshTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   // A person who is both staff and the owner of a request is told twice; the sound and the card come once.
@@ -33,9 +29,8 @@ export function AdminLive() {
   const [toasts, setToasts] = useState<AdminToast[]>([]);
 
   useEffect(() => {
-    offRef.current = off;
     pathRef.current = pathname;
-  }, [off, pathname]);
+  }, [pathname]);
 
   useEffect(() => unlockSound(), []);
 
@@ -55,7 +50,7 @@ export function AdminLive() {
     const stop = live.subscribe((event) => {
       if (event.type === "ticket") {
         if (once(`t-${event.ticketId}`)) {
-          if (!offRef.current) playNotificationSound();
+          playNotificationSound();
           show({
             id: `t-${event.ticketId}`,
             title: "Yeni dəstək müraciəti",
@@ -68,7 +63,7 @@ export function AdminLive() {
         refresh();
       } else if (event.type === "report") {
         if (once(`r-${event.reportId}`)) {
-          if (!offRef.current) playNotificationSound();
+          playNotificationSound();
           const chat = event.kind === "chat";
           show({
             id: `r-${event.reportId}`,
@@ -80,9 +75,23 @@ export function AdminLive() {
           });
         }
         refresh();
+      } else if (event.type === "review") {
+        if (once(`v-${event.kind}-${event.id}`)) {
+          playNotificationSound();
+          const store = event.kind === "store";
+          show({
+            id: `v-${event.kind}-${event.id}`,
+            title: store ? "Yoxlama gözləyən yeni mağaza" : "Yoxlama gözləyən yeni elan",
+            body: event.title,
+            Icon: store ? Store : ClipboardCheck,
+            tone: "text-warning",
+            href: adminHref(store ? `/magazalar/${event.id}` : `/elanlar/${event.id}`),
+          });
+        }
+        refresh();
       } else if (event.type === "message") {
         if (!event.message.isAdmin && once(`m-${event.message.id}`)) {
-          if (!offRef.current) playMessageSound();
+          playMessageSound();
           // Already reading that conversation: the message is right there.
           if (!pathRef.current.includes(event.ticketId)) {
             show({
@@ -118,25 +127,5 @@ export function AdminLive() {
         if (found) router.push(found.href);
       }}
     />
-  );
-}
-
-/** The little switch in the menu that turns the sounds off in this browser. */
-export function SoundToggle() {
-  const off = useMuted();
-  return (
-    <button
-      type="button"
-      onClick={() => {
-        setMuted(!off);
-        // Switching on is a click, so the browser lets the sound play: this is the proof.
-        if (off) playMessageSound();
-      }}
-      aria-pressed={!off}
-      className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-[13px] font-semibold text-ink-2 hover:bg-primary-soft hover:text-primary"
-    >
-      {off ? <VolumeX className="size-4" aria-hidden /> : <Volume2 className="size-4" aria-hidden />}
-      {off ? "Səs bağlıdır" : "Bildiriş səsi açıqdır"}
-    </button>
   );
 }

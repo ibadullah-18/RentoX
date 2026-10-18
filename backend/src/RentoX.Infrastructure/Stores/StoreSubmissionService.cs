@@ -7,7 +7,8 @@ using RentoX.Infrastructure.Persistence;
 namespace RentoX.Infrastructure.Stores;
 
 public sealed class StoreSubmissionService(
-    RentoXDbContext dbContext)
+    RentoXDbContext dbContext,
+    RentoX.Application.Support.ISupportEventPublisher? live = null)
     : IStoreSubmissionService
 {
     public async Task<StoreStatusResult> SubmitAsync(
@@ -27,6 +28,11 @@ public sealed class StoreSubmissionService(
 
         await dbContext.SaveChangesAsync(
             cancellationToken);
+
+        if (live is not null)
+        {
+            await live.ReviewWaitingAsync("store", store.Id, store.Name, cancellationToken);
+        }
 
         return new StoreStatusResult(
             store.Id,

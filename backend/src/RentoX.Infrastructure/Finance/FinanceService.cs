@@ -44,7 +44,9 @@ public sealed class FinanceService(RentoXDbContext dbContext, IClock clock) : IF
             .AsNoTracking()
             .Where(t => t.OccurredAtUtc >= from && t.OccurredAtUtc < to);
 
-        IQueryable<Guid> storeVipPayments = dbContext.Set<StoreVipPurchase>().Select(p => p.WalletTransactionId);
+        IQueryable<Guid> storeVipPayments = dbContext.Set<StoreVipPurchase>()
+            .Where(p => p.WalletTransactionId != null)
+            .Select(p => p.WalletTransactionId!.Value);
 
         decimal listingFees = await SumAsync(
             inMonth.Where(t => t.Direction == WalletTransactionDirection.Debit && t.Type == WalletTransactionType.ListingFee), cancellationToken);
@@ -93,7 +95,26 @@ public sealed class FinanceService(RentoXDbContext dbContext, IClock clock) : IF
         return new MonthlyReport(
             first, Currency, clock.UtcNow, lines, serviceIncome, refunds, income, staff, staffCost,
             budgets, budgetsTotal, taxes, taxesTotal, other, otherTotal, net, personal, personalTotal,
-            net - personalTotal, await GetProfileAsync(cancellationToken));
+            net - personalTotal, await GetProfileAsync(cancellationToken), await GiftsAsync(from, to, cancellationToken));
+    }
+
+    private async Task<GiftCounts> GiftsAsync(DateTimeOffset from, DateTimeOffset to, CancellationToken cancellationToken)
+    {
+        var promotions = await dbContext.ListingPromotions
+            .AsNoTracking()
+            .Where(p => p.GrantedByUserId != null && p.PurchasedAtUtc >= from && p.PurchasedAtUtc < to)
+            .GroupBy(p => p.Type)
+            .Select(g => new { Type = g.Key, Count = g.Count() })
+            .ToListAsync(cancellationToken);
+
+        int stores = await dbContext.Set<StoreVipPurchase>()
+            .AsNoTracking()
+            .CountAsync(p => p.GrantedByUserId != null && p.CreatedAtUtc >= from && p.CreatedAtUtc < to, cancellationToken);
+
+        return new GiftCounts(
+            promotions.Where(p => p.Type == Domain.Listings.Promotions.Enums.ListingPromotionType.Bump).Sum(p => p.Count),
+            promotions.Where(p => p.Type == Domain.Listings.Promotions.Enums.ListingPromotionType.Vip).Sum(p => p.Count),
+            stores);
     }
 
     public async Task<IReadOnlyList<ExpenseDto>> GetExpensesAsync(DateOnly month, CancellationToken cancellationToken = default)

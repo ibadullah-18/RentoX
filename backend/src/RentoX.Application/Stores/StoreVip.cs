@@ -1,4 +1,4 @@
-namespace RentoX.Application.Stores;
+﻿namespace RentoX.Application.Stores;
 
 /// <summary>What the admin sets for the VIP store product.</summary>
 public sealed record StoreVipPlanValues(
@@ -14,13 +14,18 @@ public sealed record StoreVipStatusResult(
     StoreVipPlanValues Plan,
     bool IsVip,
     DateTimeOffset? VipUntilUtc,
-    string Currency);
+    string Currency,
+    /// <summary>The VIP period now running was given for free by RentoX.</summary>
+    bool IsGift = false,
+    /// <summary>RentoX pays for this owner: buying the VIP store costs nothing.</summary>
+    bool FreeServices = false);
 
 public sealed record StoreVipPurchaseResult(
     DateTimeOffset StartsAtUtc,
     DateTimeOffset EndsAtUtc,
     decimal ChargedAmount,
-    decimal RemainingBalance);
+    decimal RemainingBalance,
+    bool IsGift = false);
 
 public sealed record StoreVipOffersResult(int Sent, int SkippedRecently);
 

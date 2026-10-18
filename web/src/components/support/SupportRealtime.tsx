@@ -16,6 +16,7 @@ export type SupportEvent =
   | { type: "ticket"; ticketId: string; subject: string; userName?: string | null }
   | { type: "changed"; ticketId: string; status: number; priority: number }
   | { type: "report"; kind: "content" | "chat"; reportId: string }
+  | { type: "review"; kind: "listing" | "store"; id: string; title: string }
   | { type: "typing"; ticketId: string; userId: string; isStaff: boolean; typing: boolean }
   /** The connection came back after a drop: anything may have been missed. */
   | { type: "reconnected" };
@@ -66,6 +67,9 @@ export function SupportRealtimeProvider({ children }: { children: React.ReactNod
     );
     hub.on("SupportTicketChanged", (e: { ticketId: string; status: number; priority: number }) =>
       emit({ type: "changed", ...e }),
+    );
+    hub.on("ReviewWaiting", (e: { kind: "listing" | "store"; id: string; title: string }) =>
+      emit({ type: "review", ...e }),
     );
     hub.on("ReportCreated", (e: { kind: "content" | "chat"; reportId: string }) => emit({ type: "report", ...e }));
     const typing = (on: boolean) => (e: { ticketId: string; userId: string; isStaff: boolean }) =>

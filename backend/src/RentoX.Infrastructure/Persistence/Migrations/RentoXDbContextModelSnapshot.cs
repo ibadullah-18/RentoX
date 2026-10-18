@@ -505,6 +505,11 @@ namespace RentoX.Infrastructure.Persistence.Migrations
                     b.Property<Guid>("CreatedByUserId")
                         .HasColumnType("uuid");
 
+                    b.Property<bool>("DarkOverlay")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true);
+
                     b.Property<int>("DisplayOrder")
                         .HasColumnType("integer");
 
@@ -522,6 +527,51 @@ namespace RentoX.Infrastructure.Persistence.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)");
 
+                    b.Property<bool>("OpenInNewTab")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("PageBodyAz")
+                        .HasMaxLength(6000)
+                        .HasColumnType("character varying(6000)");
+
+                    b.Property<string>("PageBodyEn")
+                        .HasMaxLength(6000)
+                        .HasColumnType("character varying(6000)");
+
+                    b.Property<string>("PageBodyRu")
+                        .HasMaxLength(6000)
+                        .HasColumnType("character varying(6000)");
+
+                    b.Property<string>("PageButtonLabelAz")
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)");
+
+                    b.Property<string>("PageButtonLabelEn")
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)");
+
+                    b.Property<string>("PageButtonLabelRu")
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)");
+
+                    b.Property<string>("PageButtonUrl")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("PageSlug")
+                        .HasMaxLength(60)
+                        .HasColumnType("character varying(60)");
+
+                    b.Property<int>("Platform")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(3);
+
+                    b.Property<bool>("ShowText")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true);
+
                     b.Property<DateTimeOffset?>("StartsAtUtc")
                         .HasColumnType("timestamp with time zone");
 
@@ -536,6 +586,12 @@ namespace RentoX.Infrastructure.Persistence.Migrations
                     b.Property<string>("SubtitleRu")
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
+
+                    b.Property<int>("TextAlign")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("TextTone")
+                        .HasColumnType("integer");
 
                     b.Property<string>("TitleAz")
                         .IsRequired()
@@ -553,6 +609,10 @@ namespace RentoX.Infrastructure.Persistence.Migrations
                         .HasColumnType("character varying(100)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("PageSlug")
+                        .IsUnique()
+                        .HasFilter("\"PageSlug\" IS NOT NULL");
 
                     b.HasIndex("IsActive", "DisplayOrder");
 
@@ -1337,6 +1397,9 @@ namespace RentoX.Infrastructure.Persistence.Migrations
                     b.Property<DateTimeOffset?>("EndsAtUtc")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<Guid?>("GrantedByUserId")
+                        .HasColumnType("uuid");
+
                     b.Property<Guid>("ListingId")
                         .HasColumnType("uuid");
 
@@ -1349,7 +1412,7 @@ namespace RentoX.Infrastructure.Persistence.Migrations
                     b.Property<int>("Type")
                         .HasColumnType("integer");
 
-                    b.Property<Guid>("WalletTransactionId")
+                    b.Property<Guid?>("WalletTransactionId")
                         .HasColumnType("uuid");
 
                     b.HasKey("Id");
@@ -2078,6 +2141,9 @@ namespace RentoX.Infrastructure.Persistence.Migrations
                     b.Property<DateTimeOffset>("EndsAtUtc")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<Guid?>("GrantedByUserId")
+                        .HasColumnType("uuid");
+
                     b.Property<string>("PlanName")
                         .IsRequired()
                         .HasMaxLength(60)
@@ -2089,7 +2155,7 @@ namespace RentoX.Infrastructure.Persistence.Migrations
                     b.Property<Guid>("StoreId")
                         .HasColumnType("uuid");
 
-                    b.Property<Guid>("WalletTransactionId")
+                    b.Property<Guid?>("WalletTransactionId")
                         .HasColumnType("uuid");
 
                     b.HasKey("Id");
@@ -2206,6 +2272,12 @@ namespace RentoX.Infrastructure.Persistence.Migrations
 
                     b.Property<DateTimeOffset?>("DeletedAtUtc")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("FreeServices")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid?>("FreeServicesGrantedByUserId")
+                        .HasColumnType("uuid");
 
                     b.Property<string>("FullName")
                         .IsRequired()
@@ -2739,8 +2811,7 @@ namespace RentoX.Infrastructure.Persistence.Migrations
                     b.HasOne("RentoX.Domain.Wallets.WalletTransaction", null)
                         .WithMany()
                         .HasForeignKey("WalletTransactionId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Restrict);
                 });
 
             modelBuilder.Entity("RentoX.Domain.Locations.District", b =>
@@ -2928,8 +2999,7 @@ namespace RentoX.Infrastructure.Persistence.Migrations
                     b.HasOne("RentoX.Domain.Wallets.WalletTransaction", null)
                         .WithMany()
                         .HasForeignKey("WalletTransactionId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Restrict);
                 });
 
             modelBuilder.Entity("RentoX.Domain.Support.SupportTicket", b =>

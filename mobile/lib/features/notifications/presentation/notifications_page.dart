@@ -277,6 +277,14 @@ _Look _lookOf(NotificationKind kind) => switch (kind) {
     AppIcons.soon,
     AppColors.warning,
   ),
+  NotificationKind.storeVipOffer => const _Look(
+    AppIcons.store,
+    AppColors.warning,
+  ),
+  NotificationKind.giftReceived => const _Look(
+    AppIcons.gift,
+    AppColors.warning,
+  ),
   NotificationKind.other => const _Look(AppIcons.bell, AppColors.primary),
 };
 

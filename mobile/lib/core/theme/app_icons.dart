@@ -51,6 +51,7 @@ abstract final class AppIcons {
   static const IconData share = Symbols.ios_share_rounded;
   static const IconData devices = Symbols.devices_rounded;
   static const IconData edit = Symbols.edit_rounded;
+  static const IconData gift = Symbols.redeem_rounded;
   static const IconData store = Symbols.storefront_rounded;
   static const IconData mail = Symbols.mail_rounded;
   static const IconData place = Symbols.location_on_rounded;

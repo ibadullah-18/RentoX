@@ -4,7 +4,7 @@ import { Avatar } from "@/components/admin/Avatar";
 import { PayLineForm, ProfileForm, VoidPayLineButton } from "@/components/admin/HrForms";
 import { Card, LoadProblem, PageHead, dateTime } from "@/components/admin/ui";
 import { adminHref } from "@/lib/admin-path";
-import { MONTHS, money, payKind, shiftMonth, thisMonth, type PayrollSheet, type StaffProfile } from "@/lib/admin-hr";
+import { MONTHS, money, payKind, shiftMonth, thisMonth, type PayrollHistory, type PayrollSheet, type StaffProfile } from "@/lib/admin-hr";
 import { authed } from "@/lib/authed";
 import { getRoles } from "@/lib/session";
 
@@ -21,11 +21,14 @@ function Figure({ label, value, tone = "" }: { label: string; value: number; ton
 export default async function KadrPersonPage({ params, searchParams }: PageProps<"/admin/kadr/isciler/[id]">) {
   if (!(await getRoles()).includes("SuperAdmin")) notFound();
   const { id } = await params;
-  const { year, month, key } = thisMonth((await searchParams).ay);
+  const query = await searchParams;
+  const { year, month, key } = thisMonth(query.ay);
+  const shown = [12, 24, 36].includes(Number(query.aylar)) ? Number(query.aylar) : 12;
 
-  const [profile, sheet] = await Promise.all([
+  const [profile, sheet, history] = await Promise.all([
     authed<StaffProfile>(`/api/admin/hr/staff/${encodeURIComponent(id)}`),
     authed<PayrollSheet>(`/api/admin/hr/payroll/${encodeURIComponent(id)}`, { query: { month: key } }),
+    authed<PayrollHistory>(`/api/admin/hr/payroll/${encodeURIComponent(id)}/history`, { query: { months: shown } }),
   ]);
   if (!profile.ok) {
     if (profile.status === 404) notFound();
@@ -98,6 +101,115 @@ export default async function KadrPersonPage({ params, searchParams }: PageProps
           )}
         </Card>
       </div>
+
+      <Card title="Pul tarixçəsi">
+        {history.ok ? (
+          <>
+            <div className="flex flex-wrap items-center gap-2 border-b border-line px-4 py-2 text-sm">
+              <span className="font-semibold text-ink-2">Dövr:</span>
+              {[12, 24, 36].map((n) => (
+                <Link
+                  key={n}
+                  href={adminHref(`/kadr/isciler/${id}?ay=${key}&aylar=${n}`)}
+                  className={`rounded-lg px-2.5 py-1 font-bold ${shown === n ? "bg-primary text-white" : "text-primary hover:bg-primary-soft"}`}
+                >
+                  {n} ay
+                </Link>
+              ))}
+              <span className="text-xs text-ink-2">· {history.data.monthsShown} ay göstərilir</span>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3 p-4 sm:grid-cols-3 lg:grid-cols-6">
+              <Figure label="Əsas maaşlar" value={history.data.totalBaseInQepik} />
+              <Figure label="Mükafatlar" value={history.data.totalBonusInQepik} tone="text-success" />
+              <Figure label="Kəsintilər" value={history.data.totalDeductionsInQepik} tone="text-danger" />
+              <Figure label="Avanslar" value={history.data.totalAdvancesInQepik} tone="text-warning" />
+              <Figure label="Ödənilib" value={history.data.totalPaymentsInQepik} tone="text-primary" />
+              <Figure
+                label={history.data.totalRemainingInQepik < 0 ? "Artıq ödənilib" : "Qalıb (ödəniləcək)"}
+                value={Math.abs(history.data.totalRemainingInQepik)}
+                tone={history.data.totalRemainingInQepik < 0 ? "text-danger" : "text-primary"}
+              />
+            </div>
+
+            {history.data.months.length > 0 ? (
+              <div className="overflow-x-auto border-t border-line">
+                <table className="w-full min-w-[640px] text-sm">
+                  <thead>
+                    <tr className="bg-bg text-left text-xs font-bold text-ink-2">
+                      <th className="px-4 py-2">Ay</th>
+                      <th className="px-3 py-2 text-right">Maaş</th>
+                      <th className="px-3 py-2 text-right">Mükafat</th>
+                      <th className="px-3 py-2 text-right">Kəsinti</th>
+                      <th className="px-3 py-2 text-right">Avans</th>
+                      <th className="px-3 py-2 text-right">Ödənilib</th>
+                      <th className="px-4 py-2 text-right">Qalıb</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-line">
+                    {history.data.months.map((m) => {
+                      const [y, mm] = m.month.split("-").map(Number);
+                      return (
+                        <tr key={m.month} className={m.month.startsWith(key.slice(0, 7)) ? "bg-primary-soft/40" : ""}>
+                          <td className="px-4 py-2 font-semibold">
+                            <Link href={adminHref(`/kadr/isciler/${id}?ay=${m.month.slice(0, 7)}&aylar=${shown}`)} className="text-primary hover:underline">
+                              {MONTHS[mm - 1]} {y}
+                            </Link>
+                            <span className="ml-2 text-xs font-normal text-ink-2">
+                              {m.lineCount} sətir{m.voidedCount > 0 ? ` · ${m.voidedCount} ləğv` : ""}
+                            </span>
+                          </td>
+                          <td className="px-3 py-2 text-right tabular-nums">{money(m.baseInQepik)}</td>
+                          <td className="px-3 py-2 text-right tabular-nums text-success">{money(m.bonusInQepik)}</td>
+                          <td className="px-3 py-2 text-right tabular-nums text-danger">{money(m.deductionsInQepik)}</td>
+                          <td className="px-3 py-2 text-right tabular-nums text-warning">{money(m.advancesInQepik)}</td>
+                          <td className="px-3 py-2 text-right tabular-nums text-primary">{money(m.paymentsInQepik)}</td>
+                          <td className={`px-4 py-2 text-right font-bold tabular-nums ${m.remainingInQepik < 0 ? "text-danger" : ""}`}>
+                            {money(m.remainingInQepik)}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <p className="border-t border-line px-4 py-6 text-center text-sm text-ink-2">Bu dövrdə hələ pul hərəkəti yoxdur.</p>
+            )}
+
+            <div className="border-t border-line">
+              <h3 className="px-4 pt-3 text-sm font-extrabold">Maaşın dəyişmə tarixçəsi</h3>
+              {history.data.salaryChanges.length > 0 ? (
+                <ul className="divide-y divide-line">
+                  {history.data.salaryChanges.map((c) => (
+                    <li key={`${c.effectiveFrom}-${c.changedAtUtc}`} className="flex flex-wrap items-center gap-x-3 px-4 py-2.5 text-sm">
+                      <span className="font-bold">
+                        {c.previousAmountInQepik == null ? "Başlanğıc maaş: " : `${money(c.previousAmountInQepik)} → `}
+                        {money(c.amountInQepik)} AZN
+                      </span>
+                      {c.previousAmountInQepik != null && (
+                        <span className={`text-xs font-bold ${c.amountInQepik >= c.previousAmountInQepik ? "text-success" : "text-danger"}`}>
+                          {c.amountInQepik >= c.previousAmountInQepik ? "+" : "−"}
+                          {money(Math.abs(c.amountInQepik - c.previousAmountInQepik))} AZN
+                        </span>
+                      )}
+                      <span className="text-xs text-ink-2">
+                        {MONTHS[Number(c.effectiveFrom.slice(5, 7)) - 1]} {c.effectiveFrom.slice(0, 4)} ayından · {dateTime(c.changedAtUtc)} · {c.changedByName ?? "—"}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="px-4 py-3 pb-4 text-sm text-ink-2">Maaş hələ dəyişdirilməyib.</p>
+              )}
+            </div>
+          </>
+        ) : (
+          <div className="p-4">
+            <LoadProblem what="Pul tarixçəsi" status={history.status} />
+          </div>
+        )}
+      </Card>
     </div>
   );
 }

@@ -1,4 +1,4 @@
-namespace RentoX.Application.Hr;
+﻿namespace RentoX.Application.Hr;
 
 /// <summary>How a staff member's day looks: the number is shown as a colour on the board and in the table.</summary>
 public static class DayStatus
@@ -116,6 +116,44 @@ public sealed record PayrollSheetDto(
     int RemainingInQepik,
     IReadOnlyList<PayrollLineDto> Lines);
 
+/// <summary>One month in the money history of a person: what the pay of that month came to.</summary>
+public sealed record PayrollMonthDto(
+    DateOnly Month,
+    int BaseInQepik,
+    int BonusInQepik,
+    int DeductionsInQepik,
+    int AdvancesInQepik,
+    int PaymentsInQepik,
+    int RemainingInQepik,
+    /// <summary>How many lines (bonus, deduction, advance, payment) were written for the month, voided ones apart.</summary>
+    int LineCount,
+    int VoidedCount);
+
+/// <summary>A change of the monthly pay: from which month, how much, who made it and when.</summary>
+public sealed record SalaryChangeDto(
+    DateOnly EffectiveFrom,
+    int AmountInQepik,
+    int? PreviousAmountInQepik,
+    string? ChangedByName,
+    DateTimeOffset ChangedAtUtc);
+
+/// <summary>
+/// Everything about the money of one person over the months: the totals, month by month, and every change of the pay.
+/// </summary>
+public sealed record PayrollHistoryDto(
+    Guid UserId,
+    string FullName,
+    int MonthsShown,
+    int TotalBaseInQepik,
+    int TotalBonusInQepik,
+    int TotalDeductionsInQepik,
+    int TotalAdvancesInQepik,
+    int TotalPaymentsInQepik,
+    /// <summary>Still to be paid over all the months shown (negative: paid more than the pay).</summary>
+    int TotalRemainingInQepik,
+    IReadOnlyList<PayrollMonthDto> Months,
+    IReadOnlyList<SalaryChangeDto> SalaryChanges);
+
 public sealed record StaffRequestDto(
     Guid Id,
     Guid FromUserId,
@@ -151,6 +189,9 @@ public interface IStaffHrService
     Task<IReadOnlyList<LeaveRequestDto>> GetMyLeavesAsync(Guid userId, CancellationToken cancellationToken = default);
 
     Task<PayrollSheetDto> GetPayrollAsync(Guid userId, DateOnly month, CancellationToken cancellationToken = default);
+
+    /// <summary>The money of one person month by month (the last [months], 1 to 36) and every change of the pay.</summary>
+    Task<PayrollHistoryDto> GetPayrollHistoryAsync(Guid userId, int months, CancellationToken cancellationToken = default);
 
     Task<StaffRequestDto> SendRequestAsync(
         Guid userId, string subject, string body, bool toOwner, CancellationToken cancellationToken = default);

@@ -3,8 +3,8 @@
 import { fmtNumeric } from "@/lib/dates";
 
 import { useRouter } from "next/navigation";
-import { useRef, useState } from "react";
-import { ImagePlus, Loader2, Pencil, Plus, Trash2 } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { ExternalLink, ImagePlus, Loader2, Pencil, Plus, Trash2 } from "lucide-react";
 import {
   bannerImageChanged,
   createBanner,
@@ -32,12 +32,48 @@ export type BannerRow = {
   endsAtUtc?: string | null;
   hasImage: boolean;
   isLive: boolean;
+  pageSlug?: string | null;
+  pageBodyAz?: string | null;
+  pageBodyRu?: string | null;
+  pageBodyEn?: string | null;
+  pageButtonLabelAz?: string | null;
+  pageButtonLabelRu?: string | null;
+  pageButtonLabelEn?: string | null;
+  pageButtonUrl?: string | null;
+  openInNewTab?: boolean;
+  platform?: number;
+  showText?: boolean;
+  textAlign?: number;
+  darkOverlay?: boolean;
+  textTone?: number;
 };
+
+/** What the owner can pick to send a visitor to when the banner is pressed. */
+export type StoreChoice = { slug: string; name: string };
+export type CategoryChoice = { id: string; name: string };
+
+type LinkKind = "none" | "page" | "store" | "listing" | "category" | "site" | "external";
+
+const KINDS: { id: LinkKind; label: string; hint: string }[] = [
+  { id: "none", label: "Heç yerə (kliklənmir)", hint: "Banner yalnız şəkil kimi görünür, üstünə basanda heç nə olmur." },
+  { id: "page", label: "Kampaniya səhifəsi", hint: "Öz ünvanı olan səhifə yaradılır: rentox.az/ad. Mətn, şəkil və düymə orada olur." },
+  { id: "store", label: "Mağaza", hint: "Mağazanın səhifəsi açılır (mağaza reklamı üçün)." },
+  { id: "listing", label: "Konkret elan", hint: "Bir elanın səhifəsi açılır." },
+  { id: "category", label: "Kateqoriya", hint: "Həmin kateqoriyanın elanları açılır." },
+  { id: "site", label: "Saytın başqa səhifəsi", hint: "Məsələn /destek. Səhifə mövcud olmalıdır, yoxsa «tapılmadı» çıxar." },
+  { id: "external", label: "Xarici sayt (https://…)", hint: "Başqa saytın ünvanı yeni pəncərədə açılır." },
+];
+
+const SITE_PLACES = ["/destek", "/magazalar", "/search", "/yeni-elan", "/secilmisler", "/pul-kisesi", "/qaydalar", "/haqqimizda"];
 
 const field =
   "h-9 w-full rounded-lg border border-line bg-surface px-2.5 text-sm outline-none focus:border-primary disabled:opacity-60";
+const area =
+  "w-full rounded-lg border border-line bg-surface px-2.5 py-2 text-sm outline-none focus:border-primary disabled:opacity-60";
 const TYPES = ["image/jpeg", "image/png", "image/webp"];
 const MAX_BYTES = 5 * 1024 * 1024;
+const GUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const SLUG = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
 /** An ISO time as the value of a datetime-local box (in the admin's own time zone). */
 function toLocal(iso?: string | null) {
@@ -56,12 +92,45 @@ type Draft = {
   subtitleAz: string;
   subtitleRu: string;
   subtitleEn: string;
-  linkUrl: string;
+  kind: LinkKind;
+  slug: string;
+  bodyAz: string;
+  bodyRu: string;
+  bodyEn: string;
+  buttonAz: string;
+  buttonRu: string;
+  buttonEn: string;
+  buttonUrl: string;
+  store: string;
+  listingId: string;
+  category: string;
+  site: string;
+  external: string;
+  openInNewTab: boolean;
+  platform: string;
+  showText: boolean;
+  textAlign: number;
+  darkOverlay: boolean;
+  textTone: number;
   displayOrder: string;
   isActive: boolean;
   starts: string;
   ends: string;
 };
+
+/** Works out which kind of target a saved banner has, from what was saved. */
+function kindOf(b?: BannerRow): { kind: LinkKind; store: string; listingId: string; category: string; site: string; external: string } {
+  const none = { kind: "none" as LinkKind, store: "", listingId: "", category: "", site: "", external: "" };
+  if (!b) return none;
+  if (b.pageSlug) return { ...none, kind: "page" };
+  const url = b.linkUrl ?? "";
+  if (!url) return none;
+  if (url.startsWith("/store/")) return { ...none, kind: "store", store: url.slice("/store/".length) };
+  if (url.startsWith("/listing/")) return { ...none, kind: "listing", listingId: url.slice("/listing/".length) };
+  if (url.startsWith("/search?category=")) return { ...none, kind: "category", category: url.slice("/search?category=".length) };
+  if (url.startsWith("/")) return { ...none, kind: "site", site: url };
+  return { ...none, kind: "external", external: url };
+}
 
 const draftOf = (b?: BannerRow, order = 1): Draft => ({
   titleAz: b?.titleAz ?? "",
@@ -70,12 +139,62 @@ const draftOf = (b?: BannerRow, order = 1): Draft => ({
   subtitleAz: b?.subtitleAz ?? "",
   subtitleRu: b?.subtitleRu ?? "",
   subtitleEn: b?.subtitleEn ?? "",
-  linkUrl: b?.linkUrl ?? "",
+  ...kindOf(b),
+  slug: b?.pageSlug ?? "",
+  bodyAz: b?.pageBodyAz ?? "",
+  bodyRu: b?.pageBodyRu ?? "",
+  bodyEn: b?.pageBodyEn ?? "",
+  buttonAz: b?.pageButtonLabelAz ?? "",
+  buttonRu: b?.pageButtonLabelRu ?? "",
+  buttonEn: b?.pageButtonLabelEn ?? "",
+  buttonUrl: b?.pageButtonUrl ?? "",
+  openInNewTab: b?.openInNewTab ?? false,
+  platform: String(b?.platform ?? 3),
+  showText: b?.showText ?? true,
+  textAlign: b?.textAlign ?? 0,
+  darkOverlay: b?.darkOverlay ?? true,
+  textTone: b?.textTone ?? 0,
   displayOrder: String(b?.displayOrder ?? order),
   isActive: b?.isActive ?? true,
   starts: toLocal(b?.startsAtUtc),
   ends: toLocal(b?.endsAtUtc),
 });
+
+/** The address a banner leads to, as the site will store it; empty when it leads nowhere. */
+function linkOf(v: Draft): string {
+  switch (v.kind) {
+    case "page":
+      return v.slug.trim() ? `/${v.slug.trim().replace(/^\/+/, "").toLowerCase()}` : "";
+    case "store":
+      return v.store ? `/store/${v.store}` : "";
+    case "listing":
+      return v.listingId.trim() ? `/listing/${v.listingId.trim()}` : "";
+    case "category":
+      return v.category ? `/search?category=${v.category}` : "";
+    case "site":
+      return v.site.trim();
+    case "external":
+      return v.external.trim();
+    default:
+      return "";
+  }
+}
+
+/** Why the choice cannot be saved, or nothing. */
+function problemOf(v: Draft): string | null {
+  if (v.kind === "page") {
+    const slug = v.slug.trim().replace(/^\/+/, "").toLowerCase();
+    if (!slug) return "Səhifənin adını yazın (məsələn: birbank).";
+    if (!SLUG.test(slug) || slug.length < 2) return "Səhifənin adında yalnız a-z hərfləri, rəqəmlər və tək-tək defis ola bilər (ən azı 2 simvol).";
+    if (v.buttonUrl.trim() && !(v.buttonAz.trim() && v.buttonRu.trim() && v.buttonEn.trim())) return "Düymənin yazısını üç dildə də yazın.";
+  }
+  if (v.kind === "store" && !v.store) return "Mağazanı seçin.";
+  if (v.kind === "listing" && !GUID.test(v.listingId.trim())) return "Elanın nömrəsini (ID) düzgün yazın.";
+  if (v.kind === "category" && !v.category) return "Kateqoriyanı seçin.";
+  if (v.kind === "site" && !(v.site.trim().startsWith("/") && !v.site.trim().startsWith("//"))) return "Saytın səhifəsi / ilə başlamalıdır, məsələn: /destek";
+  if (v.kind === "external" && !/^https?:\/\/\S+$/i.test(v.external.trim())) return "Xarici ünvan https:// ilə başlamalıdır.";
+  return null;
+}
 
 /** Uploads a picture for a banner through the site's own route (it adds the sign-in). */
 async function uploadImage(id: string, file: File): Promise<string | null> {
@@ -92,18 +211,60 @@ async function uploadImage(id: string, file: File): Promise<string | null> {
   }
 }
 
+function Group({ title, hint, children }: { title: string; hint?: string; children: React.ReactNode }) {
+  return (
+    <fieldset className="space-y-2 rounded-lg border border-line bg-surface p-3">
+      <legend className="px-1 text-sm font-extrabold">{title}</legend>
+      {hint && <p className="-mt-1 text-xs text-ink-2">{hint}</p>}
+      {children}
+    </fieldset>
+  );
+}
+
+/** The banner as the visitor will see it, with the look chosen so far. */
+function Preview({ v, src }: { v: Draft; src: string | null }) {
+  const dark = v.textTone === 1;
+  const align = v.textAlign === 1 ? "text-center" : v.textAlign === 2 ? "text-right" : "text-left";
+  return (
+    <div className="relative aspect-[3/1] w-full max-w-xl overflow-hidden rounded-xl bg-primary-soft">
+      {src ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={src} alt="" className="absolute inset-0 size-full object-cover" />
+      ) : (
+        <span className="absolute inset-0 flex items-center justify-center text-xs font-semibold text-primary">Şəkil seçilməyib</span>
+      )}
+      {v.darkOverlay && (
+        <span className={`absolute inset-0 bg-gradient-to-t ${dark ? "from-white/80 via-white/25" : "from-black/70 via-black/20"} to-transparent`} aria-hidden />
+      )}
+      {v.showText && (
+        <span className={`absolute inset-x-0 bottom-0 p-3 ${align} ${dark ? "text-ink" : "text-white"}`}>
+          <span className="block text-base font-extrabold leading-tight">{v.titleAz || "Başlıq"}</span>
+          {v.subtitleAz && <span className="mt-0.5 block text-xs font-medium">{v.subtitleAz}</span>}
+        </span>
+      )}
+    </div>
+  );
+}
+
 function BannerForm({
   initial,
+  currentImage,
   askImage,
   label,
+  stores,
+  categories,
   submit,
   onDone,
   onCancel,
 }: {
   initial: Draft;
+  /** The picture the banner has now, to show in the preview. */
+  currentImage?: string | null;
   /** A new banner: pick the picture together with the text. */
   askImage: boolean;
   label: string;
+  stores: StoreChoice[];
+  categories: CategoryChoice[];
   submit: (input: BannerFormInput) => Promise<BannerSaved>;
   onDone: (createdId?: string, file?: File | null) => Promise<string | null>;
   onCancel: () => void;
@@ -115,9 +276,21 @@ function BannerForm({
   const [error, setError] = useState<string | null>(null);
   const set = (patch: Partial<Draft>) => setV((x) => ({ ...x, ...patch }));
 
+  const picked = useMemo(() => (file ? URL.createObjectURL(file) : null), [file]);
+  useEffect(() => () => { if (picked) URL.revokeObjectURL(picked); }, [picked]);
+
+  const kind = KINDS.find((k) => k.id === v.kind) ?? KINDS[0];
+  const address = linkOf(v);
+
   async function save() {
+    const problem = problemOf(v);
+    if (problem) {
+      setError(problem);
+      return;
+    }
     setBusy(true);
     setError(null);
+    const page = v.kind === "page";
     const res = await submit({
       titleAz: v.titleAz,
       titleRu: v.titleRu,
@@ -125,11 +298,25 @@ function BannerForm({
       subtitleAz: v.subtitleAz,
       subtitleRu: v.subtitleRu,
       subtitleEn: v.subtitleEn,
-      linkUrl: v.linkUrl,
+      linkUrl: page ? "" : address,
       displayOrder: Number(v.displayOrder),
       isActive: v.isActive,
       startsAtUtc: toIso(v.starts),
       endsAtUtc: toIso(v.ends),
+      pageSlug: page ? v.slug.trim().replace(/^\/+/, "").toLowerCase() : "",
+      pageBodyAz: page ? v.bodyAz : "",
+      pageBodyRu: page ? v.bodyRu : "",
+      pageBodyEn: page ? v.bodyEn : "",
+      pageButtonLabelAz: page ? v.buttonAz : "",
+      pageButtonLabelRu: page ? v.buttonRu : "",
+      pageButtonLabelEn: page ? v.buttonEn : "",
+      pageButtonUrl: page ? v.buttonUrl : "",
+      openInNewTab: v.kind === "none" ? false : v.openInNewTab,
+      platform: Number(v.platform),
+      showText: v.showText,
+      textAlign: v.textAlign,
+      darkOverlay: v.darkOverlay,
+      textTone: v.textTone,
     });
     if (!res.ok) {
       setBusy(false);
@@ -143,6 +330,10 @@ function BannerForm({
     router.refresh();
   }
 
+  const check = "size-4 accent-[var(--color-primary)]";
+  const seg = (on: boolean) =>
+    `h-8 flex-1 rounded-md border px-2 text-xs font-bold ${on ? "border-primary bg-primary-soft text-primary" : "border-line bg-surface text-ink-2 hover:border-primary"}`;
+
   return (
     <form
       onSubmit={(e) => {
@@ -151,46 +342,201 @@ function BannerForm({
       }}
       className="space-y-3 rounded-lg bg-bg p-3"
     >
-      <div className="grid gap-2 sm:grid-cols-3">
-        <input aria-label="Başlıq (AZ)" placeholder="Başlıq (AZ)" value={v.titleAz} onChange={(e) => set({ titleAz: e.target.value })} maxLength={100} disabled={busy} className={field} />
-        <input aria-label="Başlıq (RU)" placeholder="Заголовок (RU)" value={v.titleRu} onChange={(e) => set({ titleRu: e.target.value })} maxLength={100} disabled={busy} className={field} />
-        <input aria-label="Başlıq (EN)" placeholder="Title (EN)" value={v.titleEn} onChange={(e) => set({ titleEn: e.target.value })} maxLength={100} disabled={busy} className={field} />
-      </div>
-      <div className="grid gap-2 sm:grid-cols-3">
-        <input aria-label="Alt yazı (AZ)" placeholder="Alt yazı (AZ, ixtiyari)" value={v.subtitleAz} onChange={(e) => set({ subtitleAz: e.target.value })} maxLength={200} disabled={busy} className={field} />
-        <input aria-label="Alt yazı (RU)" placeholder="Подзаголовок (RU)" value={v.subtitleRu} onChange={(e) => set({ subtitleRu: e.target.value })} maxLength={200} disabled={busy} className={field} />
-        <input aria-label="Alt yazı (EN)" placeholder="Subtitle (EN)" value={v.subtitleEn} onChange={(e) => set({ subtitleEn: e.target.value })} maxLength={200} disabled={busy} className={field} />
-      </div>
-      <div className="grid gap-2 sm:grid-cols-[1fr_120px]">
-        <input aria-label="Keçid" placeholder="Keçid: /destek və ya https://… (ixtiyari)" value={v.linkUrl} onChange={(e) => set({ linkUrl: e.target.value })} maxLength={500} disabled={busy} className={field} />
-        <input aria-label="Sıra" placeholder="Sıra" inputMode="numeric" value={v.displayOrder} onChange={(e) => set({ displayOrder: e.target.value })} disabled={busy} className={field} />
-      </div>
-      <div className="grid gap-2 sm:grid-cols-2">
-        <label className="block text-xs font-semibold text-ink-2">
-          Başlayır (ixtiyari)
-          <input type="datetime-local" value={v.starts} onChange={(e) => set({ starts: e.target.value })} disabled={busy} className={`${field} mt-1`} />
+      <Group title="1. Yazılar" hint="Başlıq üç dildə məcburidir. Alt yazı ixtiyaridir.">
+        <div className="grid gap-2 sm:grid-cols-3">
+          <input aria-label="Başlıq (AZ)" placeholder="Başlıq (AZ)" value={v.titleAz} onChange={(e) => set({ titleAz: e.target.value })} maxLength={100} disabled={busy} className={field} />
+          <input aria-label="Başlıq (RU)" placeholder="Заголовок (RU)" value={v.titleRu} onChange={(e) => set({ titleRu: e.target.value })} maxLength={100} disabled={busy} className={field} />
+          <input aria-label="Başlıq (EN)" placeholder="Title (EN)" value={v.titleEn} onChange={(e) => set({ titleEn: e.target.value })} maxLength={100} disabled={busy} className={field} />
+        </div>
+        <div className="grid gap-2 sm:grid-cols-3">
+          <input aria-label="Alt yazı (AZ)" placeholder="Alt yazı (AZ, ixtiyari)" value={v.subtitleAz} onChange={(e) => set({ subtitleAz: e.target.value })} maxLength={200} disabled={busy} className={field} />
+          <input aria-label="Alt yazı (RU)" placeholder="Подзаголовок (RU)" value={v.subtitleRu} onChange={(e) => set({ subtitleRu: e.target.value })} maxLength={200} disabled={busy} className={field} />
+          <input aria-label="Alt yazı (EN)" placeholder="Subtitle (EN)" value={v.subtitleEn} onChange={(e) => set({ subtitleEn: e.target.value })} maxLength={200} disabled={busy} className={field} />
+        </div>
+      </Group>
+
+      <Group title="2. Banner basılanda nə olsun?" hint={kind.hint}>
+        <select aria-label="Basanda nə olsun" value={v.kind} onChange={(e) => set({ kind: e.target.value as LinkKind })} disabled={busy} className={field}>
+          {KINDS.map((k) => (
+            <option key={k.id} value={k.id}>
+              {k.label}
+            </option>
+          ))}
+        </select>
+
+        {v.kind === "page" && (
+          <div className="space-y-3">
+            <label className="block text-xs font-semibold text-ink-2">
+              Səhifənin adı (ünvan)
+              <span className="mt-1 flex items-center gap-1">
+                <span className="rounded-lg border border-line bg-bg px-2.5 py-2 text-sm text-ink-2">rentox.az/</span>
+                <input value={v.slug} onChange={(e) => set({ slug: e.target.value })} placeholder="birbank" maxLength={60} disabled={busy} className={field} />
+              </span>
+            </label>
+            <div className="grid gap-2 sm:grid-cols-3">
+              <label className="block text-xs font-semibold text-ink-2">
+                Səhifənin mətni (AZ)
+                <textarea value={v.bodyAz} onChange={(e) => set({ bodyAz: e.target.value })} rows={5} maxLength={6000} disabled={busy} className={`${area} mt-1`} />
+              </label>
+              <label className="block text-xs font-semibold text-ink-2">
+                Текст страницы (RU)
+                <textarea value={v.bodyRu} onChange={(e) => set({ bodyRu: e.target.value })} rows={5} maxLength={6000} disabled={busy} className={`${area} mt-1`} />
+              </label>
+              <label className="block text-xs font-semibold text-ink-2">
+                Page text (EN)
+                <textarea value={v.bodyEn} onChange={(e) => set({ bodyEn: e.target.value })} rows={5} maxLength={6000} disabled={busy} className={`${area} mt-1`} />
+              </label>
+            </div>
+            <p className="text-xs text-ink-2">Mətndə **qalın** yazı, [yazı](ünvan) keçid və boş sətirlə abzas işləyir.</p>
+            <div className="grid gap-2 sm:grid-cols-[1fr_1fr_1fr_1.4fr]">
+              <input aria-label="Düymə (AZ)" placeholder="Düymə yazısı (AZ)" value={v.buttonAz} onChange={(e) => set({ buttonAz: e.target.value })} maxLength={40} disabled={busy} className={field} />
+              <input aria-label="Düymə (RU)" placeholder="Текст кнопки (RU)" value={v.buttonRu} onChange={(e) => set({ buttonRu: e.target.value })} maxLength={40} disabled={busy} className={field} />
+              <input aria-label="Düymə (EN)" placeholder="Button text (EN)" value={v.buttonEn} onChange={(e) => set({ buttonEn: e.target.value })} maxLength={40} disabled={busy} className={field} />
+              <input aria-label="Düymənin ünvanı" placeholder="Düymə hara aparsın: /search və ya https://… (ixtiyari)" value={v.buttonUrl} onChange={(e) => set({ buttonUrl: e.target.value })} maxLength={500} disabled={busy} className={field} />
+            </div>
+          </div>
+        )}
+
+        {v.kind === "store" && (
+          <select aria-label="Mağaza" value={v.store} onChange={(e) => set({ store: e.target.value })} disabled={busy} className={field}>
+            <option value="">Mağazanı seçin…</option>
+            {v.store && !stores.some((s) => s.slug === v.store) && <option value={v.store}>{v.store}</option>}
+            {stores.map((s) => (
+              <option key={s.slug} value={s.slug}>
+                {s.name}
+              </option>
+            ))}
+          </select>
+        )}
+
+        {v.kind === "listing" && (
+          <input aria-label="Elanın nömrəsi" placeholder="Elanın nömrəsi (ID), məsələn 3f2b…" value={v.listingId} onChange={(e) => set({ listingId: e.target.value })} maxLength={40} disabled={busy} className={field} />
+        )}
+
+        {v.kind === "category" && (
+          <select aria-label="Kateqoriya" value={v.category} onChange={(e) => set({ category: e.target.value })} disabled={busy} className={field}>
+            <option value="">Kateqoriyanı seçin…</option>
+            {v.category && !categories.some((c) => c.id === v.category) && <option value={v.category}>{v.category}</option>}
+            {categories.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name}
+              </option>
+            ))}
+          </select>
+        )}
+
+        {v.kind === "site" && (
+          <>
+            <input aria-label="Saytın səhifəsi" list="banner-places" placeholder="/destek" value={v.site} onChange={(e) => set({ site: e.target.value })} maxLength={500} disabled={busy} className={field} />
+            <datalist id="banner-places">
+              {SITE_PLACES.map((p) => (
+                <option key={p} value={p} />
+              ))}
+            </datalist>
+          </>
+        )}
+
+        {v.kind === "external" && (
+          <input aria-label="Xarici ünvan" placeholder="https://…" value={v.external} onChange={(e) => set({ external: e.target.value })} maxLength={500} disabled={busy} className={field} />
+        )}
+
+        {v.kind !== "none" && (
+          <>
+            <label className="flex items-center gap-2 text-sm font-semibold">
+              <input type="checkbox" checked={v.openInNewTab} onChange={(e) => set({ openInNewTab: e.target.checked })} disabled={busy} className={check} />
+              Yeni pəncərədə açılsın
+            </label>
+            <p className="text-xs text-ink-2">
+              Açılacaq ünvan:{" "}
+              <b className="break-all text-ink">{v.kind === "page" ? `rentox.az/${v.slug.trim().replace(/^\/+/, "").toLowerCase() || "…"}` : address || "…"}</b>
+            </p>
+          </>
+        )}
+      </Group>
+
+      <Group title="3. Görünüş">
+        <div className="grid gap-3 sm:grid-cols-2">
+          <div className="space-y-1">
+            <span className="block text-xs font-semibold text-ink-2">Harada göstərilsin</span>
+            <div className="flex gap-1">
+              {[
+                ["3", "Sayt və tətbiq"],
+                ["1", "Yalnız sayt"],
+                ["2", "Yalnız tətbiq"],
+              ].map(([id, text]) => (
+                <button key={id} type="button" onClick={() => set({ platform: id })} disabled={busy} className={seg(v.platform === id)}>
+                  {text}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="space-y-1">
+            <span className="block text-xs font-semibold text-ink-2">Yazının yeri</span>
+            <div className="flex gap-1">
+              {["Solda", "Ortada", "Sağda"].map((text, i) => (
+                <button key={text} type="button" onClick={() => set({ textAlign: i })} disabled={busy || !v.showText} className={seg(v.textAlign === i)}>
+                  {text}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="space-y-1">
+            <span className="block text-xs font-semibold text-ink-2">Yazının rəngi</span>
+            <div className="flex gap-1">
+              {["Açıq (ağ)", "Tünd"].map((text, i) => (
+                <button key={text} type="button" onClick={() => set({ textTone: i })} disabled={busy || !v.showText} className={seg(v.textTone === i)}>
+                  {text}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="flex flex-col justify-end gap-2">
+            <label className="flex items-center gap-2 text-sm font-semibold">
+              <input type="checkbox" checked={v.showText} onChange={(e) => set({ showText: e.target.checked })} disabled={busy} className={check} />
+              Başlıq şəkil üzərində yazılsın
+            </label>
+            <label className="flex items-center gap-2 text-sm font-semibold">
+              <input type="checkbox" checked={v.darkOverlay} onChange={(e) => set({ darkOverlay: e.target.checked })} disabled={busy} className={check} />
+              Yazı altında kölgə (oxunaqlı olsun)
+            </label>
+          </div>
+        </div>
+        <Preview v={v} src={picked ?? currentImage ?? null} />
+      </Group>
+
+      <Group title="4. Vaxt və sıra">
+        <div className="grid gap-2 sm:grid-cols-[1fr_1fr_120px]">
+          <label className="block text-xs font-semibold text-ink-2">
+            Başlayır (ixtiyari)
+            <input type="datetime-local" value={v.starts} onChange={(e) => set({ starts: e.target.value })} disabled={busy} className={`${field} mt-1`} />
+          </label>
+          <label className="block text-xs font-semibold text-ink-2">
+            Bitir (ixtiyari)
+            <input type="datetime-local" value={v.ends} onChange={(e) => set({ ends: e.target.value })} disabled={busy} className={`${field} mt-1`} />
+          </label>
+          <label className="block text-xs font-semibold text-ink-2">
+            Sıra
+            <input aria-label="Sıra" placeholder="Sıra" inputMode="numeric" value={v.displayOrder} onChange={(e) => set({ displayOrder: e.target.value })} disabled={busy} className={`${field} mt-1`} />
+          </label>
+        </div>
+        {askImage && (
+          <label className="block text-xs font-semibold text-ink-2">
+            Şəkil (JPG, PNG, WebP, ən çoxu 5 MB; geniş şəkil yaxşıdır, məsələn 1200×400)
+            <input
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+              disabled={busy}
+              className="mt-1 block w-full text-sm"
+            />
+          </label>
+        )}
+        <label className="flex items-center gap-2 text-sm font-semibold">
+          <input type="checkbox" checked={v.isActive} onChange={(e) => set({ isActive: e.target.checked })} disabled={busy} className={check} />
+          Göstərilir
         </label>
-        <label className="block text-xs font-semibold text-ink-2">
-          Bitir (ixtiyari)
-          <input type="datetime-local" value={v.ends} onChange={(e) => set({ ends: e.target.value })} disabled={busy} className={`${field} mt-1`} />
-        </label>
-      </div>
-      {askImage && (
-        <label className="block text-xs font-semibold text-ink-2">
-          Şəkil (JPG, PNG, WebP, ən çoxu 5 MB; geniş şəkil yaxşıdır, məsələn 1200×400)
-          <input
-            type="file"
-            accept="image/jpeg,image/png,image/webp"
-            onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-            disabled={busy}
-            className="mt-1 block w-full text-sm"
-          />
-        </label>
-      )}
-      <label className="flex items-center gap-2 text-sm font-semibold">
-        <input type="checkbox" checked={v.isActive} onChange={(e) => set({ isActive: e.target.checked })} disabled={busy} className="size-4 accent-[var(--color-primary)]" />
-        Göstərilir
-      </label>
+      </Group>
+
       <div className="flex flex-wrap items-center gap-2">
         <button type="submit" disabled={busy} className="flex h-9 items-center gap-2 rounded-lg bg-primary px-4 text-sm font-bold text-white hover:bg-primary-press disabled:opacity-60">
           {busy && <Loader2 className="size-4 animate-spin" aria-hidden />}
@@ -209,8 +555,10 @@ function BannerForm({
   );
 }
 
+const PLATFORM_TEXT: Record<number, string> = { 1: "yalnız sayt", 2: "yalnız tətbiq" };
+
 /** The banners of the home page: the list, a form to add one, and for each a picture, edit and delete. */
-export function BannerManager({ banners }: { banners: BannerRow[] }) {
+export function BannerManager({ banners, stores, categories }: { banners: BannerRow[]; stores: StoreChoice[]; categories: CategoryChoice[] }) {
   const router = useRouter();
   const [open, setOpen] = useState<string | null>(null); // "new" or a banner id
   const [deleting, setDeleting] = useState<BannerRow | null>(null);
@@ -271,7 +619,9 @@ export function BannerManager({ banners }: { banners: BannerRow[] }) {
         <BannerForm
           initial={draftOf(undefined, nextOrder)}
           askImage
-          label="Banneri əlavə et"
+          label="Kampaniyanı əlavə et"
+          stores={stores}
+          categories={categories}
           submit={createBanner}
           onCancel={() => setOpen(null)}
           onDone={async (id, file) => {
@@ -290,11 +640,11 @@ export function BannerManager({ banners }: { banners: BannerRow[] }) {
       ) : (
         <button type="button" onClick={() => setOpen("new")} className="flex h-10 items-center gap-2 rounded-lg bg-primary px-4 text-sm font-bold text-white hover:bg-primary-press">
           <Plus className="size-4" aria-hidden />
-          Yeni banner
+          Yeni kampaniya
         </button>
       )}
 
-      {banners.length === 0 && <p className="rounded-xl border border-line bg-surface px-4 py-6 text-center text-sm text-ink-2">Hələ banner yoxdur.</p>}
+      {banners.length === 0 && <p className="rounded-xl border border-line bg-surface px-4 py-6 text-center text-sm text-ink-2">Hələ kampaniya yoxdur.</p>}
 
       <ul className="space-y-3">
         {banners.map((b) => (
@@ -312,7 +662,17 @@ export function BannerManager({ banners }: { banners: BannerRow[] }) {
                 <span className="block truncate font-bold">{b.titleAz}</span>
                 <span className="block truncate text-xs text-ink-2">
                   {b.titleRu} · {b.titleEn} · sıra {b.displayOrder}
-                  {b.linkUrl ? ` · ${b.linkUrl}` : ""}
+                  {b.platform && PLATFORM_TEXT[b.platform] ? ` · ${PLATFORM_TEXT[b.platform]}` : ""}
+                </span>
+                <span className="block truncate text-xs text-ink-2">
+                  {b.linkUrl ? (
+                    <>
+                      <ExternalLink className="mr-1 inline size-3" aria-hidden />
+                      {b.pageSlug ? `kampaniya səhifəsi: rentox.az/${b.pageSlug}` : `keçid: ${b.linkUrl}`}
+                    </>
+                  ) : (
+                    "kliklənmir"
+                  )}
                 </span>
                 {(b.startsAtUtc || b.endsAtUtc) && (
                   <span className="block text-xs text-ink-2">
@@ -356,8 +716,11 @@ export function BannerManager({ banners }: { banners: BannerRow[] }) {
               <div className="mt-3">
                 <BannerForm
                   initial={draftOf(b)}
+                  currentImage={b.hasImage ? `/api/banners/${b.id}/image?v=${version}` : null}
                   askImage={false}
                   label="Yadda saxla"
+                  stores={stores}
+                  categories={categories}
                   submit={(i) => updateBanner(b.id, i)}
                   onCancel={() => setOpen(null)}
                   onDone={async () => {
@@ -373,8 +736,8 @@ export function BannerManager({ banners }: { banners: BannerRow[] }) {
 
       <ConfirmDialog
         open={deleting !== null}
-        title="Banner silinsin?"
-        message={`«${deleting?.titleAz ?? ""}» bannerı və şəkli həmişəlik silinəcək. Müvəqqəti gizlətmək üçün «Dəyiş» ilə söndürün.`}
+        title="Kampaniya silinsin?"
+        message={`«${deleting?.titleAz ?? ""}» kampaniyası, şəkli və səhifəsi həmişəlik silinəcək. Müvəqqəti gizlətmək üçün «Dəyiş» ilə söndürün.`}
         confirmLabel="Sil"
         destructive
         busy={busy !== null}

@@ -61,6 +61,8 @@ export type MonthlyReport = {
   personalTotal: number;
   afterPersonal: number;
   profile: FinanceProfile;
+  /** What RentoX gave for free in the month (no money taken, not income). */
+  gifts: { bumps: number; listingVip: number; storeVip: number };
 };
 
 /** "2026-10" from the address, or nothing (the API then takes the current month). */

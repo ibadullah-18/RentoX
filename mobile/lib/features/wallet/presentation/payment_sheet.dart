@@ -16,6 +16,21 @@ String formatMoney(String locale, double amount) =>
 /// What the user is paying for.
 enum PaymentKind { activation, vip, bump, renewal }
 
+extension WalletFreeServices on WalletBalance? {
+  /// Does RentoX pay for this? [store] is the VIP place of the store (it uses
+  /// [PaymentKind.vip] too).
+  bool isFree(PaymentKind kind, {bool store = false}) {
+    final w = this;
+    if (w == null) return false;
+    if (store) return w.freeStoreVip;
+    return switch (kind) {
+      PaymentKind.vip => w.freeVip,
+      PaymentKind.bump => w.freeBump,
+      PaymentKind.activation || PaymentKind.renewal => w.freeListingFee,
+    };
+  }
+}
+
 /// Asks for confirmation and runs [pay] (which performs the actual purchase).
 /// Returns `true` when the payment went through.
 ///
@@ -105,7 +120,8 @@ class _PaymentSheetState extends ConsumerState<_PaymentSheet> {
     ref.watch(tariffsProvider);
     final wallet = ref.watch(walletBalanceProvider);
     final balance = wallet.value?.balance;
-    final enough = balance != null && balance >= _amount;
+    final free = wallet.value.isFree(widget.kind, store: widget.amount != null);
+    final enough = free || (balance != null && balance >= _amount);
 
     final title =
         widget.title ??
@@ -143,7 +159,9 @@ class _PaymentSheetState extends ConsumerState<_PaymentSheet> {
                   const Divider(height: 24),
                   _Row(
                     label: l10n.paymentAmount,
-                    value: formatMoney(locale, _amount),
+                    value: free
+                        ? l10n.giftFreeFromRentox
+                        : formatMoney(locale, _amount),
                     bold: true,
                   ),
                   const SizedBox(height: AppSpacing.sm),
@@ -162,6 +180,21 @@ class _PaymentSheetState extends ConsumerState<_PaymentSheet> {
               ),
             ),
           ),
+          if (free) ...[
+            const SizedBox(height: AppSpacing.lg),
+            Row(
+              children: [
+                const Icon(AppIcons.gift, color: AppColors.warning),
+                const SizedBox(width: AppSpacing.sm),
+                Expanded(
+                  child: Text(
+                    l10n.giftFreeNote,
+                    style: const TextStyle(fontWeight: FontWeight.w700),
+                  ),
+                ),
+              ],
+            ),
+          ],
           if (wallet.hasValue && !enough) ...[
             const SizedBox(height: AppSpacing.lg),
             Text(
@@ -193,7 +226,11 @@ class _PaymentSheetState extends ConsumerState<_PaymentSheet> {
                       color: Colors.white,
                     ),
                   )
-                : Text(l10n.payNow(formatMoney(locale, _amount))),
+                : Text(
+                    free
+                        ? l10n.giftTakeFree
+                        : l10n.payNow(formatMoney(locale, _amount)),
+                  ),
           ),
           const SizedBox(height: AppSpacing.sm),
           Center(

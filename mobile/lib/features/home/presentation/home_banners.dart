@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../../app/router.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../catalog/data/catalog_repository.dart';
 import '../domain/home_banner.dart';
@@ -62,6 +63,11 @@ class _HomeBannersState extends ConsumerState<HomeBanners>
 
   /// A listing or a store opens inside the app; a full address opens in the browser; anything else does nothing.
   Future<void> _open(HomeBanner banner) async {
+    final page = banner.pageSlug;
+    if (page != null && page.isNotEmpty) {
+      context.push(Routes.campaign(page));
+      return;
+    }
     final link = banner.linkUrl;
     if (link == null || link.isEmpty) return;
     if (link.startsWith('/listing/') || link.startsWith('/store/')) {
@@ -189,50 +195,67 @@ class _Slide extends StatelessWidget {
               fit: BoxFit.cover,
               errorWidget: (_, _, _) => const SizedBox.shrink(),
             ),
-            const DecoratedBox(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.bottomCenter,
-                  end: Alignment.center,
-                  colors: [Color(0xB3000000), Color(0x00000000)],
+            if (banner.darkOverlay)
+              DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.bottomCenter,
+                    end: Alignment.center,
+                    colors: banner.textTone == 1
+                        ? const [Color(0xCCFFFFFF), Color(0x00FFFFFF)]
+                        : const [Color(0xB3000000), Color(0x00000000)],
+                  ),
                 ),
               ),
-            ),
-            Positioned(
-              left: 14,
-              right: 14,
-              bottom: 12,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    banner.title,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 17,
-                      fontWeight: FontWeight.w800,
-                      height: 1.15,
-                    ),
-                  ),
-                  if (banner.subtitle != null && banner.subtitle!.isNotEmpty)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 2),
-                      child: Text(
-                        banner.subtitle!,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 13,
-                        ),
+            if (banner.showText)
+              Positioned(
+                left: 14,
+                right: 14,
+                bottom: 12,
+                child: Column(
+                  crossAxisAlignment: switch (banner.textAlign) {
+                    1 => CrossAxisAlignment.center,
+                    2 => CrossAxisAlignment.end,
+                    _ => CrossAxisAlignment.start,
+                  },
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      banner.title,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      textAlign: switch (banner.textAlign) {
+                        1 => TextAlign.center,
+                        2 => TextAlign.right,
+                        _ => TextAlign.left,
+                      },
+                      style: TextStyle(
+                        color: banner.textTone == 1
+                            ? const Color(0xFF0F172A)
+                            : Colors.white,
+                        fontSize: 17,
+                        fontWeight: FontWeight.w800,
+                        height: 1.15,
                       ),
                     ),
-                ],
+                    if (banner.subtitle != null && banner.subtitle!.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 2),
+                        child: Text(
+                          banner.subtitle!,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: banner.textTone == 1
+                                ? const Color(0xFF0F172A)
+                                : Colors.white,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
               ),
-            ),
           ],
         ),
       ),

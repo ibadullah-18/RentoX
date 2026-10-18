@@ -1,4 +1,4 @@
-using System.Data;
+﻿using System.Data;
 using Microsoft.EntityFrameworkCore;
 using RentoX.Application.Abstractions.Authentication;
 using RentoX.Application.Abstractions.Time;
@@ -10,6 +10,7 @@ using RentoX.Domain.Listings.Enums;
 using RentoX.Domain.Notifications;
 using RentoX.Domain.Stores;
 using RentoX.Domain.Stores.Enums;
+using RentoX.Domain.Users.Enums;
 using RentoX.Domain.Wallets;
 using RentoX.Domain.Wallets.Enums;
 using RentoX.Infrastructure.Persistence;
@@ -75,8 +76,17 @@ public sealed class StoreVipService(
         DateTimeOffset now = clock.UtcNow;
         DateTimeOffset? until = await VipUntilAsync(store.Id, now, cancellationToken);
 
+        // Was the period that ends last a gift from RentoX? (The owner is told so on the panel.)
+        bool gift = until.HasValue && await dbContext.Set<StoreVipPurchase>()
+            .AsNoTracking()
+            .AnyAsync(p => p.StoreId == store.Id && p.EndsAtUtc == until.Value && p.GrantedByUserId != null, cancellationToken);
+
+        bool free = await dbContext.UserProfiles
+            .AsNoTracking()
+            .AnyAsync(p => p.Id == ownerId && (p.FreeServices & FreeServiceKinds.StoreVip) != 0, cancellationToken);
+
         return new StoreVipStatusResult(
-            await GetPlanAsync(cancellationToken), until.HasValue, until, "AZN");
+            await GetPlanAsync(cancellationToken), until.HasValue, until, "AZN", gift, free);
     }
 
     public async Task<StoreVipPurchaseResult> PurchaseAsync(
@@ -127,6 +137,24 @@ public sealed class StoreVipService(
         DateTimeOffset? current = await VipUntilAsync(store.Id, now, cancellationToken);
         DateTimeOffset start = current ?? now;
         DateTimeOffset end = start.AddDays(plan.DurationDays);
+
+        // A person RentoX pays for gets the VIP store free: no wallet transaction, so it is never income.
+        Guid? grantedBy = await dbContext.UserProfiles
+            .AsNoTracking()
+            .Where(p => p.Id == ownerId && (p.FreeServices & FreeServiceKinds.StoreVip) != 0)
+            .Select(p => p.FreeServicesGrantedByUserId)
+            .SingleOrDefaultAsync(cancellationToken);
+
+        if (grantedBy.HasValue)
+        {
+            dbContext.Set<StoreVipPurchase>().Add(StoreVipPurchase.CreateGift(
+                store.Id, plan.Name, grantedBy.Value, start, end, now));
+            await dbContext.SaveChangesAsync(cancellationToken);
+            await databaseTransaction.CommitAsync(cancellationToken);
+
+            WalletBalanceResult own = await walletService.GetAsync(ownerId, cancellationToken);
+            return new StoreVipPurchaseResult(start, end, 0m, own.Balance, true);
+        }
 
         WalletOperationResult debit = await walletService.DebitAsync(
             new DebitWalletCommand(

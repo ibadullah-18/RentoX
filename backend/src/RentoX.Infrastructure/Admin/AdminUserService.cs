@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using RentoX.Application.Admin;
 using RentoX.Application.Common;
 using RentoX.Domain.Listings.Enums;
@@ -86,6 +86,7 @@ public sealed class AdminUserService(RentoXDbContext dbContext) : IAdminUserServ
                 profile.LastSeenAtUtc,
                 profile.Bio,
                 profile.StatusReason,
+                FreeServices = (int)profile.FreeServices,
                 Language = (int)profile.PreferredLanguage
             }).SingleOrDefaultAsync(cancellationToken);
 
@@ -125,7 +126,8 @@ public sealed class AdminUserService(RentoXDbContext dbContext) : IAdminUserServ
             row.StatusReason,
             moves.Select(m => new AdminWalletTransactionItem(
                 m.Id, m.Direction, m.Type, m.Amount, m.BalanceAfter, m.Reason, m.OccurredAtUtc)).ToArray(),
-            reports);
+            reports,
+            row.FreeServices);
     }
 
     /// <summary>

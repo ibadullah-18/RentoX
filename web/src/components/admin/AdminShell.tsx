@@ -30,7 +30,7 @@ import {
   X,
 } from "lucide-react";
 import { adminLogout } from "@/app/admin/giris/actions";
-import { AdminLive, SoundToggle } from "@/components/admin/AdminLive";
+import { AdminLive } from "@/components/admin/AdminLive";
 import { WorkDay } from "@/components/admin/HrForms";
 import type { MyDay } from "@/lib/admin-hr";
 import { ADMIN_SEGMENT, adminHref } from "@/lib/admin-path";
@@ -179,7 +179,6 @@ export function AdminShell({
           <p className="truncate text-sm font-bold">{who.name}</p>
           <p className="text-xs text-ink-2">{who.role}</p>
         </div>
-        <SoundToggle />
         <form action={adminLogout}>
           <button
             type="submit"

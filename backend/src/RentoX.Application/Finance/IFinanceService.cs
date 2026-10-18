@@ -67,7 +67,11 @@ public sealed record MonthlyReport(
     IReadOnlyList<ReportExpenseLine> Personal,
     decimal PersonalTotal,
     decimal AfterPersonal,
-    FinanceProfileDto Profile);
+    FinanceProfileDto Profile,
+    /// <summary>What RentoX gave for free in the month: no money was taken, so none of it is income.</summary>
+    GiftCounts Gifts);
+
+public sealed record GiftCounts(int Bumps, int ListingVip, int StoreVip);
 
 public interface IFinanceService
 {

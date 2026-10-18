@@ -33,9 +33,9 @@ public sealed class ListingPromotionConfiguration
             .HasPrecision(18, 2)
             .IsRequired();
 
+        // Null for a gift: nothing was paid, so there is no wallet transaction.
         builder.Property(promotion =>
-                promotion.WalletTransactionId)
-            .IsRequired();
+                promotion.GrantedByUserId);
 
         builder.Property(promotion =>
                 promotion.StartsAtUtc)
@@ -47,6 +47,9 @@ public sealed class ListingPromotionConfiguration
 
         builder.Ignore(promotion =>
             promotion.IsBump);
+
+        builder.Ignore(promotion =>
+            promotion.IsGift);
 
         builder.HasIndex(promotion =>
                 promotion.WalletTransactionId)

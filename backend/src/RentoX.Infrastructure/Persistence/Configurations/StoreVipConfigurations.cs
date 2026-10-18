@@ -28,6 +28,8 @@ public sealed class StoreVipPurchaseConfiguration : IEntityTypeConfiguration<Sto
         builder.Property(p => p.ChargedAmount).HasPrecision(18, 2).IsRequired();
         builder.HasOne<StoreProfile>().WithMany().HasForeignKey(p => p.StoreId).OnDelete(DeleteBehavior.Cascade);
         builder.HasOne<WalletTransaction>().WithMany().HasForeignKey(p => p.WalletTransactionId).OnDelete(DeleteBehavior.Restrict);
+        builder.Ignore(p => p.IsGift);
+        // Several gifts have no payment (null): a unique index lets nulls repeat.
         builder.HasIndex(p => p.WalletTransactionId).IsUnique();
         builder.HasIndex(p => new { p.StoreId, p.EndsAtUtc });
     }
