@@ -9,7 +9,6 @@ import { FollowButton } from "@/components/FollowButton";
 import { MessageButton } from "@/components/MessageButton";
 import { ReportDialog } from "@/components/ReportDialog";
 import { SplitListings } from "@/components/store/SplitListings";
-import { StoreFilter } from "@/components/store/StoreFilter";
 import { StoreContact } from "@/components/store/StoreContact";
 import { StoreHours } from "@/components/store/StoreHours";
 import { StoreView } from "@/components/store/StoreTrack";
@@ -38,24 +37,16 @@ export async function generateMetadata({ params }: PageProps<"/store/[slug]">): 
 }
 
 /** A store as a visitor sees it: who it is, how to reach it, when it is open, and its listings (VIP first). */
-export default async function StorePage({ params, searchParams }: PageProps<"/store/[slug]">) {
+export default async function StorePage({ params }: PageProps<"/store/[slug]">) {
   const t = await getT();
   const locale = await getLocale();
   const { slug } = await params;
-  const query = await searchParams;
-  const one = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v)?.trim() || undefined;
-  const num = (v: string | string[] | undefined) => {
-    const s = one(v)?.replace(",", ".");
-    return s && Number.isFinite(Number(s)) && Number(s) >= 0 ? s : undefined;
-  };
-  const filter = { search: one(query.q)?.slice(0, 80), minPrice: num(query.min), maxPrice: num(query.max) };
-  const filtered = Boolean(filter.search || filter.minPrice || filter.maxPrice);
 
   const [store, session] = await Promise.all([getStore(slug), getSession()]);
   if (!store) notFound();
 
   const [listings, follow, mine] = await Promise.all([
-    getStoreListings(slug, 1, 50, filter),
+    getStoreListings(slug, 1, 50),
     session ? getFollowStatus(store.id) : Promise.resolve(null),
     session ? getMyStore() : Promise.resolve(null),
   ]);
@@ -153,10 +144,8 @@ export default async function StorePage({ params, searchParams }: PageProps<"/st
 
       <StoreHours hours={store.workingHours} />
 
-      <StoreFilter q={filter.search} min={filter.minPrice} max={filter.maxPrice} active={filtered} />
-
       {listings.items.length === 0 ? (
-        <p className="rounded-xl border border-line bg-surface py-12 text-center text-ink-2">{filtered ? t("Heç nə tapılmadı") : t("Mağazanın hələ aktiv elanı yoxdur.")}</p>
+        <p className="rounded-xl border border-line bg-surface py-12 text-center text-ink-2">{t("Mağazanın hələ aktiv elanı yoxdur.")}</p>
       ) : (
         <SplitListings items={listings.items} />
       )}

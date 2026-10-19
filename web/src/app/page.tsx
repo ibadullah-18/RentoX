@@ -52,9 +52,10 @@ export default async function HomePage({ searchParams }: PageProps<"/">) {
               {t("Hamısına bax")}
             </Link>
           </div>
-          <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {/* On a phone the stores sit side by side and the next one peeks in, so it is clear there are more. */}
+          <ul className="-mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-1 [scrollbar-width:none] sm:mx-0 sm:grid sm:grid-cols-2 sm:overflow-visible sm:px-0 sm:pb-0 lg:grid-cols-3 [&::-webkit-scrollbar]:hidden">
             {stores.map((s) => (
-              <li key={s.storeId}>
+              <li key={s.storeId} className={`shrink-0 snap-start sm:w-auto ${stores.length > 1 ? "w-[82%]" : "w-full"}`}>
                 <StoreTile store={s} vip />
               </li>
             ))}

@@ -564,7 +564,7 @@ class _StoreStrip extends ConsumerWidget {
           onSeeAll: () => context.push(Routes.searchWith(stores: true)),
         ),
         SizedBox(
-          height: 76,
+          height: 112,
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
             padding: AppSpacing.screenPadding,
@@ -572,6 +572,10 @@ class _StoreStrip extends ConsumerWidget {
             separatorBuilder: (_, _) => const SizedBox(width: 10),
             itemBuilder: (context, i) {
               final store = stores[i];
+              // More than one store: each card is a little narrower than the screen, so the next one peeks in.
+              final cardWidth = stores.length > 1
+                  ? MediaQuery.sizeOf(context).width * 0.78
+                  : MediaQuery.sizeOf(context).width - AppSpacing.lg * 2;
               return Semantics(
                 button: true,
                 label: store.name,
@@ -579,13 +583,10 @@ class _StoreStrip extends ConsumerWidget {
                   onTap: () => context.push(Routes.store(store.slug)),
                   behavior: HitTestBehavior.opaque,
                   child: Container(
-                    constraints: const BoxConstraints(
-                      minWidth: 150,
-                      maxWidth: 230,
-                    ),
+                    width: cardWidth.clamp(220.0, 420.0),
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 6,
+                      horizontal: 10,
+                      vertical: 8,
                     ),
                     decoration: BoxDecoration(
                       color: scheme.surface,
@@ -595,13 +596,13 @@ class _StoreStrip extends ConsumerWidget {
                       ),
                     ),
                     child: Row(
-                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         logo(store),
                         const SizedBox(width: 10),
-                        Flexible(
+                        Expanded(
                           child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
+                            mainAxisAlignment: MainAxisAlignment.start,
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Row(
@@ -633,6 +634,17 @@ class _StoreStrip extends ConsumerWidget {
                                   fontWeight: FontWeight.w700,
                                 ),
                               ),
+                              if (store.description.isNotEmpty)
+                                Text(
+                                  store.description,
+                                  maxLines: 3,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    fontSize: 12.5,
+                                    color: scheme.onSurfaceVariant,
+                                    height: 1.25,
+                                  ),
+                                ),
                               Text(
                                 l10n.storeListingsCount(
                                   store.activeListingCount,

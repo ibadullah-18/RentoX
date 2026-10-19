@@ -24,7 +24,6 @@ import '../../report/presentation/report_sheet.dart';
 import '../../support/presentation/support_widgets.dart';
 import '../../catalog/domain/catalog_models.dart' show ListingSummary;
 import '../domain/store_models.dart';
-import '../../search/presentation/price_filter_sheet.dart';
 import 'store_controller.dart';
 
 String _kindName(SocialKind k) => switch (k) {
@@ -294,8 +293,6 @@ class _StoreBodyState extends ConsumerState<_StoreBody> {
                   const SizedBox(height: AppSpacing.md),
                   _HoursCard(store: s),
                 ],
-                const SizedBox(height: AppSpacing.md),
-                _ListingFilterRow(slug: s.slug),
                 if (ref.watch(myStoreProvider).value?.id != s.id) ...[
                   const SizedBox(height: AppSpacing.sm),
                   ReportProblemRow(
@@ -839,98 +836,3 @@ class _Contacts extends StatelessWidget {
 }
 
 /// Search and price range over the listings of this store.
-class _ListingFilterRow extends ConsumerStatefulWidget {
-  const _ListingFilterRow({required this.slug});
-
-  final String slug;
-
-  @override
-  ConsumerState<_ListingFilterRow> createState() => _ListingFilterRowState();
-}
-
-class _ListingFilterRowState extends ConsumerState<_ListingFilterRow> {
-  final _text = TextEditingController();
-
-  @override
-  void dispose() {
-    _text.dispose();
-    super.dispose();
-  }
-
-  Future<void> _price() async {
-    final current = ref.read(storeListingFilterProvider(widget.slug));
-    final range = await showPriceFilterSheet(
-      context,
-      min: current.min,
-      max: current.max,
-    );
-    if (range == null) return;
-    ref.read(storeListingFilterProvider(widget.slug).notifier).set((
-      search: current.search,
-      min: range.min,
-      max: range.max,
-    ));
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppL10n.of(context);
-    final scheme = Theme.of(context).colorScheme;
-    final filter = ref.watch(storeListingFilterProvider(widget.slug));
-    final priced = filter.min != null || filter.max != null;
-
-    return Row(
-      children: [
-        Expanded(
-          child: SizedBox(
-            height: 42,
-            child: TextField(
-              controller: _text,
-              textInputAction: TextInputAction.search,
-              onSubmitted: (v) => ref
-                  .read(storeListingFilterProvider(widget.slug).notifier)
-                  .set((search: v.trim(), min: filter.min, max: filter.max)),
-              decoration: InputDecoration(
-                hintText: l10n.storeSearchHint,
-                prefixIcon: const Icon(AppIcons.search, size: 20),
-                isDense: true,
-                contentPadding: EdgeInsets.zero,
-                suffixIcon: filter.search.isEmpty
-                    ? null
-                    : IconButton(
-                        icon: const Icon(Icons.close_rounded, size: 18),
-                        onPressed: () {
-                          _text.clear();
-                          ref
-                              .read(
-                                storeListingFilterProvider(widget.slug)
-                                    .notifier,
-                              )
-                              .set((
-                                search: '',
-                                min: filter.min,
-                                max: filter.max,
-                              ));
-                        },
-                      ),
-              ),
-            ),
-          ),
-        ),
-        const SizedBox(width: AppSpacing.sm),
-        SizedBox(
-          height: 42,
-          child: OutlinedButton.icon(
-            onPressed: _price,
-            icon: Icon(
-              AppIcons.filter,
-              size: 18,
-              color: priced ? scheme.primary : null,
-            ),
-            label: Text(l10n.storePriceFilter),
-          ),
-        ),
-      ],
-    );
-  }
-}

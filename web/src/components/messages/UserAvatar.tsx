@@ -1,11 +1,19 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { User } from "lucide-react";
 
 /** The person's profile photo, or a soft placeholder when there is none. */
 export function UserAvatar({ userId, size = 48, version = 0 }: { userId: string; size?: number; version?: number }) {
   const [broken, setBroken] = useState(false);
+  const image = useRef<HTMLImageElement>(null);
+
+  // The picture may fail (no photo: 404) before the page is interactive, so the error handler never hears of it:
+  // look again once mounted, and show the placeholder instead of a broken picture.
+  useEffect(() => {
+    const el = image.current;
+    if (el && el.complete && el.naturalWidth === 0) setBroken(true);
+  }, []);
 
   return (
     <span
@@ -17,6 +25,7 @@ export function UserAvatar({ userId, size = 48, version = 0 }: { userId: string;
       ) : (
         // eslint-disable-next-line @next/next/no-img-element
         <img
+          ref={image}
           src={`/api/users/${userId}/profile-image${version ? `?v=${version}` : ""}`}
           alt=""
           width={size}
