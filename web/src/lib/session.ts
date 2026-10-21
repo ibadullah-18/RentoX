@@ -24,7 +24,9 @@ export type Session = { userId: string; phone: string };
 const base = {
   httpOnly: true,
   sameSite: "lax" as const,
-  secure: process.env.NODE_ENV === "production",
+  // Cookies are "secure" (sent only over HTTPS) on a real site. COOKIE_SECURE=false lets a private test over plain
+  // http://<IP> keep the sign-in: a browser throws a secure cookie away when the address is not HTTPS.
+  secure: process.env.COOKIE_SECURE ? process.env.COOKIE_SECURE === "true" : process.env.NODE_ENV === "production",
   path: "/",
 };
 

@@ -152,6 +152,8 @@ services:
     restart: unless-stopped
     environment:
       API_BASE_URL: http://api:8080
+      # Empty = "secure" cookies on the real site. false only for a private test over http://<IP> (see .env.example).
+      COOKIE_SECURE: ${COOKIE_SECURE:-}
     depends_on:
       api:
         condition: service_healthy
