@@ -43,7 +43,7 @@ export default async function AdminTicketPage({ params }: PageProps<"/admin/dest
         actions={<Pill tone={statusTone[t.status]}>{ticketStatus[t.status] ?? "—"}</Pill>}
       />
 
-      <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
+      <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_320px]">
         <TicketChat
           key={t.id}
           id={t.id}
@@ -55,10 +55,11 @@ export default async function AdminTicketPage({ params }: PageProps<"/admin/dest
             body: m.body,
             sentAtUtc: m.sentAtUtc,
             senderName: m.senderName,
+            images: m.images,
           }))}
         />
 
-        <div className="space-y-5 lg:sticky lg:top-4 lg:self-start">
+        <div className="space-y-5 xl:sticky xl:top-4 xl:self-start">
           <Card title="İstifadəçi">
             <div className="flex items-center gap-3 p-4">
               <Avatar name={t.userName} size="lg" />

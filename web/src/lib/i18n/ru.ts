@@ -475,5 +475,8 @@ export const ru: Record<string, string> = {
   "Pulsuz götür": "Получить бесплатно",
   "Bu kampaniya bitib.": "Эта кампания завершена.",
   "Ana səhifəyə qayıt": "Вернуться на главную",
+  "Yalnız JPG, PNG və ya WebP şəkil göndərmək olar.": "Можно отправлять только фото JPG, PNG или WebP.",
+  "Bir mesajda ən çoxu 5 şəkil göndərmək olar.": "В одном сообщении — не больше 5 фото.",
+  "Şəkil göndərilmədi. Yenidən cəhd edin.": "Фото не отправлено. Попробуйте ещё раз.",
   "RentoX tərəfindən hədiyyə": "Подарок от RentoX",
 };

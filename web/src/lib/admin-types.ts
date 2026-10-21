@@ -70,7 +70,7 @@ export type AdminTicket = {
   status: number;
   createdAtUtc: string;
   updatedAtUtc: string;
-  messages?: { id: string; senderId: string; isAdmin: boolean; body: string; sentAtUtc: string; senderName?: string | null }[];
+  messages?: { id: string; senderId: string; isAdmin: boolean; body: string; sentAtUtc: string; senderName?: string | null; images?: { id: string; contentType: string; sizeBytes: number; displayOrder: number }[] }[];
   resolvedAtUtc?: string | null;
   closedAtUtc?: string | null;
   /** The person who wrote the request. */

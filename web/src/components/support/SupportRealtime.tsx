@@ -9,6 +9,7 @@ export type LiveSupportMessage = {
   body: string;
   sentAtUtc: string;
   senderName?: string | null;
+  images?: { id: string; contentType: string; sizeBytes: number; displayOrder: number }[];
 };
 
 export type SupportEvent =

@@ -360,7 +360,7 @@ export function ChatPane({
         >
           <ChevronLeft className="size-6" />
         </Link>
-        <UserAvatar userId={conversation.otherUserId} size={44} />
+        <UserAvatar userId={conversation.otherUserId} size={44} hasPhoto={conversation.otherHasPhoto !== false} />
         <div className="min-w-0 flex-1">
           <Link
             href={`/listing/${conversation.listingId}`}

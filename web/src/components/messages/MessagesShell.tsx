@@ -141,7 +141,7 @@ function Shell({
                       c.id === openId ? "bg-primary-soft" : ""
                     }`}
                   >
-                    <UserAvatar userId={c.otherUserId} size={48} />
+                    <UserAvatar userId={c.otherUserId} size={48} hasPhoto={c.otherHasPhoto !== false} />
                     <span className="min-w-0 flex-1">
                       <span className="flex items-baseline justify-between gap-2">
                         <span className="truncate font-bold">{c.listingTitle}</span>

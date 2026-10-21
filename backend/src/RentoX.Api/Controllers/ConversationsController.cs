@@ -1,4 +1,4 @@
-using System.Security.Claims;
+﻿using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using RentoX.Application.Common;
@@ -100,7 +100,8 @@ public sealed class ConversationsController(
                     item.OtherUserId,
                     item.LastMessage,
                     item.LastMessageAtUtc,
-                    item.UnreadCount))
+                    item.UnreadCount,
+                    item.OtherHasPhoto))
                 .ToArray();
 
         return Ok(new PagedResponse<

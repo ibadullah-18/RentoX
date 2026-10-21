@@ -48,7 +48,7 @@ export default async function ChatReportPage({ params }: PageProps<"/admin/yazis
         actions={<Pill tone={reportStatusTone[r.status]}>{reportStatus[r.status] ?? "—"}</Pill>}
       />
 
-      <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_380px]">
+      <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_380px]">
         <Card title="Yazışma">
           <div className="flex flex-wrap items-center gap-2 border-b border-line px-4 py-2.5 text-xs">
             <span className="rounded-md bg-primary-soft px-2 py-1 font-bold text-primary">Şikayət edən: {reporterName ?? "—"}</span>
@@ -103,7 +103,7 @@ export default async function ChatReportPage({ params }: PageProps<"/admin/yazis
           </div>
         </Card>
 
-        <div className="space-y-5 lg:sticky lg:top-4 lg:self-start">
+        <div className="space-y-5 xl:sticky xl:top-4 xl:self-start">
           <ReasonCard
             kind="chat"
             reason={r.reason}

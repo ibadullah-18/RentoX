@@ -194,6 +194,8 @@ export type Conversation = {
   listingId: string;
   listingTitle: string;
   otherUserId: string;
+  /** The other person has a profile photo (the picture is asked for only then). */
+  otherHasPhoto?: boolean;
   unreadCount: number;
   lastMessage?: string | null;
   lastMessageAtUtc?: string | null;
@@ -309,7 +311,10 @@ export type AppNotification = {
   readAtUtc?: string | null;
 };
 
-export type SupportMessage = { id: string; body: string; isAdmin: boolean; sentAtUtc: string };
+/** A photo inside a support message; its picture is fetched through the site's own route. */
+export type SupportImage = { id: string; contentType: string; sizeBytes: number; displayOrder: number };
+
+export type SupportMessage = { id: string; body: string; isAdmin: boolean; sentAtUtc: string; images?: SupportImage[] };
 
 export type SupportTicket = {
   id: string;

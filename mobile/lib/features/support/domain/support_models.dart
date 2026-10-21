@@ -72,6 +72,7 @@ class SupportMessage {
     required this.body,
     required this.isAdmin,
     required this.sentAt,
+    this.imageIds = const [],
   });
 
   final String id;
@@ -79,11 +80,18 @@ class SupportMessage {
   final bool isAdmin;
   final DateTime sentAt;
 
+  /// The photos of the message; the picture of each is fetched from the request by its id.
+  final List<String> imageIds;
+
   factory SupportMessage.fromJson(Map<String, dynamic> j) => SupportMessage(
     id: j['id'] as String,
     body: (j['body'] as String?) ?? '',
     isAdmin: (j['isAdmin'] as bool?) ?? false,
     sentAt: DateTime.parse(j['sentAtUtc'] as String),
+    imageIds: [
+      for (final i in (j['images'] as List<dynamic>?) ?? const [])
+        (i as Map<String, dynamic>)['id'] as String,
+    ],
   );
 }
 

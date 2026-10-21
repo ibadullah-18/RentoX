@@ -63,6 +63,7 @@ export default async function TicketPage({
           isAdmin: m.isAdmin,
           body: m.body,
           sentAtUtc: m.sentAtUtc,
+          images: m.images,
           day: day.format(new Date(m.sentAtUtc)),
           time: time.format(new Date(m.sentAtUtc)),
         }))}

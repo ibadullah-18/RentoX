@@ -554,6 +554,7 @@
     }
   },
   "storeVipInfo": "A VIP store is shown on the home page before all listings. When the time ends it stays an ordinary store; extend in time and there is no gap.",
+  "supportAttach": "Add a photo",
   "campaignOver": "This campaign has ended.",
   "giftFreeFromRentox": "Free (from RentoX)",
   "giftFreeNote": "RentoX gives this to you free. Nothing is taken from your wallet.",

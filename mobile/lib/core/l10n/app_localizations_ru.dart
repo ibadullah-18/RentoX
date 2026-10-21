@@ -1655,6 +1655,9 @@ class AppL10nRu extends AppL10n {
       'VIP-магазин показан на главной выше всех объявлений. После окончания срока он остаётся обычным магазином; продлите вовремя — перерыва не будет.';
 
   @override
+  String get supportAttach => 'Добавить фото';
+
+  @override
   String get campaignOver => 'Эта кампания завершена.';
 
   @override

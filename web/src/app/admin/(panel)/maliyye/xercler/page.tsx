@@ -29,7 +29,7 @@ export default async function ExpensesPage({ searchParams }: PageProps<"/admin/m
         actions={<MonthForm value={month} />}
       />
 
-      <div className="grid gap-3 sm:grid-cols-4">
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {[1, 2, 3, 4].map((c) => (
           <div key={c} className="rounded-xl border border-line bg-surface p-4">
             <p className="text-sm text-ink-2">{label[c]}</p>

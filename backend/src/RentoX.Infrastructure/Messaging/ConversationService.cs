@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Npgsql;
 using RentoX.Application.Abstractions.Time;
 using RentoX.Application.Common;
@@ -226,7 +226,12 @@ public sealed class ConversationService(
                     .Count(message =>
                         message.ConversationId == item.Id &&
                         message.SenderId != userId &&
-                        message.ReadAtUtc == null)
+                        message.ReadAtUtc == null),
+                OtherHasPhoto = dbContext.UserProfiles
+                    .Any(profile =>
+                        profile.Id ==
+                            (item.BuyerId == userId ? item.SellerId : item.BuyerId) &&
+                        profile.ProfileImageKey != null)
             })
             .OrderByDescending(item =>
                 item.LastMessageAtUtc)
@@ -244,7 +249,8 @@ public sealed class ConversationService(
                     item.OtherUserId,
                     item.LastMessage,
                     item.LastMessageAtUtc,
-                    item.UnreadCount))
+                    item.UnreadCount,
+                    item.OtherHasPhoto))
             .ToArray();
 
         return new PagedResult<ConversationSummaryResult>(

@@ -1,4 +1,4 @@
-using RentoX.Domain.Common;
+﻿using RentoX.Domain.Common;
 using RentoX.Domain.Common.Exceptions;
 
 namespace RentoX.Domain.Support;
@@ -120,7 +120,8 @@ public sealed class SupportTicket : AggregateRoot
     public void AddUserMessage(
         Guid userId,
         string body,
-        DateTimeOffset sentAtUtc)
+        DateTimeOffset sentAtUtc,
+        IReadOnlyList<SupportTicketImageFile>? files = null)
     {
         EnsureNotClosed();
 
@@ -147,7 +148,8 @@ public sealed class SupportTicket : AggregateRoot
                 userId,
                 false,
                 body,
-                sentAtUtc));
+                sentAtUtc,
+                files));
 
         UpdatedAtUtc = sentAtUtc;
     }
@@ -155,7 +157,8 @@ public sealed class SupportTicket : AggregateRoot
     public void AddAdminMessage(
         Guid adminUserId,
         string body,
-        DateTimeOffset sentAtUtc)
+        DateTimeOffset sentAtUtc,
+        IReadOnlyList<SupportTicketImageFile>? files = null)
     {
         EnsureNotClosed();
 
@@ -183,7 +186,8 @@ public sealed class SupportTicket : AggregateRoot
                 adminUserId,
                 true,
                 body,
-                sentAtUtc));
+                sentAtUtc,
+                files));
 
         UpdatedAtUtc = sentAtUtc;
     }

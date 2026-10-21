@@ -1,4 +1,4 @@
-using System.Data;
+﻿using System.Data;
 using RentoX.Domain.Auditing;
 using RentoX.Application.Abstractions.Authentication;
 using Microsoft.EntityFrameworkCore;
@@ -19,7 +19,8 @@ public sealed class SupportTicketService(
     IClock clock,
     INotificationService notificationService,
     ICurrentUserContext currentUserContext,
-    ISupportEventPublisher? live = null)
+    ISupportEventPublisher? live = null,
+    RentoX.Application.Files.IFileStorage? fileStorage = null)
     : ISupportTicketService
 {
     public async Task<SupportTicketDetailsResult> CreateAsync(
@@ -88,6 +89,7 @@ public sealed class SupportTicketService(
             await dbContext.Set<SupportTicket>()
                 .AsNoTracking()
                 .Include(item => item.Messages)
+                    .ThenInclude(message => message.Images)
                 .SingleOrDefaultAsync(
                     item =>
                         item.Id == ticketId &&
@@ -99,13 +101,22 @@ public sealed class SupportTicketService(
             : MapDetails(ticket);
     }
 
-    public async Task<SupportTicketMessageResult?> AddUserMessageAsync(
+    public Task<SupportTicketMessageResult?> AddUserMessageAsync(
         Guid userId,
         Guid ticketId,
         string body,
+        CancellationToken cancellationToken = default) =>
+        AddUserMessageWithImagesAsync(userId, ticketId, body, null, cancellationToken);
+
+    public async Task<SupportTicketMessageResult?> AddUserMessageWithImagesAsync(
+        Guid userId,
+        Guid ticketId,
+        string body,
+        IReadOnlyList<SupportImageUpload>? images,
         CancellationToken cancellationToken = default)
     {
         RequireUser(userId);
+        SupportImageStore.Validate(images, body);
 
         SupportTicket? ticket =
             await dbContext.Set<SupportTicket>()
@@ -121,17 +132,27 @@ public sealed class SupportTicketService(
             return null;
         }
 
-        ticket.AddUserMessage(
-            userId,
-            body,
-            clock.UtcNow);
+        List<SupportTicketImageFile> files = await StoreImagesAsync(images, cancellationToken);
+        SupportTicketMessage message;
+        try
+        {
+            ticket.AddUserMessage(
+                userId,
+                body,
+                clock.UtcNow,
+                files);
 
-        SupportTicketMessage message =
-            ticket.Messages.Last();
+            message = ticket.Messages.Last();
 
-        dbContext.Set<SupportTicketMessage>().Add(message);
+            dbContext.Set<SupportTicketMessage>().Add(message);
 
-        await dbContext.SaveChangesAsync(cancellationToken);
+            await dbContext.SaveChangesAsync(cancellationToken);
+        }
+        catch
+        {
+            await DiscardImagesAsync(files);
+            throw;
+        }
 
         SupportTicketMessageResult result = await WithSenderNameAsync(message, cancellationToken);
         if (live is not null)
@@ -287,6 +308,7 @@ public sealed class SupportTicketService(
             await dbContext.Set<SupportTicket>()
                 .AsNoTracking()
                 .Include(item => item.Messages)
+                    .ThenInclude(message => message.Images)
                 .SingleOrDefaultAsync(
                     item => item.Id == ticketId,
                     cancellationToken);
@@ -368,13 +390,22 @@ public sealed class SupportTicketService(
         };
     }
 
-    public async Task<SupportTicketMessageResult?> AddAdminMessageAsync(
+    public Task<SupportTicketMessageResult?> AddAdminMessageAsync(
         Guid adminUserId,
         Guid ticketId,
         string body,
+        CancellationToken cancellationToken = default) =>
+        AddAdminMessageWithImagesAsync(adminUserId, ticketId, body, null, cancellationToken);
+
+    public async Task<SupportTicketMessageResult?> AddAdminMessageWithImagesAsync(
+        Guid adminUserId,
+        Guid ticketId,
+        string body,
+        IReadOnlyList<SupportImageUpload>? images,
         CancellationToken cancellationToken = default)
     {
         Guid actorUserId = RequireAuditActor();
+        SupportImageStore.Validate(images, body);
 
         if (adminUserId != actorUserId)
         {
@@ -403,29 +434,39 @@ public sealed class SupportTicketService(
 
         SupportTicketStatus previousStatus = ticket.Status;
 
-        ticket.AddAdminMessage(
-            actorUserId,
-            body,
-            clock.UtcNow);
-
-        SupportTicketMessage message =
-            ticket.Messages.Last();
-
-        dbContext.Set<SupportTicketMessage>().Add(message);
-
-        dbContext.Set<AuditLogEntry>().Add(
-            AuditLogEntry.ForSupportReply(
-                operationId,
+        List<SupportTicketImageFile> files = await StoreImagesAsync(images, cancellationToken);
+        SupportTicketMessage message;
+        try
+        {
+            ticket.AddAdminMessage(
                 actorUserId,
-                ticket.Id,
-                message.Id,
-                clock.UtcNow));
+                body,
+                clock.UtcNow,
+                files);
 
-        RecordSupportStatusChange(
-            ticket, previousStatus, actorUserId, operationId);
+            message = ticket.Messages.Last();
 
-        await dbContext.SaveChangesAsync(cancellationToken);
-        await auditTransaction.CommitAsync(cancellationToken);
+            dbContext.Set<SupportTicketMessage>().Add(message);
+
+            dbContext.Set<AuditLogEntry>().Add(
+                AuditLogEntry.ForSupportReply(
+                    operationId,
+                    actorUserId,
+                    ticket.Id,
+                    message.Id,
+                    clock.UtcNow));
+
+            RecordSupportStatusChange(
+                ticket, previousStatus, actorUserId, operationId);
+
+            await dbContext.SaveChangesAsync(cancellationToken);
+            await auditTransaction.CommitAsync(cancellationToken);
+        }
+        catch
+        {
+            await DiscardImagesAsync(files);
+            throw;
+        }
 
         await notificationService.CreateAsync(
             new CreateNotificationCommand(
@@ -649,6 +690,7 @@ public sealed class SupportTicketService(
     {
         return await dbContext.Set<SupportTicket>()
             .Include(ticket => ticket.Messages)
+                .ThenInclude(message => message.Images)
             .SingleOrDefaultAsync(
                 ticket => ticket.Id == ticketId,
                 cancellationToken);
@@ -765,7 +807,63 @@ public sealed class SupportTicketService(
             message.SenderId,
             message.IsAdmin,
             message.Body,
-            message.SentAtUtc);
+            message.SentAtUtc,
+            null,
+            message.Images
+                .OrderBy(image => image.DisplayOrder)
+                .Select(image => new SupportImageResult(image.Id, image.ContentType, image.SizeBytes, image.DisplayOrder))
+                .ToArray());
+    }
+
+    public async Task<SupportImageDownload?> OpenImageAsync(
+        Guid ticketId,
+        Guid imageId,
+        Guid? ownerId,
+        CancellationToken cancellationToken = default)
+    {
+        if (fileStorage is null)
+        {
+            return null;
+        }
+
+        var image = await (
+            from attachment in dbContext.Set<SupportTicketImage>().AsNoTracking()
+            join message in dbContext.Set<SupportTicketMessage>().AsNoTracking() on attachment.MessageId equals message.Id
+            join ticket in dbContext.Set<SupportTicket>().AsNoTracking() on message.SupportTicketId equals ticket.Id
+            where attachment.Id == imageId && ticket.Id == ticketId && (ownerId == null || ticket.UserId == ownerId)
+            select new { attachment.StorageKey, attachment.ContentType })
+            .SingleOrDefaultAsync(cancellationToken);
+        if (image is null)
+        {
+            return null;
+        }
+
+        Stream? content = await fileStorage.OpenReadAsync(image.StorageKey, cancellationToken);
+        return content is null ? null : new SupportImageDownload(content, image.ContentType);
+    }
+
+    private async Task<List<SupportTicketImageFile>> StoreImagesAsync(
+        IReadOnlyList<SupportImageUpload>? images, CancellationToken cancellationToken)
+    {
+        if (images is null || images.Count == 0)
+        {
+            return [];
+        }
+
+        if (fileStorage is null)
+        {
+            throw new DomainException("Photos cannot be saved now.");
+        }
+
+        return await SupportImageStore.StoreAsync(fileStorage, images, cancellationToken);
+    }
+
+    private async Task DiscardImagesAsync(List<SupportTicketImageFile> files)
+    {
+        if (fileStorage is not null && files.Count > 0)
+        {
+            await SupportImageStore.DiscardAsync(fileStorage, files, null);
+        }
     }
 
     private static string GetStatusName(

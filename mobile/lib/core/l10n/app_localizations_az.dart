@@ -1618,6 +1618,9 @@ class AppL10nAz extends AppL10n {
       'VIP mağaza ana səhifədə, bütün elanlardan əvvəl göstərilir. Müddət bitəndən sonra adi mağaza kimi qalır; vaxtında uzatsanız fasilə olmur.';
 
   @override
+  String get supportAttach => 'Şəkil əlavə et';
+
+  @override
   String get campaignOver => 'Bu kampaniya bitib.';
 
   @override

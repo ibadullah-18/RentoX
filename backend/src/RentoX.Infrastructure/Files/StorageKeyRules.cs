@@ -1,4 +1,4 @@
-using RentoX.Application.Files;
+﻿using RentoX.Application.Files;
 using RentoX.Domain.Common.Exceptions;
 
 namespace RentoX.Infrastructure.Files;
@@ -24,6 +24,7 @@ internal static class StorageKeyRules
             FileStorageArea.ProfileImages => "profile-images",
             FileStorageArea.ChatAttachments => "chat-attachments",
             FileStorageArea.Banners => "banners",
+            FileStorageArea.SupportAttachments => "support-attachments",
             _ => throw new DomainException("Storage area is invalid.")
         };
     }

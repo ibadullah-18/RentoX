@@ -50,7 +50,7 @@ export default async function ReportPage({ params }: PageProps<"/admin/sikayetle
         actions={<Pill tone={reportStatusTone[r.status]}>{reportStatus[r.status] ?? "—"}</Pill>}
       />
 
-      <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_380px]">
+      <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_380px]">
         <div className="space-y-5">
           <ReasonCard
             kind="content"
@@ -100,7 +100,7 @@ export default async function ReportPage({ params }: PageProps<"/admin/sikayetle
           <OtherReports items={other} noun={noun} />
         </div>
 
-        <div className="space-y-5 lg:sticky lg:top-4 lg:self-start">
+        <div className="space-y-5 xl:sticky xl:top-4 xl:self-start">
           <Card title="Qərar">
             {r.status === 3 || r.status === 4 ? (
               <Outcome status={r.status} note={r.resolutionNote} />

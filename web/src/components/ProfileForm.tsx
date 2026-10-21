@@ -22,12 +22,14 @@ export function ProfileForm({
   initialName,
   initialBio,
   initialLanguage,
+  initialHasPhoto = true,
 }: {
   userId: string;
   phone: string;
   initialName: string;
   initialBio: string;
   initialLanguage: Locale;
+  initialHasPhoto?: boolean;
 }) {
   const t = useT();
   const router = useRouter();
@@ -36,6 +38,7 @@ export function ProfileForm({
   const [bio, setBio] = useState(initialBio);
   const [language, setLanguage] = useState<Locale>(initialLanguage);
   const [photoVersion, setPhotoVersion] = useState(0);
+  const [hasPhoto, setHasPhoto] = useState(initialHasPhoto);
   const [busy, setBusy] = useState<"save" | "photo" | "delete" | null>(null);
   const [message, setMessage] = useState<{ ok: boolean; text: string } | null>(null);
   const [askDelete, setAskDelete] = useState(false);
@@ -67,6 +70,7 @@ export function ProfileForm({
       const res = await fetch("/bff/profile-image", { method: "POST", body: form });
       if (res.status === 401) return router.push("/giris?next=/kabinet/profil");
       if (!res.ok) return setMessage({ ok: false, text: t("Şəkil yüklənmədi. Yenidən cəhd edin.") });
+      setHasPhoto(true);
       setPhotoVersion((v) => v + 1);
       router.refresh();
     } catch {
@@ -81,6 +85,7 @@ export function ProfileForm({
     setBusy("photo");
     try {
       await fetch("/bff/profile-image", { method: "DELETE" });
+      setHasPhoto(false);
       setPhotoVersion((v) => v + 1);
       router.refresh();
     } finally {
@@ -104,7 +109,7 @@ export function ProfileForm({
     <div className="space-y-5">
       <section className="flex items-center gap-4 rounded-xl border border-line bg-surface p-4">
         <div className="relative">
-          <UserAvatar key={photoVersion} userId={userId} size={72} version={photoVersion} />
+          <UserAvatar key={photoVersion} userId={userId} size={72} version={photoVersion} hasPhoto={hasPhoto} />
           {busy === "photo" && (
             <span className="absolute inset-0 flex items-center justify-center rounded-full bg-black/40 text-white">
               <Loader2 className="size-6 animate-spin" aria-hidden />

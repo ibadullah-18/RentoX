@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { ChevronLeft, LifeBuoy, Loader2, Send } from "lucide-react";
+import { AttachButton, AttachPreview, MessagePhotos, postPhotos, useAttachments } from "./Attachments";
 import { replyTicket } from "@/app/destek/actions";
 import { dateFmt } from "@/lib/format";
 import { useLocale, useT } from "@/lib/i18n/client";
@@ -51,6 +52,11 @@ export function TicketThread({
   const [text, setText] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const attach = useAttachments({
+    type: t("Yalnız JPG, PNG və ya WebP şəkil göndərmək olar."),
+    size: t("Hər şəkil ən çoxu 10 MB ola bilər."),
+    count: t("Bir mesajda ən çoxu 5 şəkil göndərmək olar."),
+  });
 
   const messages = [...saved, ...arrived.filter((m) => !saved.some((x) => x.id === m.id))].sort((a, b) =>
     a.sentAtUtc.localeCompare(b.sentAtUtc),
@@ -84,10 +90,22 @@ export function TicketThread({
 
   async function send() {
     const body = text.trim();
-    if (!body || busy) return;
+    if ((!body && attach.files.length === 0) || busy) return;
     setBusy(true);
     setError(null);
     typingSender.stopped();
+    if (attach.files.length > 0) {
+      const sent = await postPhotos(`/bff/support/${ticketId}/images`, attach.files, body);
+      setBusy(false);
+      if (sent.ok) {
+        setText("");
+        attach.clear();
+        router.refresh();
+        box.current?.focus();
+      } else if (sent.status === 401) router.push(`/giris?next=/destek/${ticketId}`);
+      else setError(sent.status === 429 ? t("Çox tez-tez cəhd olunub. Bir az gözləyin.") : t("Şəkil göndərilmədi. Yenidən cəhd edin."));
+      return;
+    }
     const result = await replyTicket(ticketId, body);
     setBusy(false);
     if (result.ok) {
@@ -140,6 +158,7 @@ export function TicketThread({
                     m.isAdmin ? "rounded-bl-md border border-line bg-surface" : "rounded-br-md bg-primary text-white"
                   }`}
                 >
+                  <MessagePhotos sources={(m.images ?? []).map((i) => `/bff/support-image/${ticketId}/${i.id}`)} />
                   {m.body}
                   <span className={`ml-3 inline-block translate-y-0.5 text-[10px] ${m.isAdmin ? "text-ink-2" : "text-white/70"}`}>
                     {timeOf(m)}
@@ -172,8 +191,11 @@ export function TicketThread({
               e.preventDefault();
               void send();
             }}
-            className="flex items-end gap-2"
+            className="space-y-2"
           >
+            <AttachPreview attach={attach} disabled={busy} removeLabel={t("Şəkli sil")} />
+            <div className="flex items-end gap-2">
+            <AttachButton attach={attach} disabled={busy} label={t("Şəkil əlavə et")} />
             <textarea
               ref={box}
               value={text}
@@ -197,17 +219,18 @@ export function TicketThread({
             />
             <button
               type="submit"
-              disabled={busy || !text.trim()}
+              disabled={busy || (!text.trim() && attach.files.length === 0)}
               aria-label={t("Göndər")}
               className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-primary text-white hover:bg-primary-press disabled:opacity-50"
             >
               {busy ? <Loader2 className="size-5 animate-spin" aria-hidden /> : <Send className="size-5" aria-hidden />}
             </button>
+            </div>
           </form>
         )}
-        {error && (
+        {(error ?? attach.problem) && (
           <p role="alert" className="mt-2 text-sm font-semibold text-danger">
-            {error}
+            {error ?? attach.problem}
           </p>
         )}
       </div>

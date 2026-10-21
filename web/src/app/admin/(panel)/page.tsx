@@ -146,7 +146,7 @@ export default async function AdminDashboard() {
         </ul>
       </section>
 
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid gap-6 xl:grid-cols-2">
         <TopList title="Ən çox baxılan elanlar" items={d.mostViewedListings} unit="baxış" pick="viewCount" />
         <TopList title="Ən çox seçilmiş elanlar" items={d.mostFavoritedListings} unit="♥" pick="favoriteCount" />
       </div>

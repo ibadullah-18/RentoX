@@ -1,10 +1,11 @@
-using System.Security.Claims;
+﻿using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using RentoX.Application.Authorization;
 using RentoX.Application.Common;
 using RentoX.Application.Support;
 using RentoX.Contracts.Common;
+using RentoX.Api.Controllers;
 using RentoX.Contracts.Support;
 
 namespace RentoX.Api.Controllers.Admin;
@@ -93,6 +94,66 @@ public sealed class AdminSupportTicketsController(
         return Created(
             $"/api/admin/support/tickets/{ticketId:D}",
             MapMessage(result));
+    }
+
+    /// <summary>A message with photos (and, if wanted, words) from the staff.</summary>
+    [Microsoft.AspNetCore.RateLimiting.EnableRateLimiting("image-upload")]
+    [HttpPost("{ticketId:guid}/messages/images")]
+    [Consumes("multipart/form-data")]
+    [RequestSizeLimit(55 * 1024 * 1024)]
+    [RequestFormLimits(MultipartBodyLengthLimit = 55 * 1024 * 1024)]
+    [ProducesResponseType<SupportTicketMessageResponse>(StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<SupportTicketMessageResponse>> AddImagesAsync(
+        Guid ticketId,
+        [FromForm] SupportImagesForm form,
+        CancellationToken cancellationToken)
+    {
+        if (!TryGetAdminId(out Guid adminUserId))
+        {
+            return Unauthorized();
+        }
+
+        if (form.Files is null || form.Files.Count is < 1 or > 5)
+        {
+            return Problem(statusCode: 400, detail: "A message must contain 1 to 5 images.");
+        }
+
+        List<SupportImageUpload> uploads = [];
+        try
+        {
+            foreach (IFormFile file in form.Files)
+            {
+                uploads.Add(new SupportImageUpload(file.OpenReadStream(), file.ContentType, file.Length));
+            }
+
+            SupportTicketMessageResult? result = await supportTicketService.AddAdminMessageWithImagesAsync(
+                adminUserId, ticketId, form.Body ?? string.Empty, uploads, cancellationToken);
+            return result is null
+                ? NotFound()
+                : Created($"/api/admin/support/tickets/{ticketId:D}", MapMessage(result));
+        }
+        finally
+        {
+            foreach (SupportImageUpload upload in uploads)
+            {
+                await upload.Content.DisposeAsync();
+            }
+        }
+    }
+
+    [HttpGet("{ticketId:guid}/images/{imageId:guid}")]
+    [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
+    public async Task<IActionResult> DownloadImageAsync(Guid ticketId, Guid imageId, CancellationToken cancellationToken)
+    {
+        SupportImageDownload? image = await supportTicketService.OpenImageAsync(ticketId, imageId, null, cancellationToken);
+        if (image is null)
+        {
+            return NotFound();
+        }
+
+        Response.Headers["X-Content-Type-Options"] = "nosniff";
+        return File(image.Content, image.ContentType);
     }
 
     [HttpPatch("{ticketId:guid}/status")]
@@ -228,6 +289,13 @@ public sealed class AdminSupportTicketsController(
             result.IsAdmin,
             result.Body,
             result.SentAtUtc,
-            result.SenderName);
+            result.SenderName,
+            MapImages(result));
     }
+
+    private static SupportImageResponse[]? MapImages(SupportTicketMessageResult result) =>
+        result.Images?
+            .Select(image => new SupportImageResponse(image.Id, image.ContentType, image.SizeBytes, image.DisplayOrder))
+            .ToArray();
+
 }

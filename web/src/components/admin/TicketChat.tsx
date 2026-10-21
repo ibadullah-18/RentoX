@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { Loader2, MessageSquareText, Send } from "lucide-react";
 import { replyAsAdmin, setTicketStatus } from "@/app/admin/(panel)/actions";
 import { useSupportLive, useTypingFrom, useTypingSender } from "@/components/support/SupportRealtime";
+import { AttachButton, AttachPreview, MessagePhotos, postPhotos, useAttachments } from "@/components/support/Attachments";
 import { adminHref } from "@/lib/admin-path";
 
 export type ChatMessage = {
@@ -13,6 +14,7 @@ export type ChatMessage = {
   body: string;
   sentAtUtc: string;
   senderName?: string | null;
+  images?: { id: string; contentType: string; sizeBytes: number; displayOrder: number }[];
 };
 
 /** Answers support writes again and again; one click puts the text in the box (then it can be changed). */
@@ -69,6 +71,11 @@ export function TicketChat({
   const [showReplies, setShowReplies] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const attach = useAttachments({
+    type: "Yalnız JPG, PNG və ya WebP şəkil göndərmək olar.",
+    size: "Hər şəkil ən çoxu 10 MB ola bilər.",
+    count: "Bir mesajda ən çoxu 5 şəkil göndərmək olar.",
+  });
 
   const closed = status === 4;
 
@@ -89,16 +96,29 @@ export function TicketChat({
 
   async function send() {
     const body = text.trim();
-    if (!body || busy) return;
+    if ((!body && attach.files.length === 0) || busy) return;
     setBusy(true);
     setError(null);
-    const res = await replyAsAdmin(id, body);
+    let res: { ok: true } | { ok: false; unauthorized: boolean; message: string };
+    if (attach.files.length > 0) {
+      const sent = await postPhotos(`/bff/admin-support/${id}/images`, attach.files, body);
+      res = sent.ok
+        ? { ok: true }
+        : {
+            ok: false,
+            unauthorized: sent.status === 401,
+            message: sent.status === 429 ? "Çox tez-tez cəhd olunub. Bir az gözləyin." : "Şəkil göndərilmədi. Yenidən cəhd edin.",
+          };
+    } else {
+      res = await replyAsAdmin(id, body);
+    }
     if (!res.ok) {
       setBusy(false);
       if (res.unauthorized) router.push(adminHref("/giris"));
       else setError(res.message);
       return;
     }
+    attach.clear();
     if (after !== "keep" && Number(after) !== status) {
       const moved = await setTicketStatus(id, Number(after));
       if (!moved.ok && !moved.unauthorized) setError(`Cavab göndərildi, amma status dəyişmədi: ${moved.message}`);
@@ -145,6 +165,7 @@ export function TicketChat({
                     m.isAdmin ? "rounded-br-md bg-primary text-white" : "rounded-bl-md border border-line bg-surface"
                   }`}
                 >
+                  <MessagePhotos sources={(m.images ?? []).map((i) => `/bff/admin-support-image/${id}/${i.id}`)} />
                   {m.body}
                   <span className={`ml-3 inline-block translate-y-0.5 text-[10px] ${m.isAdmin ? "text-white/70" : "text-ink-2"}`}>{timeOf(m.sentAtUtc)}</span>
                 </div>
@@ -205,7 +226,10 @@ export function TicketChat({
               </div>
             )}
 
+            <AttachPreview attach={attach} disabled={busy} removeLabel="Şəkli sil" />
+
             <div className="flex items-end gap-2">
+              <AttachButton attach={attach} disabled={busy} label="Şəkil əlavə et" />
               <textarea
                 ref={box}
                 value={text}
@@ -229,7 +253,7 @@ export function TicketChat({
               />
               <button
                 type="submit"
-                disabled={busy || !text.trim()}
+                disabled={busy || (!text.trim() && attach.files.length === 0)}
                 aria-label="Göndər"
                 className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-primary text-white hover:bg-primary-press disabled:opacity-50"
               >
@@ -259,9 +283,9 @@ export function TicketChat({
             </div>
           </form>
         )}
-        {error && (
+        {(error ?? attach.problem) && (
           <p role="alert" className="mt-2 text-sm font-semibold text-danger">
-            {error}
+            {error ?? attach.problem}
           </p>
         )}
       </div>

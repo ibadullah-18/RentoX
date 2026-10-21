@@ -7,6 +7,7 @@ import '../../notifications/data/notifications_realtime.dart';
 import '../../notifications/domain/notification_models.dart';
 import '../data/support_realtime.dart';
 import '../data/support_repository.dart';
+import '../../listing_create/domain/photo.dart';
 import '../domain/support_models.dart';
 
 class SupportListState {
@@ -180,6 +181,13 @@ class TicketController extends AsyncNotifier<SupportTicket> {
   /// Sends a reply. Throws on failure so the composer can keep the text.
   Future<void> reply(String body) async {
     await _repo.reply(id, body);
+    state = AsyncData(await _repo.details(id));
+    ref.invalidate(supportListProvider);
+  }
+
+  /// A reply with photos (and, if wanted, words). Throws on failure so the composer can keep them.
+  Future<void> replyWithPhotos(String body, List<PickedPhoto> photos) async {
+    await _repo.replyWithPhotos(id, body, photos);
     state = AsyncData(await _repo.details(id));
     ref.invalidate(supportListProvider);
   }

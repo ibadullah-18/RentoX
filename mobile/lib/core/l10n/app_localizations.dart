@@ -3111,6 +3111,12 @@ abstract class AppL10n {
   /// **'VIP mağaza ana səhifədə, bütün elanlardan əvvəl göstərilir. Müddət bitəndən sonra adi mağaza kimi qalır; vaxtında uzatsanız fasilə olmur.'**
   String get storeVipInfo;
 
+  /// No description provided for @supportAttach.
+  ///
+  /// In az, this message translates to:
+  /// **'Şəkil əlavə et'**
+  String get supportAttach;
+
   /// No description provided for @campaignOver.
   ///
   /// In az, this message translates to:

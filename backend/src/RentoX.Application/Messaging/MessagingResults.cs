@@ -1,4 +1,4 @@
-namespace RentoX.Application.Messaging;
+﻿namespace RentoX.Application.Messaging;
 
 public sealed record MessageResult(
     Guid Id,
@@ -30,4 +30,6 @@ public sealed record ConversationSummaryResult(
     Guid OtherUserId,
     string? LastMessage,
     DateTimeOffset? LastMessageAtUtc,
-    int UnreadCount);
+    int UnreadCount,
+    /// <summary>The other person has a profile photo (so the picture is asked for only when it exists).</summary>
+    bool OtherHasPhoto = false);

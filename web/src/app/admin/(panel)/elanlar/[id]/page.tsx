@@ -80,7 +80,7 @@ export default async function ReviewListingPage({ params }: PageProps<"/admin/el
         </p>
       )}
 
-      <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_340px]">
+      <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_340px]">
         <div className="min-w-0 space-y-5">
           {images.length > 0 && (
             <Card title={`Şəkillər (${images.length})`}>
@@ -118,7 +118,7 @@ export default async function ReviewListingPage({ params }: PageProps<"/admin/el
           )}
         </div>
 
-        <aside className="space-y-5 lg:sticky lg:top-4 lg:self-start">
+        <aside className="space-y-5 xl:sticky xl:top-4 xl:self-start">
           <Card title="Elan sahibi">
             <div className="flex items-center gap-3 p-4">
               <Avatar name={l.ownerFullName} size="lg" />

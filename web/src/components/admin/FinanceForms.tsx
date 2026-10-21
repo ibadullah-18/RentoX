@@ -45,7 +45,7 @@ export function ExpenseForm({ today }: { today: string }) {
   return (
     <form onSubmit={submit} className="space-y-3 rounded-xl border border-line bg-surface p-4">
       <h2 className="font-extrabold">Xərc yaz</h2>
-      <div className="grid gap-3 sm:grid-cols-4">
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <label className="block">
           <span className="mb-1 block text-sm font-bold">Növ</span>
           <select value={category} onChange={(e) => setCategory(e.target.value)} disabled={busy} className={input}>

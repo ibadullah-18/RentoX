@@ -2219,6 +2219,44 @@ namespace RentoX.Infrastructure.Persistence.Migrations
                         });
                 });
 
+            modelBuilder.Entity("RentoX.Domain.Support.SupportTicketImage", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ContentType")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<int>("DisplayOrder")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("MessageId")
+                        .HasColumnType("uuid");
+
+                    b.Property<long>("SizeBytes")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("StorageKey")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("MessageId", "DisplayOrder")
+                        .IsUnique();
+
+                    b.ToTable("support_ticket_images", "support", t =>
+                        {
+                            t.HasCheckConstraint("CK_support_ticket_images_DisplayOrder", "\"DisplayOrder\" >= 0 AND \"DisplayOrder\" < 5");
+
+                            t.HasCheckConstraint("CK_support_ticket_images_SizeBytes", "\"SizeBytes\" > 0 AND \"SizeBytes\" <= 10485760");
+                        });
+                });
+
             modelBuilder.Entity("RentoX.Domain.Support.SupportTicketMessage", b =>
                 {
                     b.Property<Guid>("Id")
@@ -3011,6 +3049,15 @@ namespace RentoX.Infrastructure.Persistence.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("RentoX.Domain.Support.SupportTicketImage", b =>
+                {
+                    b.HasOne("RentoX.Domain.Support.SupportTicketMessage", null)
+                        .WithMany("Images")
+                        .HasForeignKey("MessageId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("RentoX.Domain.Support.SupportTicketMessage", b =>
                 {
                     b.HasOne("RentoX.Infrastructure.Identity.AppUser", null)
@@ -3081,6 +3128,11 @@ namespace RentoX.Infrastructure.Persistence.Migrations
             modelBuilder.Entity("RentoX.Domain.Support.SupportTicket", b =>
                 {
                     b.Navigation("Messages");
+                });
+
+            modelBuilder.Entity("RentoX.Domain.Support.SupportTicketMessage", b =>
+                {
+                    b.Navigation("Images");
                 });
 
             modelBuilder.Entity("RentoX.Domain.Wallets.Wallet", b =>

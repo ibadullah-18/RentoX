@@ -4,7 +4,18 @@ import { useEffect, useRef, useState } from "react";
 import { User } from "lucide-react";
 
 /** The person's profile photo, or a soft placeholder when there is none. */
-export function UserAvatar({ userId, size = 48, version = 0 }: { userId: string; size?: number; version?: number }) {
+export function UserAvatar({
+  userId,
+  size = 48,
+  version = 0,
+  hasPhoto = true,
+}: {
+  userId: string;
+  size?: number;
+  version?: number;
+  /** Known to have no photo: the placeholder is shown and no picture is asked for (no "not found" in the console). */
+  hasPhoto?: boolean;
+}) {
   const [broken, setBroken] = useState(false);
   const image = useRef<HTMLImageElement>(null);
 
@@ -20,7 +31,7 @@ export function UserAvatar({ userId, size = 48, version = 0 }: { userId: string;
       className="flex shrink-0 items-center justify-center overflow-hidden rounded-full bg-primary-soft text-primary"
       style={{ width: size, height: size }}
     >
-      {broken ? (
+      {broken || !hasPhoto ? (
         <User style={{ width: size * 0.52, height: size * 0.52 }} aria-hidden />
       ) : (
         // eslint-disable-next-line @next/next/no-img-element

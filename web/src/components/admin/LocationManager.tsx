@@ -62,7 +62,7 @@ function PlaceForm({
       }}
       className="space-y-3 rounded-lg bg-bg p-3"
     >
-      <div className="grid gap-2 sm:grid-cols-4">
+      <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
         <input aria-label="Azərbaycanca ad" placeholder="Ad (AZ)" value={v.nameAz} onChange={(e) => set({ nameAz: e.target.value })} disabled={busy} className={field} />
         <input aria-label="Rusca ad" placeholder="Название (RU)" value={v.nameRu} onChange={(e) => set({ nameRu: e.target.value })} disabled={busy} className={field} />
         <input aria-label="İngiliscə ad" placeholder="Name (EN)" value={v.nameEn} onChange={(e) => set({ nameEn: e.target.value })} disabled={busy} className={field} />

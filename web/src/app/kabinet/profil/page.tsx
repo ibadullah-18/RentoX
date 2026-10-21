@@ -37,6 +37,7 @@ export default async function EditProfilePage() {
         initialName={account.data.fullName}
         initialBio={account.data.bio ?? ""}
         initialLanguage={await getLocale()}
+        initialHasPhoto={Boolean(account.data.profileImageUrl)}
       />
       {settings.ok && <NotificationSettings initial={settings.data.announcementsEnabled} />}
     </div>

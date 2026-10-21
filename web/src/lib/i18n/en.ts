@@ -475,5 +475,8 @@ export const en: Record<string, string> = {
   "Pulsuz götür": "Take it free",
   "Bu kampaniya bitib.": "This campaign has ended.",
   "Ana səhifəyə qayıt": "Back to the home page",
+  "Yalnız JPG, PNG və ya WebP şəkil göndərmək olar.": "Only JPG, PNG or WebP photos can be sent.",
+  "Bir mesajda ən çoxu 5 şəkil göndərmək olar.": "At most 5 photos can be sent in one message.",
+  "Şəkil göndərilmədi. Yenidən cəhd edin.": "The photo was not sent. Try again.",
   "RentoX tərəfindən hədiyyə": "A gift from RentoX",
 };

@@ -23,6 +23,8 @@ export type Account = {
   phoneNumber: string;
   fullName: string;
   bio?: string | null;
+  /** The address of the profile photo; empty when the person has none. */
+  profileImageUrl?: string | null;
 };
 
 export async function getAccount() {

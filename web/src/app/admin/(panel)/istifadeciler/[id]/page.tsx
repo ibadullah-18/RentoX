@@ -70,7 +70,7 @@ export default async function UserAdminPage({ params }: PageProps<"/admin/istifa
 
       {d.reports && (
         <Card title="Bu şəxs haqqında şikayətlər">
-          <div className="grid grid-cols-2 gap-px bg-line sm:grid-cols-4">
+          <div className="grid grid-cols-2 gap-px bg-line lg:grid-cols-4">
             {[
               { label: "Cəmi", n: d.reports.total, tone: "" },
               { label: "Gözləyir / baxılır", n: d.reports.open, tone: d.reports.open > 0 ? "text-warning" : "" },

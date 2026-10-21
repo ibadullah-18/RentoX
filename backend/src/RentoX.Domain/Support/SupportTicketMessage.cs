@@ -1,4 +1,4 @@
-using RentoX.Domain.Common;
+﻿using RentoX.Domain.Common;
 using RentoX.Domain.Common.Exceptions;
 
 namespace RentoX.Domain.Support;
@@ -17,7 +17,8 @@ public sealed class SupportTicketMessage : Entity
         Guid senderId,
         bool isAdmin,
         string body,
-        DateTimeOffset sentAtUtc)
+        DateTimeOffset sentAtUtc,
+        IReadOnlyList<SupportTicketImageFile>? files = null)
         : base(id)
     {
         if (supportTicketId == Guid.Empty)
@@ -37,9 +38,27 @@ public sealed class SupportTicketMessage : Entity
         SupportTicketId = supportTicketId;
         SenderId = senderId;
         IsAdmin = isAdmin;
-        Body = NormalizeBody(body);
+        // A message may be only photos: then the text can be empty.
+        Body = files is { Count: > 0 } && string.IsNullOrWhiteSpace(body) ? string.Empty : NormalizeBody(body);
         SentAtUtc = sentAtUtc;
+
+        if (files is { Count: > 0 })
+        {
+            if (files.Count > SupportTicketImage.MaximumPerMessage)
+            {
+                throw new DomainException("A message can have at most 5 images.");
+            }
+
+            for (int index = 0; index < files.Count; index++)
+            {
+                this.images.Add(SupportTicketImage.Create(id, files[index], index));
+            }
+        }
     }
+
+    private readonly List<SupportTicketImage> images = [];
+
+    public IReadOnlyCollection<SupportTicketImage> Images => images.AsReadOnly();
 
     public Guid SupportTicketId { get; private set; }
 
@@ -57,7 +76,8 @@ public sealed class SupportTicketMessage : Entity
         Guid senderId,
         bool isAdmin,
         string body,
-        DateTimeOffset sentAtUtc)
+        DateTimeOffset sentAtUtc,
+        IReadOnlyList<SupportTicketImageFile>? files = null)
     {
         return new SupportTicketMessage(
             Guid.NewGuid(),
@@ -65,7 +85,8 @@ public sealed class SupportTicketMessage : Entity
             senderId,
             isAdmin,
             body,
-            sentAtUtc);
+            sentAtUtc,
+            files);
     }
 
     private static string NormalizeBody(string body)

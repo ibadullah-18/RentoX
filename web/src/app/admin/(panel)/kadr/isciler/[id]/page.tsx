@@ -45,7 +45,7 @@ export default async function KadrPersonPage({ params, searchParams }: PageProps
         actions={<Avatar name={p.fullName} size="lg" />}
       />
 
-      <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+      <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
         <Card title="Profil və giriş">
           <ProfileForm key={JSON.stringify(p)} profile={p} />
         </Card>
@@ -72,7 +72,7 @@ export default async function KadrPersonPage({ params, searchParams }: PageProps
               </div>
 
               {sheet.data.lines.length > 0 && (
-                <ul className="divide-y divide-line border-t border-line">
+                <ul className="max-h-[26rem] divide-y divide-line overflow-y-auto border-t border-line">
                   {sheet.data.lines.map((l) => (
                     <li key={l.id} className={`flex items-start gap-3 px-4 py-2.5 text-sm ${l.isVoid ? "opacity-50" : ""}`}>
                       <span className="min-w-0 flex-1">
@@ -119,7 +119,7 @@ export default async function KadrPersonPage({ params, searchParams }: PageProps
               <span className="text-xs text-ink-2">· {history.data.monthsShown} ay göstərilir</span>
             </div>
 
-            <div className="grid grid-cols-2 gap-3 p-4 sm:grid-cols-3 lg:grid-cols-6">
+            <div className="grid grid-cols-2 gap-3 p-4 sm:grid-cols-3 xl:grid-cols-6">
               <Figure label="Əsas maaşlar" value={history.data.totalBaseInQepik} />
               <Figure label="Mükafatlar" value={history.data.totalBonusInQepik} tone="text-success" />
               <Figure label="Kəsintilər" value={history.data.totalDeductionsInQepik} tone="text-danger" />
@@ -133,10 +133,10 @@ export default async function KadrPersonPage({ params, searchParams }: PageProps
             </div>
 
             {history.data.months.length > 0 ? (
-              <div className="overflow-x-auto border-t border-line">
+              <div className="max-h-[28rem] overflow-auto border-t border-line">
                 <table className="w-full min-w-[640px] text-sm">
                   <thead>
-                    <tr className="bg-bg text-left text-xs font-bold text-ink-2">
+                    <tr className="sticky top-0 bg-bg text-left text-xs font-bold text-ink-2">
                       <th className="px-4 py-2">Ay</th>
                       <th className="px-3 py-2 text-right">Maaş</th>
                       <th className="px-3 py-2 text-right">Mükafat</th>
@@ -180,7 +180,7 @@ export default async function KadrPersonPage({ params, searchParams }: PageProps
             <div className="border-t border-line">
               <h3 className="px-4 pt-3 text-sm font-extrabold">Maaşın dəyişmə tarixçəsi</h3>
               {history.data.salaryChanges.length > 0 ? (
-                <ul className="divide-y divide-line">
+                <ul className="max-h-72 divide-y divide-line overflow-y-auto">
                   {history.data.salaryChanges.map((c) => (
                     <li key={`${c.effectiveFrom}-${c.changedAtUtc}`} className="flex flex-wrap items-center gap-x-3 px-4 py-2.5 text-sm">
                       <span className="font-bold">

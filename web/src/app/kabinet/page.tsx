@@ -31,6 +31,7 @@ export default async function CabinetPage() {
   const name = account.ok ? account.data.fullName : "";
   const phone = account.ok ? account.data.phoneNumber : session.phone;
   const bio = account.ok ? (account.data.bio ?? "") : "";
+  const hasPhoto = account.ok ? Boolean(account.data.profileImageUrl) : false;
 
   const row =
     "flex items-center gap-3 border-b border-line px-4 py-4 last:border-b-0 hover:bg-primary-soft";
@@ -63,7 +64,7 @@ export default async function CabinetPage() {
             </span>
           </Link>
           <Link href="/kabinet/profil" className="flex items-center gap-2 px-1 text-sm font-semibold text-ink-2 hover:text-primary">
-            <UserAvatar userId={session.userId} size={24} />
+            <UserAvatar userId={session.userId} size={24} hasPhoto={hasPhoto} />
             <span className="truncate">{name || phone}</span>
             <ChevronRight className="size-4" aria-hidden />
           </Link>
@@ -73,7 +74,7 @@ export default async function CabinetPage() {
         href="/kabinet/profil"
         className="flex items-center gap-4 rounded-xl border border-line bg-surface p-4 hover:border-primary"
       >
-        <UserAvatar userId={session.userId} size={56} />
+        <UserAvatar userId={session.userId} size={56} hasPhoto={hasPhoto} />
         <div className="min-w-0 flex-1">
           <p className="truncate text-lg font-extrabold">{name || t("Adınızı əlavə edin")}</p>
           <p className="text-sm text-ink-2">{phone}</p>

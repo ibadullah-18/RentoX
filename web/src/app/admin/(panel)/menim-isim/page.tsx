@@ -44,7 +44,7 @@ export default async function MyWorkPage({ searchParams }: PageProps<"/admin/men
     <div className="space-y-5">
       <PageHead title="Mənim işim" hint="İşə başlayanda və bitirəndə düyməyə basın. İcazəni əvvəlcədən istəyin, maaşınıza və müraciətlərinizə buradan baxın." />
 
-      <div className="grid gap-5 lg:grid-cols-2">
+      <div className="grid gap-5 xl:grid-cols-2">
         <Card title="Bu gün">
           <WorkDay day={d} big />
           <p className="border-t border-line px-5 py-3 text-sm text-ink-2">
@@ -128,7 +128,7 @@ export default async function MyWorkPage({ searchParams }: PageProps<"/admin/men
         )}
       </Card>
 
-      <div className="grid gap-5 lg:grid-cols-2">
+      <div className="grid gap-5 xl:grid-cols-2">
         <Card title="Müraciət yaz">
           <StaffRequestForm hasWatcher={d.hasWatcher} />
         </Card>

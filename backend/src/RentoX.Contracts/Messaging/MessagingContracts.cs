@@ -1,4 +1,4 @@
-namespace RentoX.Contracts.Messaging;
+﻿namespace RentoX.Contracts.Messaging;
 
 public sealed record StartConversationRequest(
     Guid ListingId,
@@ -37,6 +37,7 @@ public sealed record ConversationSummaryResponse(
     Guid OtherUserId,
     string? LastMessage,
     DateTimeOffset? LastMessageAtUtc,
-    int UnreadCount);
+    int UnreadCount,
+    bool OtherHasPhoto = false);
 
 public sealed record UnreadMessageCountResponse(int Count);

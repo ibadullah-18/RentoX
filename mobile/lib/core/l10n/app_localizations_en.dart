@@ -1648,6 +1648,9 @@ class AppL10nEn extends AppL10n {
       'A VIP store is shown on the home page before all listings. When the time ends it stays an ordinary store; extend in time and there is no gap.';
 
   @override
+  String get supportAttach => 'Add a photo';
+
+  @override
   String get campaignOver => 'This campaign has ended.';
 
   @override

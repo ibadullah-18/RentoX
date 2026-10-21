@@ -1,4 +1,4 @@
-using RentoX.Application.Common;
+﻿using RentoX.Application.Common;
 
 namespace RentoX.Application.Support;
 
@@ -8,13 +8,22 @@ public sealed record CreateSupportTicketCommand(
     string Subject,
     string InitialMessage);
 
+/// <summary>A photo inside a message; it is fetched by its id from the request it belongs to.</summary>
+public sealed record SupportImageResult(Guid Id, string ContentType, long SizeBytes, int DisplayOrder);
+
 public sealed record SupportTicketMessageResult(
     Guid Id,
     Guid SenderId,
     bool IsAdmin,
     string Body,
     DateTimeOffset SentAtUtc,
-    string? SenderName = null);
+    string? SenderName = null,
+    IReadOnlyList<SupportImageResult>? Images = null);
+
+// The caller owns the upload streams; the HTTP response owns a returned download stream.
+public sealed record SupportImageUpload(Stream Content, string ContentType, long SizeBytes);
+
+public sealed record SupportImageDownload(Stream Content, string ContentType);
 
 public sealed record SupportTicketSummaryResult(
     Guid Id,
@@ -87,6 +96,21 @@ public interface ISupportTicketService
         string body,
         CancellationToken cancellationToken = default);
 
+    /// <param name="images">Up to 5 photos sent with (or instead of) the text.</param>
+    Task<SupportTicketMessageResult?> AddUserMessageWithImagesAsync(
+        Guid userId,
+        Guid ticketId,
+        string body,
+        IReadOnlyList<SupportImageUpload>? images,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>One photo of a request. [ownerId]: the person (they see only their own); null for the staff.</summary>
+    Task<SupportImageDownload?> OpenImageAsync(
+        Guid ticketId,
+        Guid imageId,
+        Guid? ownerId,
+        CancellationToken cancellationToken = default);
+
     Task<PagedResult<SupportTicketSummaryResult>> GetForAdminAsync(
         int? status,
         int? priority,
@@ -109,6 +133,13 @@ public interface ISupportTicketService
         Guid adminUserId,
         Guid ticketId,
         string body,
+        CancellationToken cancellationToken = default);
+
+    Task<SupportTicketMessageResult?> AddAdminMessageWithImagesAsync(
+        Guid adminUserId,
+        Guid ticketId,
+        string body,
+        IReadOnlyList<SupportImageUpload>? images,
         CancellationToken cancellationToken = default);
 
     Task<SupportTicketDetailsResult?> ChangeStatusAsync(

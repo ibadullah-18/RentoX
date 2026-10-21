@@ -1,4 +1,4 @@
-namespace RentoX.Contracts.Support;
+﻿namespace RentoX.Contracts.Support;
 
 public sealed record CreateSupportTicketRequest(
     int Category,
@@ -14,13 +14,17 @@ public sealed record ChangeSupportTicketStatusRequest(
 public sealed record ChangeSupportTicketPriorityRequest(
     int Priority);
 
+/// <summary>A photo inside a message; its picture is fetched from the request by this id.</summary>
+public sealed record SupportImageResponse(Guid Id, string ContentType, long SizeBytes, int DisplayOrder);
+
 public sealed record SupportTicketMessageResponse(
     Guid Id,
     Guid SenderId,
     bool IsAdmin,
     string Body,
     DateTimeOffset SentAtUtc,
-    string? SenderName = null);
+    string? SenderName = null,
+    IReadOnlyList<SupportImageResponse>? Images = null);
 
 public sealed record SupportTicketSummaryResponse(
     Guid Id,
