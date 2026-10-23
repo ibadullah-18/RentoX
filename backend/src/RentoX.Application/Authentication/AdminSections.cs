@@ -25,9 +25,21 @@ public static class AdminSections
     /// </summary>
     public const string Hr = "hr";
 
+    /// <summary>
+    /// The look of the site: name, logos, notice, motion. Like the staff section it must be given on purpose
+    /// (no section chosen does not include it); a SuperAdmin has it.
+    /// </summary>
+    public const string Branding = "branding";
+
     /// <summary>The order matters: the position is the bit used when a set is recorded in the audit log.</summary>
     public static readonly string[] All =
-        [Listings, Stores, Reports, Support, Catalog, Users, Finance, Hr];
+        [Listings, Stores, Reports, Support, Catalog, Users, Finance, Hr, Branding];
+
+    /// <summary>Sections an Admin has only when they were chosen for them.</summary>
+    private static readonly string[] OnPurposeOnly = [Hr, Branding];
+
+    /// <summary>The ordinary sections: what "no section chosen" stands for.</summary>
+    public static IReadOnlyList<string> Ordinary { get; } = All.Where(s => !OnPurposeOnly.Contains(s)).ToArray();
 
     public static string Policy(string section) => $"section:{section}";
 
@@ -39,6 +51,7 @@ public static class AdminSections
     public const string UsersPolicy = "section:users";
     public const string FinancePolicy = "section:finance";
     public const string HrPolicy = "section:hr";
+    public const string BrandingPolicy = "section:branding";
 
     public static bool Allows(ClaimsPrincipal user, string section)
     {
@@ -55,9 +68,9 @@ public static class AdminSections
         }
 
         var chosen = user.FindAll(ClaimType).Select(c => c.Value).ToArray();
-        if (section == Hr)
+        if (OnPurposeOnly.Contains(section))
         {
-            return chosen.Contains(Hr);
+            return chosen.Contains(section);
         }
 
         return chosen.Length == 0 || chosen.Contains(section);
@@ -69,8 +82,17 @@ public static class AdminSections
         string[] chosen = sections.ToArray();
         if (chosen.Length == 0)
         {
-            // "No section chosen" is every section except the staff one.
-            return (1 << (All.Length - 1)) - 1;
+            // "No section chosen" is every section except the ones that must be given on purpose.
+            int implied = 0;
+            for (int i = 0; i < All.Length; i++)
+            {
+                if (!OnPurposeOnly.Contains(All[i]))
+                {
+                    implied |= 1 << i;
+                }
+            }
+
+            return implied;
         }
 
         int mask = 0;

@@ -5,6 +5,7 @@ import type {
   PublicStore,
   StoreCard,
   Banner,
+  Branding,
   CampaignPage,
   PageContent,
   PageSummary,
@@ -69,6 +70,41 @@ export async function getSiteInfo(): Promise<SiteInfo> {
 /** The banners on show on the home page (none if the API cannot say). */
 export async function getBanners(): Promise<Banner[]> {
   return (await get<Banner[]>("/api/banners", { language: await lang(), platform: "web" }, 60, ["banners"])) ?? [];
+}
+
+/** The pictures that come with the site, used until the owner uploads their own. */
+export const DEFAULT_LOGO = "/brand/logo.png";
+export const DEFAULT_LOGO_DARK = "/brand/logo-dark.png";
+export const DEFAULT_ICON = "/brand/icon.png";
+
+const DEFAULT_BRANDING: Branding = {
+  siteName: "RentoX",
+  footerText: null,
+  useTextLogo: false,
+  headerLogoHeight: 40,
+  footerLogoHeight: 40,
+  motionLevel: 0,
+  defaultTheme: 0,
+  announcementEnabled: false,
+  announcementTone: 0,
+  version: 0,
+};
+
+/** The name, logos and icon of the brand (the defaults if the API cannot say). */
+export async function getBranding(): Promise<Branding> {
+  return (await get<Branding>("/api/branding", {}, 60, ["branding"])) ?? DEFAULT_BRANDING;
+}
+
+/** Which picture to show where. The footer falls back to the header one, a dark page to the light one the owner uploaded. */
+export function brandLogos(branding: Branding, where: "header" | "footer") {
+  const headerLight = branding.headerLogoUrl ?? DEFAULT_LOGO;
+  const headerDark = branding.headerLogoDarkUrl ?? branding.headerLogoUrl ?? DEFAULT_LOGO_DARK;
+  if (where === "header") return { light: headerLight, dark: headerDark, height: branding.headerLogoHeight };
+  return {
+    light: branding.footerLogoUrl ?? headerLight,
+    dark: branding.footerLogoDarkUrl ?? branding.footerLogoUrl ?? headerDark,
+    height: branding.footerLogoHeight,
+  };
 }
 
 /** The page of a campaign (rentox.az/name); nothing when there is none, or it is switched off. */

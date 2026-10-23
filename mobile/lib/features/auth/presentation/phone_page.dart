@@ -101,16 +101,8 @@ class _PhonePageState extends ConsumerState<PhonePage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const SizedBox(height: AppSpacing.lg),
-                    const RentoXMark(size: 72),
-                    const SizedBox(height: AppSpacing.sm),
-                    const RentoXLogo(size: 40),
-                    const SizedBox(height: AppSpacing.xs),
-                    Text(
-                      l10n.tagline,
-                      style: TextStyle(
-                        color: theme.colorScheme.onSurfaceVariant,
-                      ),
-                    ),
+                    // The logo already has the tag and its own tagline.
+                    const RentoXLogo(size: 52),
                     const SizedBox(height: AppSpacing.xxl),
                     Text(
                       l10n.loginTitle,
@@ -169,7 +161,7 @@ class _PhonePageState extends ConsumerState<PhonePage> {
                           : Text(l10n.continueAction),
                     ),
                     const SizedBox(height: AppSpacing.md),
-                    const _Consent(),
+                    const ConsentText(),
                     Center(
                       child: TextButton(
                         onPressed: () => context.push(Routes.info),
@@ -188,14 +180,17 @@ class _PhonePageState extends ConsumerState<PhonePage> {
 }
 
 /// "By continuing you accept the terms and the privacy policy", with both as links.
-class _Consent extends StatefulWidget {
-  const _Consent();
+class ConsentText extends StatefulWidget {
+  const ConsentText({super.key, this.textAlign = TextAlign.center, this.fontSize = 12});
+
+  final TextAlign textAlign;
+  final double fontSize;
 
   @override
-  State<_Consent> createState() => _ConsentState();
+  State<ConsentText> createState() => _ConsentTextState();
 }
 
-class _ConsentState extends State<_Consent> {
+class _ConsentTextState extends State<ConsentText> {
   late final TapGestureRecognizer _terms = TapGestureRecognizer()
     ..onTap = () => context.push(Routes.infoPage('terms'));
   late final TapGestureRecognizer _privacy = TapGestureRecognizer()
@@ -238,8 +233,8 @@ class _ConsentState extends State<_Consent> {
               TextSpan(text: part),
         ],
       ),
-      textAlign: TextAlign.center,
-      style: TextStyle(fontSize: 12, color: scheme.onSurfaceVariant),
+      textAlign: widget.textAlign,
+      style: TextStyle(fontSize: widget.fontSize, color: scheme.onSurfaceVariant),
     );
   }
 }

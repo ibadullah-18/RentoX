@@ -236,6 +236,10 @@ public static class DependencyInjection
             RentoX.Infrastructure.Content.SiteInfoService>();
 
         services.AddScoped<
+            RentoX.Application.Content.IBrandingService,
+            RentoX.Infrastructure.Content.BrandingService>();
+
+        services.AddScoped<
             RentoX.Application.Admin.IAnnouncementService,
             RentoX.Infrastructure.Admin.AnnouncementService>();
 

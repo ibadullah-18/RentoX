@@ -127,6 +127,13 @@ export async function canSeeHr(): Promise<boolean> {
   return sections?.includes("hr") ?? false;
 }
 
+/** May this person change the look of the site (name, logos, notice)? The owner, or an Admin given that section on purpose. */
+export async function canSeeBranding(): Promise<boolean> {
+  const sections = await getSections();
+  if ((await getRoles()).includes("SuperAdmin")) return true;
+  return sections?.includes("branding") ?? false;
+}
+
 export async function isAdmin(): Promise<boolean> {
   const roles = await getRoles();
   return roles.includes("Admin") || roles.includes("SuperAdmin");

@@ -6,6 +6,7 @@ import { Eye, EyeOff, Loader2, Pencil, Plus, Trash2 } from "lucide-react";
 import {
   createCategory,
   createField,
+  deleteCategory,
   saveOption,
   setCategoryActive,
   setFieldActive,
@@ -16,6 +17,7 @@ import {
   type OptionInput,
   type Saved,
 } from "@/app/admin/(panel)/catalog-actions";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { adminHref } from "@/lib/admin-path";
 import {
   LANGS,
@@ -325,6 +327,43 @@ export function CategoryActiveButton({ id, isActive }: { id: string; isActive: b
         {isActive ? "Deaktiv et" : "Aktiv et"}
       </button>
       {error && <span className="text-sm font-semibold text-danger">{error}</span>}
+    </div>
+  );
+}
+
+/** Deletes the category for good (only possible while it has no listing and no sub-category), then back to the list. */
+export function CategoryDeleteButton({ id, name }: { id: string; name: string }) {
+  const router = useRouter();
+  const { busy, error, run } = useSave();
+  const [asking, setAsking] = useState(false);
+  return (
+    <div className="flex items-center gap-3">
+      <button
+        type="button"
+        disabled={busy}
+        onClick={() => setAsking(true)}
+        className="flex h-10 items-center gap-2 rounded-lg px-3 text-sm font-bold text-danger hover:bg-danger/10 disabled:opacity-60"
+      >
+        <Trash2 className="size-4" aria-hidden />
+        Sil
+      </button>
+      {error && <span className="text-sm font-semibold text-danger">{error}</span>}
+      <ConfirmDialog
+        open={asking}
+        title="Kateqoriya silinsin?"
+        message={`«${name}» həmişəlik silinəcək. Yalnız elanı və alt kateqoriyası olmayan kateqoriya silinə bilər; qalanlarını deaktiv edin.`}
+        confirmLabel="Sil"
+        destructive
+        busy={busy}
+        onClose={() => setAsking(false)}
+        onConfirm={() => {
+          void run(
+            () => deleteCategory(id),
+            () => router.push(adminHref("/kateqoriyalar")),
+          );
+          setAsking(false);
+        }}
+      />
     </div>
   );
 }

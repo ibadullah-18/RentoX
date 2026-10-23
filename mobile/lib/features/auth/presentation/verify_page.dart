@@ -13,6 +13,7 @@ import '../../../shared/widgets/otp_field.dart';
 import '../data/auth_repository.dart';
 import '../domain/auth_models.dart';
 import 'auth_controller.dart';
+import 'phone_page.dart' show ConsentText;
 
 class VerifyPage extends ConsumerStatefulWidget {
   const VerifyPage({super.key, required this.args, this.redirectTo});
@@ -33,6 +34,7 @@ class _VerifyPageState extends ConsumerState<VerifyPage> {
   Timer? _ticker;
   int _secondsLeft = 0;
   bool _loading = false;
+  bool _agreed = false;
   String? _codeError;
 
   @override
@@ -83,7 +85,8 @@ class _VerifyPageState extends ConsumerState<VerifyPage> {
   Future<void> _submit(String code) async {
     if (code.length != 6 || _loading) return;
     final isRegistration = widget.args.isRegistration;
-    if (isRegistration && !_nameKey.currentState!.validate()) return;
+    // A new account is only made by someone who accepted the terms.
+    if (isRegistration && (!_agreed || !_nameKey.currentState!.validate())) return;
 
     final repo = ref.read(authRepositoryProvider);
     setState(() {
@@ -184,6 +187,29 @@ class _VerifyPageState extends ConsumerState<VerifyPage> {
                     ),
                     const SizedBox(height: AppSpacing.md),
                   ],
+                  if (isRegistration) ...[
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Checkbox(
+                          value: _agreed,
+                          onChanged: _loading
+                              ? null
+                              : (v) => setState(() => _agreed = v ?? false),
+                        ),
+                        const Expanded(
+                          child: Padding(
+                            padding: EdgeInsets.only(top: 12),
+                            child: ConsentText(
+                              textAlign: TextAlign.start,
+                              fontSize: 13,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                  ],
                   Center(
                     child: OtpField(
                       controller: _code,
@@ -212,7 +238,9 @@ class _VerifyPageState extends ConsumerState<VerifyPage> {
                   ],
                   const SizedBox(height: AppSpacing.xl),
                   FilledButton(
-                    onPressed: _loading ? null : () => _submit(_code.text),
+                    onPressed: (_loading || (isRegistration && !_agreed))
+                        ? null
+                        : () => _submit(_code.text),
                     child: _loading
                         ? const SizedBox(
                             height: 22,

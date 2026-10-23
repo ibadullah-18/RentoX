@@ -12,7 +12,8 @@ namespace RentoX.Infrastructure.Listings;
 public sealed class ListingSubmissionService(
     RentoXDbContext dbContext,
     ICategoryFieldQueryService fieldQueryService,
-    RentoX.Application.Support.ISupportEventPublisher? live = null)
+    RentoX.Application.Support.ISupportEventPublisher? live = null,
+    RentoX.Application.Settings.ISystemSettingsService? settings = null)
     : IListingSubmissionService
 {
     public async Task<SubmitListingResult> SubmitAsync(
@@ -74,6 +75,15 @@ public sealed class ListingSubmissionService(
         ValidateFields(
             listing,
             definitions);
+
+        if (settings is not null)
+        {
+            int needed = (await settings.GetCurrentAsync(cancellationToken)).MinListingPhotos;
+            if (listing.Images.Count < needed)
+            {
+                throw new DomainException($"The listing needs at least {needed} photos before it is sent for review.");
+            }
+        }
 
         listing.SubmitForReview();
 

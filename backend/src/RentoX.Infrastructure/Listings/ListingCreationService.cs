@@ -12,7 +12,9 @@ namespace RentoX.Infrastructure.Listings;
 
 public sealed class ListingCreationService(
     RentoXDbContext dbContext,
-    ICategoryFieldQueryService fieldQueryService)
+    ICategoryFieldQueryService fieldQueryService,
+    RentoX.Application.Settings.ISystemSettingsService? settings = null,
+    RentoX.Application.Abstractions.Time.IClock? clock = null)
     : IListingCreationService
 {
     public async Task<CreateListingResult> CreateAsync(
@@ -45,6 +47,18 @@ public sealed class ListingCreationService(
         {
             throw new DomainException(
                 "Owner account was not found.");
+        }
+
+        int perDay = settings is null ? 0 : (await settings.GetCurrentAsync(cancellationToken)).MaxNewListingsPerDay;
+        if (perDay > 0 && clock is not null)
+        {
+            DateTimeOffset since = clock.UtcNow.AddDays(-1);
+            int made = await dbContext.Listings.CountAsync(
+                item => item.OwnerId == command.OwnerId && item.CreatedAtUtc > since, cancellationToken);
+            if (made >= perDay)
+            {
+                throw new DomainException($"You can create at most {perDay} new listings a day. Try again tomorrow.");
+            }
         }
 
         await ListingRules.ValidateLocationAsync(

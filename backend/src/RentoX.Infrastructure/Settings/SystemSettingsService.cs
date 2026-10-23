@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using RentoX.Application.Abstractions.Authentication;
 using RentoX.Application.Abstractions.Time;
@@ -21,7 +21,7 @@ public sealed class SystemSettingsService(
     private static readonly TimeSpan Keep = TimeSpan.FromSeconds(30);
 
     /// <summary>The values the site started with, in force until the first change.</summary>
-    public static readonly SystemSettingsValues Starting = new(30, 15);
+    public static readonly SystemSettingsValues Starting = new(30, 15, 0, 0);
 
     public async Task<SystemSettingsValues> GetCurrentAsync(CancellationToken cancellationToken = default)
     {
@@ -33,7 +33,7 @@ public sealed class SystemSettingsService(
         SystemSettingsValues current = await dbContext.Set<SettingsVersion>()
             .AsNoTracking()
             .OrderByDescending(s => s.CreatedAtUtc)
-            .Select(s => new SystemSettingsValues(s.ListingLifetimeDays, s.MaxListingPhotos))
+            .Select(s => new SystemSettingsValues(s.ListingLifetimeDays, s.MaxListingPhotos, s.MinListingPhotos, s.MaxNewListingsPerDay))
             .FirstOrDefaultAsync(cancellationToken)
             ?? Starting;
 
@@ -53,7 +53,9 @@ public sealed class SystemSettingsService(
             throw new DomainException("An authenticated admin is required.");
         }
 
-        SettingsVersion version = SettingsVersion.Create(values.ListingLifetimeDays, values.MaxListingPhotos, actor.Value, clock.UtcNow);
+        SettingsVersion version = SettingsVersion.Create(
+            values.ListingLifetimeDays, values.MaxListingPhotos, values.MinListingPhotos, values.MaxNewListingsPerDay,
+            actor.Value, clock.UtcNow);
         dbContext.Set<SettingsVersion>().Add(version);
         await dbContext.SaveChangesAsync(cancellationToken);
 
@@ -71,13 +73,13 @@ public sealed class SystemSettingsService(
             .AsNoTracking()
             .OrderByDescending(s => s.CreatedAtUtc)
             .Take(take)
-            .Select(s => new { s.Id, s.ListingLifetimeDays, s.MaxListingPhotos, s.CreatedByUserId, s.CreatedAtUtc })
+            .Select(s => new { s.Id, s.ListingLifetimeDays, s.MaxListingPhotos, s.MinListingPhotos, s.MaxNewListingsPerDay, s.CreatedByUserId, s.CreatedAtUtc })
             .ToListAsync(cancellationToken);
 
         return rows
             .Select(r => new SystemSettingsHistoryItem(
                 r.Id,
-                new SystemSettingsValues(r.ListingLifetimeDays, r.MaxListingPhotos),
+                new SystemSettingsValues(r.ListingLifetimeDays, r.MaxListingPhotos, r.MinListingPhotos, r.MaxNewListingsPerDay),
                 r.CreatedByUserId,
                 r.CreatedAtUtc))
             .ToArray();

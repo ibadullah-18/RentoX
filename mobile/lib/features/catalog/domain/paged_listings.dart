@@ -25,11 +25,15 @@ class PagedListings {
     totalCount: page.totalCount,
   );
 
-  /// Appends [next] (de-duplicating by id) and clears the loading flag.
+  /// Appends [next] and clears the loading flag. A listing seen already is not added again, except a VIP one: VIP
+  /// listings come round again on purpose as the feed goes on.
   PagedListings appended(Paged<ListingSummary> next) {
     final known = items.map((e) => e.id).toSet();
     return PagedListings(
-      items: [...items, ...next.items.where((e) => !known.contains(e.id))],
+      items: [
+        ...items,
+        ...next.items.where((e) => e.isVip || !known.contains(e.id)),
+      ],
       page: next.page,
       totalPages: next.totalPages,
       totalCount: next.totalCount,

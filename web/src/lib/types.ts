@@ -361,6 +361,35 @@ export type CampaignPage = {
   isOver: boolean;
 };
 
+/** How the site looks: its name, logos and icon (the owner can change them in the admin panel). */
+export type Branding = {
+  siteName: string;
+  footerText?: string | null;
+  /** Show the name as text instead of the logo picture. */
+  useTextLogo: boolean;
+  headerLogoHeight: number;
+  footerLogoHeight: number;
+  /** An address is empty while the owner has not uploaded their own: the picture that comes with the site is used. */
+  headerLogoUrl?: string | null;
+  headerLogoDarkUrl?: string | null;
+  footerLogoUrl?: string | null;
+  footerLogoDarkUrl?: string | null;
+  iconUrl?: string | null;
+  shareImageUrl?: string | null;
+  /** 0 full, 1 soft (fades only), 2 off. */
+  motionLevel: number;
+  /** The look a new visitor gets: 0 day, 1 night, 2 follow the device. */
+  defaultTheme: number;
+  description?: string | null;
+  announcementEnabled: boolean;
+  announcementText?: string | null;
+  announcementLink?: string | null;
+  /** 0 information, 1 warning, 2 good news. */
+  announcementTone: number;
+  /** Changes with every edit: a changed picture is loaded again at once. */
+  version: number;
+};
+
 /** A fixed page (terms, privacy, about …) in the visitor's language. */
 export type PageSummary = { slug: string; title: string };
 

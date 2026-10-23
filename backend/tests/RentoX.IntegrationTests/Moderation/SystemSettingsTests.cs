@@ -55,6 +55,33 @@ public sealed class SystemSettingsTests(AuditPostgresFixture database)
     }
 
     [Fact]
+    public async Task TheListingLimitsAreSavedAndKeptInTheHistory()
+    {
+        await ResetAsync();
+        var cache = new MemoryCache(new MemoryCacheOptions());
+
+        await Service(cache).SetAsync(new SystemSettingsValues(30, 10, 2, 5));
+
+        SystemSettingsValues now = await Service(cache).GetCurrentAsync();
+        Assert.Equal(2, now.MinListingPhotos);
+        Assert.Equal(5, now.MaxNewListingsPerDay);
+        Assert.Equal(2, (await Service(cache).GetHistoryAsync(5)).Single().Values.MinListingPhotos);
+    }
+
+    [Theory]
+    [InlineData(16, 15, 0)]
+    [InlineData(1, 15, 201)]
+    [InlineData(1, 15, -1)]
+    public async Task LimitsThatMakeNoSenseAreRefused(int least, int most, int perDay)
+    {
+        await ResetAsync();
+        var cache = new MemoryCache(new MemoryCacheOptions());
+
+        await Assert.ThrowsAsync<DomainException>(() =>
+            Service(cache).SetAsync(new SystemSettingsValues(30, most, least, perDay)));
+    }
+
+    [Fact]
     public async Task OnlyASignedInAdminCanChangeThem()
     {
         await ResetAsync();

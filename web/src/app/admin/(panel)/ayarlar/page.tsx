@@ -2,7 +2,7 @@ import { SettingsForm } from "@/components/admin/SettingsForm";
 import { Card, LoadProblem, PageHead, dateTime } from "@/components/admin/ui";
 import { authed } from "@/lib/authed";
 
-type Values = { listingLifetimeDays: number; maxListingPhotos: number };
+type Values = { listingLifetimeDays: number; maxListingPhotos: number; minListingPhotos?: number; maxNewListingsPerDay?: number };
 type History = { id: string; values: Values; changedByUserId: string; changedAtUtc: string }[];
 
 /** The adjustable settings of the site, and every change made to them. */
@@ -24,19 +24,21 @@ export default async function SettingsPage() {
 
       <Card title="Dəyişikliklərin tarixçəsi">
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[420px] text-left text-sm">
+          <table className="w-full min-w-[560px] text-left text-sm">
             <thead className="border-b border-line text-ink-2">
               <tr>
                 <th className="px-4 py-3 font-semibold">Vaxt</th>
                 <th className="px-4 py-3 font-semibold">Kim</th>
                 <th className="px-4 py-3 text-right font-semibold">Elanın müddəti</th>
                 <th className="px-4 py-3 text-right font-semibold">Şəkil sayı</th>
+                <th className="px-4 py-3 text-right font-semibold">Ən az şəkil</th>
+                <th className="px-4 py-3 text-right font-semibold">Gündəlik limit</th>
               </tr>
             </thead>
             <tbody>
               {(!history.ok || history.data.length === 0) && (
                 <tr>
-                  <td colSpan={4} className="px-4 py-6 text-center text-ink-2">
+                  <td colSpan={6} className="px-4 py-6 text-center text-ink-2">
                     Hələ dəyişiklik edilməyib: ilkin dəyərlər keçərlidir (30 gün, elanda ən çoxu 15 şəkil).
                   </td>
                 </tr>
@@ -48,6 +50,8 @@ export default async function SettingsPage() {
                     <td className="px-4 py-2.5 font-mono text-xs">{h.changedByUserId.slice(0, 8)}</td>
                     <td className="px-4 py-2.5 text-right">{h.values.listingLifetimeDays} gün</td>
                     <td className="px-4 py-2.5 text-right">{h.values.maxListingPhotos ?? 15}</td>
+                    <td className="px-4 py-2.5 text-right">{h.values.minListingPhotos ?? 0}</td>
+                    <td className="px-4 py-2.5 text-right">{h.values.maxNewListingsPerDay ? h.values.maxNewListingsPerDay : "—"}</td>
                   </tr>
                 ))}
             </tbody>

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Plus } from "lucide-react";
-import { CategoryActiveButton, CategoryForm } from "@/components/admin/CatalogForms";
+import { CategoryActiveButton, CategoryDeleteButton, CategoryForm } from "@/components/admin/CatalogForms";
 import { Card, LoadProblem, PageHead, Pill } from "@/components/admin/ui";
 import { adminHref } from "@/lib/admin-path";
 import {
@@ -51,6 +51,7 @@ export default async function EditCategoryPage({ params }: PageProps<"/admin/kat
           <>
             {!category.isActive && <Pill tone="muted">Deaktiv</Pill>}
             <CategoryActiveButton id={category.id} isActive={category.isActive} />
+            <CategoryDeleteButton id={category.id} name={trName(category.translations)} />
           </>
         }
       />

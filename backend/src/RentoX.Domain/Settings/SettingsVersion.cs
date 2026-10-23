@@ -1,4 +1,4 @@
-using RentoX.Domain.Common;
+﻿using RentoX.Domain.Common;
 using RentoX.Domain.Common.Exceptions;
 
 namespace RentoX.Domain.Settings;
@@ -20,6 +20,9 @@ public sealed class SettingsVersion : Entity
 
     public const int DefaultListingPhotos = 15;
 
+    /// <summary>The most new listings one person may create in a day (0: no limit).</summary>
+    public const int MaximumNewListingsPerDay = 200;
+
     private SettingsVersion()
     {
     }
@@ -28,10 +31,22 @@ public sealed class SettingsVersion : Entity
         Guid id,
         int listingLifetimeDays,
         int maxListingPhotos,
+        int minListingPhotos,
+        int maxNewListingsPerDay,
         Guid createdByUserId,
         DateTimeOffset createdAtUtc)
         : base(id)
     {
+        if (minListingPhotos < 0 || minListingPhotos > maxListingPhotos)
+        {
+            throw new DomainException("The least number of photos cannot be more than the most.");
+        }
+
+        if (maxNewListingsPerDay is < 0 or > MaximumNewListingsPerDay)
+        {
+            throw new DomainException($"The daily limit of new listings must be between 0 and {MaximumNewListingsPerDay}.");
+        }
+
         if (maxListingPhotos is < MinimumListingPhotos or > MaximumListingPhotos)
         {
             throw new DomainException(
@@ -56,6 +71,8 @@ public sealed class SettingsVersion : Entity
 
         ListingLifetimeDays = listingLifetimeDays;
         MaxListingPhotos = maxListingPhotos;
+        MinListingPhotos = minListingPhotos;
+        MaxNewListingsPerDay = maxNewListingsPerDay;
         CreatedByUserId = createdByUserId;
         CreatedAtUtc = createdAtUtc;
     }
@@ -66,6 +83,12 @@ public sealed class SettingsVersion : Entity
     /// <summary>How many photos one listing may have.</summary>
     public int MaxListingPhotos { get; private set; }
 
+    /// <summary>How many photos a listing needs before it can be sent for review (0: none needed).</summary>
+    public int MinListingPhotos { get; private set; }
+
+    /// <summary>How many new listings one person may create in a day (0: no limit).</summary>
+    public int MaxNewListingsPerDay { get; private set; }
+
     public Guid CreatedByUserId { get; private set; }
 
     public DateTimeOffset CreatedAtUtc { get; private set; }
@@ -73,7 +96,9 @@ public sealed class SettingsVersion : Entity
     public static SettingsVersion Create(
         int listingLifetimeDays,
         int maxListingPhotos,
+        int minListingPhotos,
+        int maxNewListingsPerDay,
         Guid createdByUserId,
         DateTimeOffset createdAtUtc) =>
-        new(Guid.NewGuid(), listingLifetimeDays, maxListingPhotos, createdByUserId, createdAtUtc);
+        new(Guid.NewGuid(), listingLifetimeDays, maxListingPhotos, minListingPhotos, maxNewListingsPerDay, createdByUserId, createdAtUtc);
 }

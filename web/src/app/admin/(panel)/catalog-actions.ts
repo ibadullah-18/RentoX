@@ -18,6 +18,9 @@ const known: [RegExp, string][] = [
   [/parent category was not found/i, "Üst kateqoriya tapılmadı."],
   [/must remain a selection field/i, "Seçimləri olan sahə seçim tipində qalmalıdır."],
   [/custom values are only valid/i, "Öz dəyər yalnız seçim sahələrində mümkündür."],
+  [/has sub-categories/i, "Bu kateqoriyanın alt kateqoriyaları var: əvvəlcə onları silin və ya köçürün."],
+  [/category has listings/i, "Bu kateqoriyada elan var, silmək olmaz: əvəzinə deaktiv edin."],
+  [/still used elsewhere/i, "Kateqoriya başqa yerdə istifadə olunur, silmək olmaz: əvəzinə deaktiv edin."],
   [/not found/i, "Qeyd tapılmadı."],
   [/duplicate|already/i, "Bu qeyd artıq mövcuddur."],
 ];
@@ -32,7 +35,7 @@ function fail(status: number, message: string): Saved {
 
 async function send(
   path: string,
-  method: "POST" | "PUT" | "PATCH",
+  method: "POST" | "PUT" | "PATCH" | "DELETE",
   body: unknown,
   paths: string[],
 ): Promise<Saved> {
@@ -106,6 +109,12 @@ export async function updateCategory(id: string, input: CategoryInput, periods: 
 export async function setCategoryActive(id: string, isActive: boolean): Promise<Saved> {
   if (!ID.test(id)) return bad;
   return send(`/api/admin/categories/${id}/status`, "PATCH", { isActive }, ["/admin/kateqoriyalar", `/admin/kateqoriyalar/${id}`]);
+}
+
+/** Deletes a category for good: only one with no listing and no sub-category. */
+export async function deleteCategory(id: string): Promise<Saved> {
+  if (!ID.test(id)) return bad;
+  return send(`/api/admin/categories/${id}`, "DELETE", undefined, ["/admin/kateqoriyalar"]);
 }
 
 export type FieldInput = {

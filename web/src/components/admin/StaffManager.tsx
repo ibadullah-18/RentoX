@@ -239,7 +239,7 @@ function SectionsEditor({
             ))}
           </div>
           <p className="text-xs text-ink-2">
-            Heç nə seçilməsə və ya hamısı seçilsə, hər bölmə açıqdır. Dəyişiklik şəxsin sessiyasını bağlayır, yenidən daxil olmalıdır.
+            Heç nə seçilməsə və ya adi bölmələrin hamısı seçilsə, hər adi bölmə açıqdır. «Kadr» və «Brend» isə yalnız açıq seçilən şəxsə verilir. Dəyişiklik şəxsin sessiyasını bağlayır, yenidən daxil olmalıdır.
           </p>
           <button
             type="button"

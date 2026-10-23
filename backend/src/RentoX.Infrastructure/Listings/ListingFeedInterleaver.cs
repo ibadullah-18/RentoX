@@ -5,8 +5,13 @@ namespace RentoX.Infrastructure.Listings;
 /// not push everything else out of sight: every round shows up to
 /// <see cref="VipPerRound"/> VIP listings, then up to
 /// <see cref="BumpedPerRound"/> recently bumped ones, then up to
-/// <see cref="PlainPerRound"/> plain ones, and the round repeats. A kind
-/// that has run out is skipped, so nothing is ever left a gap.
+/// <see cref="PlainPerRound"/> plain ones, and the round repeats.
+///
+/// VIP listings come round again: while there are still bumped or plain listings to show, the VIP slots of every
+/// round keep being filled, and when the last VIP listing has been shown the next VIP slot shows the first one
+/// again. So the paid places never go empty as the visitor scrolls down. A round never shows the same VIP listing
+/// twice (with 2 VIP listings, a round has 2 VIP slots, not 4). When nothing else is left, each VIP listing that has
+/// not been shown yet is shown once, and the feed ends. Bumped and plain listings are never repeated.
 /// </summary>
 public static class ListingFeedInterleaver
 {
@@ -22,14 +27,14 @@ public static class ListingFeedInterleaver
     public const int Plain = 2;
 
     /// <summary>
-    /// Which kind sits at each position of the page, and how many of each
-    /// kind come before the page (so each kind can be fetched with its own
-    /// skip/take).
+    /// For each position of the page: which kind of listing sits there, and which one of that kind (its place in the
+    /// list of that kind, starting at 0; a VIP place that came round again points to the first ones). [Total] is how
+    /// many positions the whole feed has, repeats included (this is what the number of pages is made from).
     /// </summary>
     public sealed record Plan(
         IReadOnlyList<int> Page,
-        int[] SkipPerKind,
-        int[] TakePerKind);
+        IReadOnlyList<int> Indices,
+        int Total);
 
     public static Plan Build(
         int vipCount,
@@ -42,42 +47,71 @@ public static class ListingFeedInterleaver
         ArgumentOutOfRangeException.ThrowIfNegative(skip);
         ArgumentOutOfRangeException.ThrowIfNegative(take);
 
-        int[] available = [vipCount, bumpedCount, plainCount];
         int[] perRound = round ?? [VipPerRound, BumpedPerRound, PlainPerRound];
-        int[] skipped = [0, 0, 0];
-        int[] taken = [0, 0, 0];
-        List<int> page = [];
 
-        int end = skip + take;
+        int bumpedLeft = bumpedCount;
+        int plainLeft = plainCount;
+        int bumpedUsed = 0;
+        int plainUsed = 0;
+        long vipPlace = 0;
         int position = 0;
+        int end = skip + take;
 
-        while (position < end &&
-               (available[Vip] > 0 ||
-                available[Bumped] > 0 ||
-                available[Plain] > 0))
+        List<int> kinds = [];
+        List<int> indices = [];
+
+        void Add(int kind, int index)
         {
-            for (int kind = 0; kind < 3 && position < end; kind++)
+            if (position >= skip && position < end)
             {
-                int quota = Math.Min(perRound[kind], available[kind]);
-
-                for (int i = 0; i < quota && position < end; i++)
-                {
-                    if (position < skip)
-                    {
-                        skipped[kind]++;
-                    }
-                    else
-                    {
-                        page.Add(kind);
-                        taken[kind]++;
-                    }
-
-                    available[kind]--;
-                    position++;
-                }
+                kinds.Add(kind);
+                indices.Add(index);
             }
+
+            position++;
         }
 
-        return new Plan(page, skipped, taken);
+        while (true)
+        {
+            bool othersLeft = bumpedLeft > 0 || plainLeft > 0;
+
+            int vipTake = vipCount == 0
+                ? 0
+                : othersLeft
+                    ? Math.Min(perRound[Vip], vipCount)
+                    : (int)Math.Min(perRound[Vip], Math.Max(0, vipCount - vipPlace));
+            int bumpedTake = Math.Min(perRound[Bumped], bumpedLeft);
+            int plainTake = Math.Min(perRound[Plain], plainLeft);
+
+            if (vipTake == 0 && bumpedTake == 0 && plainTake == 0)
+            {
+                break;
+            }
+
+            for (int i = 0; i < vipTake; i++)
+            {
+                Add(Vip, (int)((vipPlace + i) % vipCount));
+            }
+
+            vipPlace += vipTake;
+
+            for (int i = 0; i < bumpedTake; i++)
+            {
+                Add(Bumped, bumpedUsed + i);
+            }
+
+            bumpedUsed += bumpedTake;
+            bumpedLeft -= bumpedTake;
+
+            for (int i = 0; i < plainTake; i++)
+            {
+                Add(Plain, plainUsed + i);
+            }
+
+            plainUsed += plainTake;
+            plainLeft -= plainTake;
+        }
+
+        return new Plan(kinds, indices, position);
     }
 }

@@ -9,6 +9,8 @@ const nextConfig: NextConfig = {
   // A self-contained server folder (.next/standalone) for the Docker image.
   output: "standalone",
   // A second copy of the site (another port) needs its own build folder.
+  // Going back returns to the same place on the page.
+  experimental: { scrollRestoration: true },
   distDir: process.env.NEXT_DIST_DIR ?? ".next",
   turbopack: {
     rules: {

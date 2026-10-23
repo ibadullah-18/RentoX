@@ -70,6 +70,7 @@ export const adminNav: AdminNavGroup[] = [
     title: "Sistem",
     items: [
       { id: "staff", sub: "/isciler", label: "İşçilər və icazələr", icon: "staff", superOnly: true },
+      { id: "branding", sub: "/brend", label: "Brend: loqo, ikon, ad", icon: "pages", section: "branding" },
       { id: "audit", sub: "/audit", label: "Əməliyyat tarixçəsi", icon: "audit", superOnly: true },
     ],
   },

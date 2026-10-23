@@ -79,6 +79,8 @@ flutter:
 
   assets:
     - assets/brand/tag_mark.png
+    - assets/brand/logo.png
+    - assets/brand/logo_dark.png
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
@@ -113,10 +115,10 @@ flutter_launcher_icons:
   android: true
   ios: true
   remove_alpha_ios: true
-  adaptive_icon_background: "#4F42FC"
+  adaptive_icon_background: "#1D5BFE"
   adaptive_icon_foreground: "assets/brand/app_icon.png"
   web:
     generate: true
     image_path: "assets/brand/app_icon.png"
     background_color: "#F6F5FF"
-    theme_color: "#5B4BFF"
+    theme_color: "#1D5BFE"

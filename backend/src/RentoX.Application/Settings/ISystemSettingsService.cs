@@ -1,7 +1,11 @@
-namespace RentoX.Application.Settings;
+﻿namespace RentoX.Application.Settings;
 
 /// <summary>The settings in force. Add a field here (and to the version) for the next adjustable value.</summary>
-public sealed record SystemSettingsValues(int ListingLifetimeDays, int MaxListingPhotos = 15);
+public sealed record SystemSettingsValues(
+    int ListingLifetimeDays,
+    int MaxListingPhotos = 15,
+    int MinListingPhotos = 0,
+    int MaxNewListingsPerDay = 0);
 
 public sealed record SystemSettingsHistoryItem(
     Guid Id,

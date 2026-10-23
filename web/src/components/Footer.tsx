@@ -1,27 +1,18 @@
 import { getT } from "@/lib/i18n/server";
 import Link from "next/link";
+import { PAGE_PATH } from "@/lib/site-pages";
 import type { ComponentType } from "react";
 import { Headset, Mail, Phone } from "lucide-react";
 import { Logo } from "./Logo";
 import { FacebookIcon, InstagramIcon, TikTokIcon, WhatsAppIcon } from "./SocialIcons";
-import { getPageList, getSiteInfo } from "@/lib/api";
-
-/** The page behind each fixed page of the site. */
-const PAGE_PATH: Record<string, string> = {
-  about: "/haqqimizda",
-  terms: "/sertler",
-  privacy: "/mexfilik",
-  cooperation: "/emekdasliq",
-  rules: "/qaydalar",
-  faq: "/suallar",
-};
+import { getBranding, getPageList, getSiteInfo } from "@/lib/api";
 
 /** The numbers and addresses a link can be made from. */
 const digits = (value: string) => value.replace(/[^\d+]/g, "");
 
 export async function Footer() {
   const t = await getT();
-  const [pages, info] = await Promise.all([getPageList(), getSiteInfo()]);
+  const [pages, info, branding] = await Promise.all([getPageList(), getSiteInfo(), getBranding()]);
 
   // A channel that is not filled in is simply not here.
   type Contact = { key: string; icon: ComponentType<{ className?: string }>; label: string; href: string; title: string };
@@ -45,9 +36,9 @@ export async function Footer() {
       <div className="mx-auto grid max-w-[1240px] gap-8 px-4 py-8 text-sm text-ink-2 md:grid-cols-[1.3fr_1fr_1fr] md:px-6">
         <div className="space-y-3">
           <div className="flex items-center gap-3">
-            <Logo />
+            <Logo variant="footer" />
           </div>
-          <p>{t("Kirayə elanları — hər şey bir yerdə")}</p>
+          <p>{branding.footerText ?? t("Kirayə elanları — hər şey bir yerdə")}</p>
           {(info.operatorName || info.voen) && (
             <p className="text-xs">
               {info.operatorName}
@@ -118,7 +109,7 @@ export async function Footer() {
       <div className="border-t border-line">
         <div className="mx-auto max-w-[1240px] px-4 py-6 text-center md:px-6">
           <p className="text-xs text-ink-2">
-            © {new Date().getFullYear()} RentoX. {t("Bütün hüquqlar qorunur.")}
+            © {new Date().getFullYear()} {branding.siteName}. {t("Bütün hüquqlar qorunur.")}
           </p>
           <a
             href="https://www.linkedin.com/in/ibadulla-huseynzade/"

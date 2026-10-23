@@ -1,5 +1,6 @@
 "use client";
 
+import { BrandMark } from "@/components/BrandMark";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
@@ -68,11 +69,14 @@ export function AdminShell({
   badges,
   who,
   workDay,
+  brand,
   children,
 }: {
   groups: AdminNavGroup[];
   badges: Record<string, number>;
   who: { name: string; role: string };
+  /** The logo as the owner set it (the same pictures as on the site). */
+  brand: { light: string; dark: string; name: string; text: boolean };
   /** A staff member's day (start and finish); null for the owner. */
   workDay?: MyDay | null;
   children: React.ReactNode;
@@ -107,9 +111,9 @@ export function AdminShell({
   const menu = (
     <nav aria-label="Admin" className="flex h-full flex-col">
       <div className="flex items-center justify-between px-4 py-4">
-        <Link href={adminHref()} className="text-lg font-extrabold tracking-tight">
-          rento<span className="text-primary">x</span>
-          <span className="ml-2 rounded-md bg-primary-soft px-1.5 py-0.5 text-[10px] font-bold uppercase text-primary">admin</span>
+        <Link href={adminHref()} className="flex items-center gap-2 text-lg font-extrabold tracking-tight">
+          <BrandMark light={brand.light} dark={brand.dark} name={brand.name} height={32} text={brand.text} />
+          <span className="rounded-md bg-primary-soft px-1.5 py-0.5 text-[10px] font-bold uppercase text-primary">admin</span>
         </Link>
         <button
           type="button"
@@ -206,8 +210,9 @@ export function AdminShell({
         >
           <Menu className="size-5" />
         </button>
-        <span className="font-extrabold tracking-tight">
-          rento<span className="text-primary">x</span> <span className="text-xs font-bold uppercase text-primary">admin</span>
+        <span className="flex items-center gap-2 font-extrabold tracking-tight">
+          <BrandMark light={brand.light} dark={brand.dark} name={brand.name} height={30} text={brand.text} />
+          <span className="text-xs font-bold uppercase text-primary">admin</span>
         </span>
       </header>
 

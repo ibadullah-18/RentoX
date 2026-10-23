@@ -87,6 +87,7 @@ export async function verifyCode(input: {
   code: string;
   isRegistration: boolean;
   fullName?: string;
+  agreed?: boolean;
 }): Promise<Verified> {
   const code = input.code.replace(/\D/g, "");
   if (code.length !== 6) return { ok: false, message: await tr("6 rəqəmli kodu yazın.") };
@@ -94,6 +95,11 @@ export async function verifyCode(input: {
   const name = input.fullName?.trim() ?? "";
   if (input.isRegistration && (name.length < 2 || name.length > 100)) {
     return { ok: false, message: await tr("Adınızı yazın (2–100 hərf).") };
+  }
+
+  // A new account is made only by someone who accepted the terms.
+  if (input.isRegistration && !input.agreed) {
+    return { ok: false, message: await tr("Qeydiyyat üçün şərtlərlə razılaşmalısınız.") };
   }
 
   try {

@@ -33,7 +33,7 @@ export async function Header({
   return (
     <header className="sticky top-0 z-50 border-b border-line bg-bg">
       <div className="mx-auto flex max-w-[1240px] flex-wrap items-center gap-x-3 gap-y-2.5 px-4 py-2.5 md:flex-nowrap md:px-6">
-        <Logo className="order-1" />
+        <Logo variant="header" className="order-1" />
 
         <Suspense fallback={<div className="order-4 h-11 w-full md:order-2 md:h-10 md:w-auto md:flex-1" />}>
           <SearchBox className="order-4 w-full md:order-2 md:w-auto md:flex-1" />

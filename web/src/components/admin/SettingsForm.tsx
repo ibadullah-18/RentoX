@@ -11,10 +11,14 @@ const input =
   "h-10 w-full rounded-lg border border-line bg-surface px-3 text-[15px] outline-none focus:border-primary disabled:opacity-60";
 
 /** The adjustable settings; saving puts them in force at once and keeps the old ones in the history. */
-export function SettingsForm({ current }: { current: { listingLifetimeDays: number; maxListingPhotos: number } }) {
+type Current = { listingLifetimeDays: number; maxListingPhotos: number; minListingPhotos?: number; maxNewListingsPerDay?: number };
+
+export function SettingsForm({ current }: { current: Current }) {
   const router = useRouter();
   const [days, setDays] = useState(String(current.listingLifetimeDays));
   const [photos, setPhotos] = useState(String(current.maxListingPhotos ?? 15));
+  const [least, setLeast] = useState(String(current.minListingPhotos ?? 0));
+  const [perDay, setPerDay] = useState(String(current.maxNewListingsPerDay ?? 0));
   const [asking, setAsking] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -22,13 +26,24 @@ export function SettingsForm({ current }: { current: { listingLifetimeDays: numb
 
   const parsed = Number(days);
   const parsedPhotos = Number(photos);
-  const changed = parsed !== current.listingLifetimeDays || parsedPhotos !== (current.maxListingPhotos ?? 15);
+  const parsedLeast = Number(least);
+  const parsedPerDay = Number(perDay);
+  const changed =
+    parsed !== current.listingLifetimeDays ||
+    parsedPhotos !== (current.maxListingPhotos ?? 15) ||
+    parsedLeast !== (current.minListingPhotos ?? 0) ||
+    parsedPerDay !== (current.maxNewListingsPerDay ?? 0);
 
   async function save() {
     setBusy(true);
     setError(null);
     setDone(false);
-    const res = await saveSettings({ listingLifetimeDays: parsed, maxListingPhotos: parsedPhotos });
+    const res = await saveSettings({
+      listingLifetimeDays: parsed,
+      maxListingPhotos: parsedPhotos,
+      minListingPhotos: parsedLeast,
+      maxNewListingsPerDay: parsedPerDay,
+    });
     setBusy(false);
     setAsking(false);
     if (res.ok) {
@@ -86,6 +101,46 @@ export function SettingsForm({ current }: { current: { listingLifetimeDays: numb
         </span>
       </label>
 
+      <label className="block max-w-sm">
+        <span className="mb-1 block text-sm font-bold">Göndərmək üçün ən az şəkil</span>
+        <div className="flex items-center gap-2">
+          <input
+            value={least}
+            onChange={(e) => {
+              setLeast(e.target.value);
+              setDone(false);
+            }}
+            inputMode="numeric"
+            disabled={busy}
+            className={input}
+          />
+          <span className="w-10 shrink-0 text-sm text-ink-2">şəkil</span>
+        </div>
+        <span className="mt-1 block text-xs text-ink-2">
+          Elan yoxlamaya göndərilməzdən əvvəl ən azı bu qədər şəkli olmalıdır. 0: şəkil məcburi deyil. Şəkilsiz elanların qarşısını almaq üçün 1 və ya 2 yaxşıdır.
+        </span>
+      </label>
+
+      <label className="block max-w-sm">
+        <span className="mb-1 block text-sm font-bold">Bir nəfərin gündəlik yeni elan limiti</span>
+        <div className="flex items-center gap-2">
+          <input
+            value={perDay}
+            onChange={(e) => {
+              setPerDay(e.target.value);
+              setDone(false);
+            }}
+            inputMode="numeric"
+            disabled={busy}
+            className={input}
+          />
+          <span className="w-10 shrink-0 text-sm text-ink-2">elan</span>
+        </div>
+        <span className="mt-1 block text-xs text-ink-2">
+          Bir istifadəçi son 24 saatda ən çoxu bu qədər yeni elan yarada bilər (spamın qarşısını alır). 0: məhdudiyyət yoxdur.
+        </span>
+      </label>
+
       <p className="rounded-lg bg-warning-soft px-3 py-2 text-xs text-ink">
         Yeni müddət yalnız bundan sonra dərc olunan və ya yenilənən elanlara tətbiq olunur. Artıq yayımda olan elanların bitmə tarixi dəyişmir.
       </p>
@@ -110,7 +165,7 @@ export function SettingsForm({ current }: { current: { listingLifetimeDays: numb
       <ConfirmDialog
         open={asking}
         title="Ayar dəyişdirilsin?"
-        message={`Elan müddəti ${parsed} gün, elandakı şəkil sayı ${parsedPhotos} olacaq. Müddət yeni dərc olunan və yenilənən elanlara, şəkil sayı isə yeni yüklənən şəkillərə tətbiq olunacaq.`}
+        message={`Elan müddəti ${parsed} gün, elandakı şəkil sayı ${parsedPhotos}, göndərmək üçün ən az şəkil ${parsedLeast}, gündəlik elan limiti ${parsedPerDay === 0 ? "yoxdur" : parsedPerDay} olacaq. Müddət yeni dərc olunan və yenilənən elanlara, şəkil sayı isə yeni yüklənən şəkillərə tətbiq olunacaq.`}
         confirmLabel="Dəyişdir"
         busy={busy}
         onClose={() => setAsking(false)}

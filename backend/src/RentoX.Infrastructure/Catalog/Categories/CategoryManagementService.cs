@@ -141,6 +141,36 @@ public sealed class CategoryManagementService(
         return CreateResult(category);
     }
 
+    public async Task DeleteAsync(
+        Guid categoryId,
+        CancellationToken cancellationToken = default)
+    {
+        Category category =
+            await dbContext.Categories
+                .SingleOrDefaultAsync(item => item.Id == categoryId, cancellationToken)
+            ?? throw new DomainException("Category was not found.");
+
+        if (await dbContext.Categories.AnyAsync(item => item.ParentId == categoryId, cancellationToken))
+        {
+            throw new DomainException("The category has sub-categories: delete or move them first.");
+        }
+
+        if (await dbContext.Listings.AnyAsync(item => item.CategoryId == categoryId, cancellationToken))
+        {
+            throw new DomainException("The category has listings: deactivate it instead of deleting.");
+        }
+
+        dbContext.Categories.Remove(category);
+        try
+        {
+            await dbContext.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateException)
+        {
+            throw new DomainException("The category is still used elsewhere: deactivate it instead of deleting.");
+        }
+    }
+
     public async Task SetActiveStatusAsync(
         Guid categoryId,
         bool isActive,

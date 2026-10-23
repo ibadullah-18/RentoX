@@ -13,6 +13,20 @@ export function isChatOpen(pathname: string): boolean {
   return /^\/mesajlar\/[^/]+/.test(pathname) || /^\/destek\/(?!yeni(\/|$))[^/]+/.test(pathname);
 }
 
+/**
+ * Pages that have their own action at the bottom (a listing's call and message buttons, a form's send button) or that
+ * are a single task (signing in): on a phone the bottom bar steps aside there.
+ */
+export function hidesBottomBar(pathname: string): boolean {
+  return (
+    isChatOpen(pathname) ||
+    /^\/(listing|giris|yeni-elan|sikayet)(\/|$)/.test(pathname) ||
+    /^\/destek\/yeni(\/|$)/.test(pathname) ||
+    /^\/kabinet\/profil(\/|$)/.test(pathname) ||
+    /^\/elanlarim\/[^/]+\/redakte(\/|$)/.test(pathname)
+  );
+}
+
 /** The footer is for reading pages, not for a chat window. */
 export function FooterGate({ children }: { children: React.ReactNode }) {
   return isChatRoute(usePathname()) ? null : children;

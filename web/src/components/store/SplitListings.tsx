@@ -13,8 +13,10 @@ const REGULAR_FIRST = 6;
  */
 export async function SplitListings({ items }: { items: ListingSummary[] }) {
   const t = await getT();
-  const vip = items.filter((l) => l.isVip);
-  const regular = items.filter((l) => !l.isVip);
+  // The feed brings a VIP listing round again; on a store's own page each listing is shown once.
+  const once = items.filter((l, i) => items.findIndex((x) => x.id === l.id) === i);
+  const vip = once.filter((l) => l.isVip);
+  const regular = once.filter((l) => !l.isVip);
   const labels = { showAll: t("Hamısını göstər"), showLess: t("Daha az göstər") };
 
   return (

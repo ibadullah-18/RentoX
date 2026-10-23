@@ -8,8 +8,10 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { ChevronRight, Heart, LifeBuoy, ShieldCheck, ListChecks, LogOut, MessageCircle, Plus, Store, Wallet, Pencil } from "lucide-react";
+import { ChevronRight, Heart, Info, LifeBuoy, ShieldCheck, ListChecks, LogOut, MessageCircle, Plus, Store, Wallet, Pencil } from "lucide-react";
 import { logout } from "@/app/giris/actions";
+import { getPageList } from "@/lib/api";
+import { PAGE_PATH } from "@/lib/site-pages";
 import { getAccount, getMyStore, getWallet } from "@/lib/personal";
 import { formatNumber } from "@/lib/format";
 import { getSession, isAdmin } from "@/lib/session";
@@ -25,7 +27,8 @@ export default async function CabinetPage() {
   const theme = await getTheme();
   if (!session) redirect("/giris?next=/kabinet");
 
-  const [account, wallet, store, admin] = await Promise.all([getAccount(), getWallet(), getMyStore(), isAdmin()]);
+  const [account, wallet, store, admin, pages] = await Promise.all([getAccount(), getWallet(), getMyStore(), isAdmin(), getPageList()]);
+  const infoPages = pages.filter((p) => PAGE_PATH[p.slug]);
   if (!account.ok && account.status === 401) redirect("/giris?next=/kabinet");
 
   const name = account.ok ? account.data.fullName : "";
@@ -136,6 +139,19 @@ export default async function CabinetPage() {
           <ChevronRight className="size-5 text-ink-2" aria-hidden />
         </Link>
       </nav>
+
+      {infoPages.length > 0 && (
+        <nav aria-label={t("Sayt haqqında")} className="overflow-hidden rounded-xl border border-line bg-surface">
+          <h2 className="border-b border-line px-4 py-2.5 text-sm font-extrabold text-ink-2">{t("Sayt haqqında")}</h2>
+          {infoPages.map((p) => (
+            <Link key={p.slug} href={PAGE_PATH[p.slug]} className={row}>
+              <Info className="size-5 text-primary" aria-hidden />
+              <span className="flex-1 font-semibold">{p.title}</span>
+              <ChevronRight className="size-5 text-ink-2" aria-hidden />
+            </Link>
+          ))}
+        </nav>
+      )}
 
       <section className="overflow-hidden rounded-xl border border-line bg-surface">
         <div className="flex items-center gap-3 border-b border-line px-4 py-2.5">

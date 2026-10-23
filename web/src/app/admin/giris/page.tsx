@@ -1,3 +1,5 @@
+import { BrandMark } from "@/components/BrandMark";
+import { brandLogos, getBranding } from "@/lib/api";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { ShieldCheck } from "lucide-react";
@@ -16,14 +18,16 @@ function safeNext(value: string | string[] | undefined): string {
 export default async function AdminLoginPage({ searchParams }: PageProps<"/admin/giris">) {
   const next = safeNext((await searchParams).next);
   if (await isAdmin()) redirect(next);
+  const branding = await getBranding();
+  const logos = brandLogos(branding, "header");
 
   return (
     <div className="flex min-h-dvh items-center justify-center bg-bg px-4 py-10">
       <div className="w-full max-w-sm">
         <div className="mb-6 text-center">
-          <p className="text-3xl font-extrabold tracking-tight">
-            rento<span className="text-primary">x</span>
-          </p>
+          <div className="flex justify-center">
+            <BrandMark light={logos.light} dark={logos.dark} name={branding.siteName} height={56} text={branding.useTextLogo} />
+          </div>
           <p className="mt-1 flex items-center justify-center gap-1.5 text-sm font-bold text-ink-2">
             <ShieldCheck className="size-4 text-primary" aria-hidden />
             İdarəetmə paneli

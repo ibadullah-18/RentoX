@@ -27,6 +27,7 @@ export default async function CategoriesPage() {
             <li key={c.id}>
               <Link
                 href={`/search?category=${c.id}`}
+                data-tilt
                 className={`flex aspect-square flex-col items-center justify-center gap-2 rounded-xl p-2 text-center transition-transform hover:-translate-y-0.5 ${tints[i % tints.length]}`}
               >
                 <CategoryIcon slug={c.slug} iconUrl={c.iconUrl} className="size-8" />

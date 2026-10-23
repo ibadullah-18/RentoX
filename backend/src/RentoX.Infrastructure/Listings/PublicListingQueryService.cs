@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using RentoX.Application.Abstractions.Time;
 using RentoX.Application.Common;
 using RentoX.Application.Listings;
@@ -760,8 +760,6 @@ public sealed class PublicListingQueryService(
             int bumpedCount = await bumpedQuery.CountAsync(cancellationToken);
             int plainCount = await plainQuery.CountAsync(cancellationToken);
 
-            totalCount = vipCount + bumpedCount + plainCount;
-
             ListingFeedInterleaver.Plan plan =
                 ListingFeedInterleaver.Build(
                     vipCount,
@@ -771,18 +769,32 @@ public sealed class PublicListingQueryService(
                     query.PageSize,
                     query.WideFeed ? ListingFeedInterleaver.WideRound : null);
 
+            // VIP listings come round again, so the feed is longer than the number of listings.
+            totalCount = plan.Total;
+
             IQueryable<Listing>[] kinds =
                 [vipQuery, bumpedQuery, plainQuery];
 
-            List<ListingProjection>[] fetched =
-                new List<ListingProjection>[3];
+            // What the page needs of each kind: its places in the list of that kind (a VIP place that came round
+            // again points to the start of the list), fetched as a few runs of neighbours.
+            Dictionary<int, ListingProjection>[] fetched =
+                [[], [], []];
 
             for (int kind = 0; kind < 3; kind++)
             {
-                fetched[kind] =
-                    plan.TakePerKind[kind] == 0
-                        ? []
-                        : await kinds[kind]
+                int[] wanted =
+                    plan.Page
+                        .Select((k, i) => (Kind: k, Index: plan.Indices[i]))
+                        .Where(slot => slot.Kind == kind)
+                        .Select(slot => slot.Index)
+                        .Distinct()
+                        .Order()
+                        .ToArray();
+
+                foreach ((int start, int length) in Runs(wanted))
+                {
+                    List<ListingProjection> run =
+                        await kinds[kind]
                             .OrderByDescending(listing =>
                                 dbContext.ListingPromotions
                                     .Where(promotion =>
@@ -795,20 +807,25 @@ public sealed class PublicListingQueryService(
                                         (DateTimeOffset?)promotion.StartsAtUtc)
                                 ?? listing.PublishedAtUtc)
                             .ThenByDescending(listing => listing.Id)
-                            .Skip(plan.SkipPerKind[kind])
-                            .Take(plan.TakePerKind[kind])
+                            .Skip(start)
+                            .Take(length)
                             .Select(ProjectListing)
                             .ToListAsync(cancellationToken);
+
+                    for (int i = 0; i < run.Count; i++)
+                    {
+                        fetched[kind][start + i] = run[i];
+                    }
+                }
             }
 
-            int[] next = [0, 0, 0];
             projections = [];
 
-            foreach (int kind in plan.Page)
+            for (int i = 0; i < plan.Page.Count; i++)
             {
-                if (next[kind] < fetched[kind].Count)
+                if (fetched[plan.Page[i]].TryGetValue(plan.Indices[i], out ListingProjection? found))
                 {
-                    projections.Add(fetched[kind][next[kind]++]);
+                    projections.Add(found);
                 }
             }
         }
@@ -990,6 +1007,24 @@ public sealed class PublicListingQueryService(
                 query.PageSize,
                 totalCount,
                 totalPages);
+    }
+
+    /// <summary>Sorted places in a list as runs of neighbours: [3,4,5,9] becomes (3,3) and (9,1).</summary>
+    private static IEnumerable<(int Start, int Length)> Runs(int[] sorted)
+    {
+        int i = 0;
+        while (i < sorted.Length)
+        {
+            int start = sorted[i];
+            int length = 1;
+            while (i + length < sorted.Length && sorted[i + length] == start + length)
+            {
+                length++;
+            }
+
+            yield return (start, length);
+            i += length;
+        }
     }
 
     private const int MaximumFieldFilters = 15;

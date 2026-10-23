@@ -126,6 +126,17 @@ public sealed class AdminCategoriesController(
         return NoContent();
     }
 
+    /// <summary>Deletes a category that has no listing and no sub-category.</summary>
+    [HttpDelete("{categoryId:guid}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> DeleteAsync(Guid categoryId, CancellationToken cancellationToken)
+    {
+        await categoryManagementService.DeleteAsync(categoryId, cancellationToken);
+        return NoContent();
+    }
+
     [HttpPatch("{categoryId:guid}/status")]
     [ProducesResponseType(
     StatusCodes.Status204NoContent)]

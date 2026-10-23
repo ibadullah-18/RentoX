@@ -210,4 +210,5 @@ export const PANEL_SECTIONS: { id: string; label: string }[] = [
   { id: "users", label: "İstifadəçilər (blok daxil)" },
   { id: "finance", label: "Maliyyə rəqəmləri" },
   { id: "hr", label: "Kadr (işçilərin gəlişi, icazələri, müraciətləri)" },
+  { id: "branding", label: "Brend və sayt ayarları (loqo, ad, elan xəbərdarlığı, hərəkət)" },
 ];

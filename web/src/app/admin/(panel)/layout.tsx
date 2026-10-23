@@ -7,6 +7,7 @@ import { getDashboard, requireAdmin } from "@/lib/admin";
 import { getReportCounts } from "@/lib/admin-reports";
 import type { LeaveRequest, MyDay, StaffRequest } from "@/lib/admin-hr";
 import { authed } from "@/lib/authed";
+import { brandLogos, getBranding } from "@/lib/api";
 import { canSeeHr, getRoles, getSections } from "@/lib/session";
 
 export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
@@ -58,15 +59,21 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
         (i) =>
           (!i.superOnly || isSuper) &&
           (!i.selfOnly || !isSuper) &&
-          // The staff section is only ever given on purpose; "no section chosen" does not include it.
-          (!i.section || (i.section === "hr" ? isSuper || (sections?.includes("hr") ?? false) : sections === null || sections.includes(i.section))),
+          // The staff and branding sections are only ever given on purpose; "no section chosen" does not include them.
+          (!i.section ||
+            (i.section === "hr" || i.section === "branding"
+              ? isSuper || (sections?.includes(i.section) ?? false)
+              : sections === null || sections.includes(i.section))),
       ),
     }))
     .filter((g) => g.items.length > 0);
 
+  const branding = await getBranding();
+  const logos = brandLogos(branding, "header");
+
   return (
     <SupportRealtimeProvider>
-      <AdminShell groups={groups} badges={badges} who={{ name: "RentoX", role: isSuper ? "SuperAdmin" : "Admin" }} workDay={workDay && workDay.ok ? workDay.data : null}>
+      <AdminShell brand={{ light: logos.light, dark: logos.dark, name: branding.siteName, text: branding.useTextLogo }} groups={groups} badges={badges} who={{ name: "RentoX", role: isSuper ? "SuperAdmin" : "Admin" }} workDay={workDay && workDay.ok ? workDay.data : null}>
         {children}
       </AdminShell>
     </SupportRealtimeProvider>

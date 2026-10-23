@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Identity;
+﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using RentoX.Application.Abstractions.Authentication;
 using RentoX.Application.Abstractions.Time;
@@ -136,9 +136,9 @@ public sealed class StaffManagementService(
             throw new DomainException("A section is not valid.");
         }
 
-        // Every ordinary section chosen is the same as nothing chosen: all of them. (The staff section is
-        // different: it is only ever given on purpose, so it is not part of "all".)
-        if (wanted.Length == AdminSections.All.Length - 1 && !wanted.Contains(AdminSections.Hr))
+        // Every ordinary section chosen is the same as nothing chosen: all of them. (The staff and branding sections
+        // are different: they are only ever given on purpose, so they are not part of "all".)
+        if (wanted.Length == AdminSections.Ordinary.Count && wanted.All(AdminSections.Ordinary.Contains))
         {
             wanted = [];
         }

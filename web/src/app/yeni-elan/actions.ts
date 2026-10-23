@@ -46,6 +46,14 @@ async function failure(status: number, message: string): Promise<Outcome<never>>
       message: await tr("Serverə qoşulmaq olmadı. İnternetinizi yoxlayın."),
     };
   }
+  const photos = /needs at least (\d+) photos/.exec(message);
+  if (photos) {
+    return { ok: false, unauthorized: false, message: await tr("Elanı göndərmək üçün ən azı {n} şəkil əlavə edin.", { n: Number(photos[1]) }) };
+  }
+  const perDay = /at most (\d+) new listings a day/.exec(message);
+  if (perDay) {
+    return { ok: false, unauthorized: false, message: await tr("Bir gündə ən çoxu {n} yeni elan yarada bilərsiniz. Sabah yenidən cəhd edin.", { n: Number(perDay[1]) }) };
+  }
   // The API's own explanation (English) is shown when it is a clear rule.
   return { ok: false, unauthorized: false, message: message && message !== "unknown" ? message : await tr("Əməliyyat alınmadı. Yenidən cəhd edin.") };
 }

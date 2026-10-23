@@ -10,6 +10,7 @@ export async function StoreTile({ store, vip = false }: { store: StoreCard; vip?
   return (
     <Link
       href={`/store/${store.slug}`}
+      data-tilt
       className={`flex h-full items-start gap-3 rounded-xl border bg-surface p-3 hover:border-primary ${vip ? "border-warning/50" : "border-line"}`}
     >
       <span className="relative flex size-16 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-primary-soft text-primary">

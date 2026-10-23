@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using RentoX.Domain.Settings;
 
@@ -14,6 +14,8 @@ public sealed class SettingsVersionConfiguration : IEntityTypeConfiguration<Sett
 
         builder.Property(s => s.ListingLifetimeDays).IsRequired();
         builder.Property(s => s.MaxListingPhotos).IsRequired();
+        builder.Property(s => s.MinListingPhotos).IsRequired().HasDefaultValue(0);
+        builder.Property(s => s.MaxNewListingsPerDay).IsRequired().HasDefaultValue(0);
         builder.Property(s => s.CreatedByUserId).IsRequired();
         builder.Property(s => s.CreatedAtUtc).IsRequired();
 

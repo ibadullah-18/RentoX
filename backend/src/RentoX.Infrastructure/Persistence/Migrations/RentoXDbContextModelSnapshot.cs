@@ -619,6 +619,93 @@ namespace RentoX.Infrastructure.Persistence.Migrations
                     b.ToTable("home_banners", "content");
                 });
 
+            modelBuilder.Entity("RentoX.Domain.Content.SiteBranding", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("AnnouncementEnabled")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("AnnouncementLink")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.Property<string>("AnnouncementText")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<int>("AnnouncementTone")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("DefaultTheme")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.Property<string>("FooterLogoDarkKey")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.Property<int>("FooterLogoHeight")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(40);
+
+                    b.Property<string>("FooterLogoKey")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.Property<string>("FooterText")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("HeaderLogoDarkKey")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.Property<int>("HeaderLogoHeight")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(40);
+
+                    b.Property<string>("HeaderLogoKey")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.Property<string>("IconKey")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.Property<int>("MotionLevel")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("ShareImageKey")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.Property<string>("SiteName")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)");
+
+                    b.Property<DateTimeOffset>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("UpdatedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("UseTextLogo")
+                        .HasColumnType("boolean");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("site_branding", "content");
+                });
+
             modelBuilder.Entity("RentoX.Domain.Content.SiteInfo", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1913,6 +2000,16 @@ namespace RentoX.Infrastructure.Persistence.Migrations
 
                     b.Property<int>("MaxListingPhotos")
                         .HasColumnType("integer");
+
+                    b.Property<int>("MaxNewListingsPerDay")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0);
+
+                    b.Property<int>("MinListingPhotos")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0);
 
                     b.HasKey("Id");
 

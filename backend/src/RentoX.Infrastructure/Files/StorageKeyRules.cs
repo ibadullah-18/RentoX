@@ -25,6 +25,7 @@ internal static class StorageKeyRules
             FileStorageArea.ChatAttachments => "chat-attachments",
             FileStorageArea.Banners => "banners",
             FileStorageArea.SupportAttachments => "support-attachments",
+            FileStorageArea.Branding => "branding",
             _ => throw new DomainException("Storage area is invalid.")
         };
     }

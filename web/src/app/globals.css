@@ -93,6 +93,39 @@ body {
   font-family: var(--font-sans);
 }
 
+/* The logo: a picture for light pages and one for dark pages; the look of the page decides which one is seen. */
+.rx-logo {
+  display: block;
+  height: min(var(--logo-h, 40px), 56px);
+}
+@media (max-width: 767px) {
+  .rx-logo {
+    height: min(var(--logo-h, 40px), 34px);
+  }
+}
+.rx-logo img {
+  height: 100%;
+  width: auto;
+  max-width: none;
+}
+.rx-logo-dark {
+  display: none;
+}
+:root[data-theme="dark"] .rx-logo-light {
+  display: none;
+}
+:root[data-theme="dark"] .rx-logo-dark {
+  display: block;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]):not([data-theme="dark"]) .rx-logo-light {
+    display: none;
+  }
+  :root:not([data-theme="light"]):not([data-theme="dark"]) .rx-logo-dark {
+    display: block;
+  }
+}
+
 /* Room for the floating bottom bar on phones. */
 @media (max-width: 767px) {
   body {
@@ -187,3 +220,237 @@ body {
 @keyframes dot-fill { from { width: 0; } to { width: 100%; } }
 .dot-fill { animation: dot-fill cubic-bezier(0.37, 0, 0.63, 1) forwards; }
 @media (prefers-reduced-motion: reduce) { .dot-fill { animation: none; width: 100%; } }
+
+/* ==========================================================================
+   Motion. One language for the whole site: things rise out of depth with the
+   same curve and the same timing. Levels (set by the owner): data-motion
+   "full" / "soft" (fades only) / "off"; the device's "reduce motion" always wins.
+   ========================================================================== */
+:root {
+  --ease-out: cubic-bezier(0.25, 1, 0.5, 1);
+  --ease-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-sheet: cubic-bezier(0.32, 0.72, 0, 1);
+  --ease-spring: cubic-bezier(0.34, 1.4, 0.64, 1);
+  --dur-fast: 160ms;
+  --dur-base: 280ms;
+  --dur-slow: 700ms;
+}
+:root[data-motion="soft"] {
+  --ease-spring: var(--ease-out);
+}
+
+/* The entrance: out of the depth, a little tilted, then settled. */
+@keyframes rx-rise {
+  from {
+    opacity: 0;
+    transform: perspective(900px) translate3d(0, 22px, -70px) rotateX(7deg) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes rx-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* A page opens as a burst: its blocks come one after the other, quickly (at most eight steps). */
+/* (A grey loading placeholder, aria-busy, stands still: the real page then bursts in once.) */
+.rx-page > :not([aria-busy]),
+.rx-page > :only-child:not([aria-busy]) > * {
+  animation: rx-rise var(--dur-slow) var(--ease-expo) backwards;
+  animation-delay: calc(var(--i, 0) * 55ms);
+}
+.rx-page > :only-child {
+  animation: none;
+}
+.rx-page > :nth-child(2), .rx-page > :only-child > :nth-child(2) { --i: 1; }
+.rx-page > :nth-child(3), .rx-page > :only-child > :nth-child(3) { --i: 2; }
+.rx-page > :nth-child(4), .rx-page > :only-child > :nth-child(4) { --i: 3; }
+.rx-page > :nth-child(5), .rx-page > :only-child > :nth-child(5) { --i: 4; }
+.rx-page > :nth-child(6), .rx-page > :only-child > :nth-child(6) { --i: 5; }
+.rx-page > :nth-child(7), .rx-page > :only-child > :nth-child(7) { --i: 6; }
+.rx-page > :nth-child(n + 8), .rx-page > :only-child > :nth-child(n + 8) { --i: 7; }
+
+/* Going back: the page is where it was, nothing replays; only a short soft fade. */
+.rx-page[data-nav="back"] {
+  animation: rx-fade var(--dur-fast) var(--ease-out) backwards;
+}
+.rx-page[data-nav="back"] > *,
+.rx-page[data-nav="back"] > :only-child > * {
+  animation: none;
+}
+
+/* Cards that come into view while scrolling rise the same way (where the browser can do it without scripts). */
+@supports (animation-timeline: view()) {
+  .rx-reveal {
+    animation: rx-rise linear backwards;
+    animation-timeline: view();
+    animation-range: entry 0% entry 55%;
+  }
+}
+
+/* Light 3D: a card under the pointer leans towards it. Only with a real mouse; the lean is set by one script. */
+@media (hover: hover) and (pointer: fine) {
+  :root:not([data-motion="soft"]):not([data-motion="off"]) [data-tilt] {
+    transform: perspective(900px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)) translateZ(0);
+    transition:
+      transform var(--dur-base) var(--ease-out),
+      box-shadow var(--dur-base) var(--ease-out);
+  }
+  :root:not([data-motion="soft"]):not([data-motion="off"]) [data-tilt][data-tilting] {
+    transition:
+      transform 90ms linear,
+      box-shadow var(--dur-base) var(--ease-out);
+    box-shadow: 0 14px 30px -14px rgb(27 23 64 / 0.35);
+  }
+}
+
+/* Day and night: the colours melt into each other instead of jumping. */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 380ms;
+  animation-timing-function: var(--ease-out);
+}
+.rx-theming,
+.rx-theming *,
+.rx-theming *::before,
+.rx-theming *::after {
+  transition:
+    background-color 320ms var(--ease-out),
+    border-color 320ms var(--ease-out),
+    color 320ms var(--ease-out),
+    fill 320ms var(--ease-out),
+    stroke 320ms var(--ease-out) !important;
+}
+
+/* While a page is still loading, the footer would jump up under the grey placeholder: it waits. */
+body:has([aria-busy="true"]) > footer {
+  visibility: hidden;
+}
+
+/* The bottom bar of the phone: one shell that stretches from the full bar into a slim "+" and back. */
+.rx-dock {
+  position: fixed;
+  inset-inline: 0.75rem;
+  bottom: 0.75rem;
+  z-index: 40;
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+}
+/* Phone only (written here, outside Tailwind's layers, so it must say so itself). */
+@media (min-width: 768px) {
+  .rx-dock {
+    display: none;
+  }
+}
+.rx-dock-shell {
+  position: relative;
+  overflow: hidden;
+  pointer-events: auto;
+  width: 100%;
+  height: 64px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--surface) 95%, transparent);
+  box-shadow: 0 10px 28px -10px rgb(27 23 64 / 0.35);
+  backdrop-filter: blur(12px);
+  transition:
+    width 560ms var(--ease-spring),
+    height 480ms var(--ease-spring),
+    border-radius 480ms var(--ease-spring),
+    background-color 360ms var(--ease-out),
+    border-color 360ms var(--ease-out),
+    transform 560ms var(--ease-spring);
+}
+.rx-dock[data-collapsed="true"] .rx-dock-shell {
+  width: 56px;
+  height: 36px;
+  border-radius: 12px;
+  border-color: transparent;
+  background: var(--primary);
+}
+/* The row keeps its full width while the shell narrows, so nothing wraps or squeezes: it is only cut off and faded. */
+.rx-dock-row {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: calc(100vw - 1.5rem - 2px);
+  height: 100%;
+  translate: -50% 0;
+  opacity: 1;
+  transition: opacity 260ms var(--ease-out) 160ms;
+}
+.rx-dock[data-collapsed="true"] .rx-dock-row {
+  opacity: 0;
+  transition: opacity 140ms var(--ease-out);
+}
+.rx-dock-plus {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  opacity: 0;
+  scale: 0.6;
+  transition:
+    opacity 120ms var(--ease-out),
+    scale 120ms var(--ease-out);
+}
+.rx-dock[data-collapsed="true"] .rx-dock-plus {
+  opacity: 1;
+  scale: 1;
+  transition:
+    opacity 260ms var(--ease-out) 200ms,
+    scale 420ms var(--ease-spring) 200ms;
+}
+/* While the bar is whole, the items rise one after the other. */
+.rx-dock:not([data-collapsed="true"]) .rx-dock-row > * {
+  animation: rx-rise 460ms var(--ease-expo) backwards;
+  animation-delay: calc(140ms + var(--k, 0) * 40ms);
+}
+
+/* The owner can turn motion down, and so can the device: everything above stands still. */
+:root[data-motion="soft"] .rx-page > *,
+:root[data-motion="soft"] .rx-page > :only-child > *,
+:root[data-motion="soft"] .rx-dock:not([data-collapsed="true"]) .rx-dock-row > * {
+  animation-name: rx-fade;
+}
+:root[data-motion="soft"] .rx-reveal {
+  animation-name: rx-fade;
+}
+:root[data-motion="off"] .rx-page,
+:root[data-motion="off"] .rx-page > *,
+:root[data-motion="off"] .rx-page > :only-child > *,
+:root[data-motion="off"] .rx-reveal,
+:root[data-motion="off"] .rx-dock *,
+:root[data-motion="off"] .rx-dock {
+  animation: none !important;
+  transition: none !important;
+}
+@media (prefers-reduced-motion: reduce) {
+  .rx-page,
+  .rx-page > *,
+  .rx-page > :only-child > *,
+  .rx-reveal,
+  .rx-dock,
+  .rx-dock * {
+    animation: none !important;
+    transition: none !important;
+  }
+  [data-tilt] {
+    transform: none !important;
+  }
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
+}

@@ -20,6 +20,14 @@ public interface ICategoryManagementService
         IReadOnlyCollection<int> periods,
         CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// Deletes a category for good. Only a category with no listing (of any status) and no sub-category can go;
+    /// anything else must be switched off (deactivated) instead.
+    /// </summary>
+    Task DeleteAsync(
+        Guid categoryId,
+        CancellationToken cancellationToken = default);
+
     Task SetActiveStatusAsync(
         Guid categoryId,
         bool isActive,

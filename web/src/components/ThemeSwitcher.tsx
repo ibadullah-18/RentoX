@@ -23,8 +23,21 @@ export function ThemeSwitcher({ initial, buttonClassName }: { initial: Theme; bu
   function choose(next: Theme) {
     setChosen(next);
     const root = document.documentElement;
-    if (next === "auto") root.removeAttribute("data-theme");
-    else root.setAttribute("data-theme", next);
+    const apply = () => {
+      if (next === "auto") root.removeAttribute("data-theme");
+      else root.setAttribute("data-theme", next);
+    };
+    const still = window.matchMedia("(prefers-reduced-motion: reduce)").matches || root.dataset.motion === "off";
+    if (still) apply();
+    else if (typeof document.startViewTransition === "function") {
+      // The browser melts the old look into the new one.
+      document.startViewTransition(apply);
+    } else {
+      // Older browsers: the colours of every part fade for a moment.
+      root.classList.add("rx-theming");
+      apply();
+      window.setTimeout(() => root.classList.remove("rx-theming"), 400);
+    }
     void setTheme(next);
   }
 

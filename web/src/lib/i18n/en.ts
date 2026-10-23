@@ -479,4 +479,9 @@ export const en: Record<string, string> = {
   "Bir mesajda ən çoxu 5 şəkil göndərmək olar.": "At most 5 photos can be sent in one message.",
   "Şəkil göndərilmədi. Yenidən cəhd edin.": "The photo was not sent. Try again.",
   "RentoX tərəfindən hədiyyə": "A gift from RentoX",
+  "{terms} və {privacy} ilə razıyam": "I agree to the {terms} and the {privacy}",
+  "Qeydiyyat üçün şərtlərlə razılaşmalısınız.": "To register you must accept the terms.",
+  "Sayt haqqında": "About the site",
+  "Elanı göndərmək üçün ən azı {n} şəkil əlavə edin.": "Add at least {n} photos before sending the listing.",
+  "Bir gündə ən çoxu {n} yeni elan yarada bilərsiniz. Sabah yenidən cəhd edin.": "You can create at most {n} new listings a day. Try again tomorrow.",
 };

@@ -25,6 +25,7 @@ export async function ListingCard({
     <div className="relative">
     <Link
       href={`/listing/${listing.id}`}
+      data-tilt
       className="group block overflow-hidden rounded-lg bg-surface transition-transform duration-150 active:scale-[0.98]"
     >
       <div className="relative aspect-[4/3] overflow-hidden bg-primary-soft">

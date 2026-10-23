@@ -8,5 +8,6 @@ public enum FileStorageArea
     ProfileImages = 4,
     ChatAttachments = 5,
     Banners = 6,
-    SupportAttachments = 7
+    SupportAttachments = 7,
+    Branding = 8
 }

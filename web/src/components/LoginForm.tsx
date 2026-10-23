@@ -20,6 +20,7 @@ export function LoginForm({ next }: { next: string }) {
   const [phone, setPhone] = useState("");
   const [code, setCode] = useState("");
   const [fullName, setFullName] = useState("");
+  const [agreed, setAgreed] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pending, start] = useTransition();
   const [now, setNow] = useState(() => Date.now());
@@ -66,6 +67,7 @@ export function LoginForm({ next }: { next: string }) {
         code: value,
         isRegistration: step.isRegistration,
         fullName,
+        agreed,
       });
       if (!result.ok) return setError(result.message);
       router.replace(next);
@@ -163,6 +165,34 @@ export function LoginForm({ next }: { next: string }) {
         </label>
       )}
 
+      {step.isRegistration && (
+        <label className="flex items-start gap-2.5 text-sm">
+          <input
+            type="checkbox"
+            checked={agreed}
+            onChange={(e) => setAgreed(e.target.checked)}
+            className="mt-0.5 size-5 shrink-0 accent-[var(--color-primary)]"
+          />
+          <span>
+            {t("{terms} və {privacy} ilə razıyam", { terms: "", privacy: "" })
+              .split(/(|)/)
+              .map((part, i) =>
+                part === "" ? (
+                  <Link key={i} href="/sertler" target="_blank" className="font-semibold text-primary hover:underline">
+                    {t("İstifadə şərtləri")}
+                  </Link>
+                ) : part === "" ? (
+                  <Link key={i} href="/mexfilik" target="_blank" className="font-semibold text-primary hover:underline">
+                    {t("Məxfilik siyasəti")}
+                  </Link>
+                ) : (
+                  part
+                ),
+              )}
+          </span>
+        </label>
+      )}
+
       <label className="block">
         <span className="mb-2 block text-sm font-bold">{t("SMS kodu")}</span>
         <input
@@ -184,7 +214,7 @@ export function LoginForm({ next }: { next: string }) {
 
       {error && <p role="alert" className="text-sm font-semibold text-danger">{error}</p>}
 
-      <button type="submit" disabled={pending || code.length !== 6} className={button}>
+      <button type="submit" disabled={pending || code.length !== 6 || (step.isRegistration && !agreed)} className={button}>
         {pending && <Loader2 className="size-5 animate-spin" aria-hidden />}
         {step.isRegistration ? t("Qeydiyyatdan keç") : t("Daxil ol")}
       </button>
