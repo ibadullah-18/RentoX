@@ -1,4 +1,4 @@
-using System.Security.Claims;
+﻿using System.Security.Claims;
 using RentoX.Application.Authorization;
 using Xunit;
 
@@ -22,15 +22,16 @@ public sealed class AdminSectionsTests
     }
 
     [Fact]
-    public void AnAdminWithNoSectionsChosenKeepsAllOfThemExceptTheStaffOne()
+    public void AnAdminWithNoSectionsChosenKeepsAllOfThemExceptStaffAndBranding()
     {
         ClaimsPrincipal admin = Person(RoleNames.Admin);
 
         Assert.All(
-            AdminSections.All.Where(section => section != AdminSections.Hr),
+            AdminSections.Ordinary,
             section => Assert.True(AdminSections.Allows(admin, section)));
-        // Looking after the staff (their pay and days off) is only ever given on purpose.
+        // Looking after the staff (their pay and days off) and the look of the site are only ever given on purpose.
         Assert.False(AdminSections.Allows(admin, AdminSections.Hr));
+        Assert.False(AdminSections.Allows(admin, AdminSections.Branding));
     }
 
     [Fact]
@@ -41,6 +42,13 @@ public sealed class AdminSectionsTests
 
         Assert.True(AdminSections.Allows(watcher, AdminSections.Hr));
         Assert.False(AdminSections.Allows(other, AdminSections.Hr));
+    }
+
+    [Fact]
+    public void TheBrandingSectionIsAllowedOnlyWhenItIsGiven()
+    {
+        Assert.True(AdminSections.Allows(Person(RoleNames.Admin, AdminSections.Branding), AdminSections.Branding));
+        Assert.False(AdminSections.Allows(Person(RoleNames.Admin, AdminSections.Support), AdminSections.Branding));
     }
 
     [Fact]
@@ -65,12 +73,13 @@ public sealed class AdminSectionsTests
     [Fact]
     public void ASetIsOneNumberAndAnEmptySetMeansAll()
     {
-        int ordinary = (1 << (AdminSections.All.Length - 1)) - 1;
+        int ordinary = AdminSections.ToMask(AdminSections.Ordinary);
 
-        // Nothing chosen is every ordinary section; the staff section is a bit of its own.
+        // Nothing chosen is every ordinary section; the staff and branding sections are bits of their own.
         Assert.Equal(ordinary, AdminSections.ToMask([]));
         Assert.Equal((1 << AdminSections.All.Length) - 1, AdminSections.ToMask(AdminSections.All));
         Assert.NotEqual(ordinary, AdminSections.ToMask(AdminSections.All));
+        Assert.Equal(0b0111_1111, ordinary);
         Assert.Equal(1, AdminSections.ToMask([AdminSections.Listings]));
         Assert.Equal(0b1000, AdminSections.ToMask([AdminSections.Support]));
         Assert.NotEqual(
