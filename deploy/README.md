@@ -91,15 +91,23 @@ docker compose ps          # hamısı "running" / "healthy" olmalıdır, migrate
 curl https://api.rentox.az/health/ready     # {"status":"Ready",...}
 ```
 
-Yeniləmə (yeni kod gələndə):
+Yeniləmə (yeni kod gələndə), **tək əmrlə**:
 
 ```bash
-git pull
-docker compose build
-docker compose up -d       # migrasiya avtomatik işləyir
+bash ~/RentoX/deploy/update.sh
 ```
 
-Qısa dayanma (bir neçə saniyə) olur. Yeniləməni az yükün olduğu saatda edin.
+Skript yeni kodu GitHub-dan çəkir, əvvəlcə yedək götürür, qurur, başladır və saytın işlədiyini yoxlayır. Yeni versiya işləməsə, köhnəsini özü qaytarır. `--force` (yeni kod olmasa da yenidən qur, məsələn `.env` dəyişəndən sonra) və `--no-backup` seçimləri var.
+
+Qısa ad üçün (bir dəfə):
+
+```bash
+chmod +x ~/RentoX/deploy/update.sh && ln -sf ~/RentoX/deploy/update.sh /usr/local/bin/rentox-update
+```
+
+Bundan sonra yenilənmə: `rentox-update`.
+
+Əl ilə (skriptsiz) eyni iş: `git pull && docker compose build && docker compose up -d` (migrasiya avtomatik işləyir). Qısa dayanma (bir neçə saniyə) olur. Yeniləməni az yükün olduğu saatda edin.
 
 ## 4. Yedəkləmə (Cloudflare R2)
 
