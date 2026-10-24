@@ -7,6 +7,7 @@ import { brandImageChanged, resetBrandImage, saveBranding } from "@/app/admin/(p
 import { adminHref } from "@/lib/admin-path";
 import type { Branding } from "@/lib/types";
 import { BrandMark } from "@/components/BrandMark";
+import { useImageEditor } from "@/components/ImageEditor";
 
 const DEFAULT_LOGO = "/brand/logo.png";
 const DEFAULT_LOGO_DARK = "/brand/logo-dark.png";
@@ -39,6 +40,21 @@ export function BrandingForm({ branding }: { branding: Branding }) {
   const router = useRouter();
   const picker = useRef<HTMLInputElement>(null);
   const pickFor = useRef<string | null>(null);
+  const editor = useImageEditor();
+
+  /** The share picture is placed in its frame first (1200x630, as WhatsApp and Facebook show it); logos are never cut. */
+  async function place(slug: string, file: File) {
+    if (slug !== "share-image") return upload(slug, file);
+    const edited = await editor.edit(file, {
+      aspect: 1200 / 630,
+      outWidth: 1200,
+      pro: true,
+      title: "Paylaşım şəklini yerləşdirin",
+      hint: "Keçid WhatsApp, Telegram və Facebook-da belə görünəcək. Yazıları çərçivənin ortasında saxlayın.",
+      previews: [{ label: "Paylaşılan keçiddə", aspect: 1200 / 630, width: 240 }],
+    });
+    if (edited) await upload(slug, edited);
+  }
 
   const [name, setName] = useState(branding.siteName);
   const [footer, setFooter] = useState(branding.footerText ?? "");
@@ -179,6 +195,7 @@ export function BrandingForm({ branding }: { branding: Branding }) {
 
   return (
     <div className="space-y-5">
+      {editor.dialog}
       <input
         ref={picker}
         type="file"
@@ -188,7 +205,7 @@ export function BrandingForm({ branding }: { branding: Branding }) {
           const file = e.target.files?.[0];
           const slug = pickFor.current;
           e.target.value = "";
-          if (file && slug) void upload(slug, file);
+          if (file && slug) void place(slug, file);
         }}
       />
 

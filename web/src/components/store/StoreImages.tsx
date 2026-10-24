@@ -3,9 +3,10 @@
 import { useT } from "@/lib/i18n/client";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
-import { ImagePlus, Loader2, Store, Trash2 } from "lucide-react";
+import { ImagePlus, Loader2, SlidersHorizontal, Store, Trash2 } from "lucide-react";
 import { removeStoreImage } from "@/app/magaza/actions";
 import { StoreRules } from "@/lib/store-form";
+import { fetchPicture, useImageEditor } from "../ImageEditor";
 
 type Kind = "logo" | "cover";
 
@@ -30,6 +31,37 @@ export function StoreImages({
   const [error, setError] = useState<string | null>(null);
   const logoInput = useRef<HTMLInputElement>(null);
   const coverInput = useRef<HTMLInputElement>(null);
+  const editor = useImageEditor();
+
+  /** A chosen picture is first placed in its frame (move, zoom, turn), then sent. */
+  async function pick(kind: Kind, file: File | undefined) {
+    if (!file) return;
+    if (!TYPES.includes(file.type)) return setError(t("Yalnız JPEG, PNG və WebP şəkilləri qəbul olunur."));
+    const edited =
+      kind === "logo"
+        ? await editor.edit(file, {
+            aspect: 1,
+            outWidth: 512,
+            title: t("Loqonu yerləşdirin"),
+            hint: t("Yalnız çərçivənin içi qalır."),
+            previews: [
+              { label: t("Mağaza kartı"), aspect: 1, width: 72 },
+              { label: t("Kiçik"), aspect: 1, width: 36 },
+            ],
+          })
+        : await editor.edit(file, {
+            aspect: 4,
+            outWidth: 1600,
+            title: t("Üz qabığını yerləşdirin"),
+            hint: t("Telefonda kənarlar bir az kəsilir: önəmli hissəni sarı xəttin içində saxlayın."),
+            guides: [{ label: t("Telefon"), aspect: 3 }],
+            previews: [
+              { label: t("Kompüterdə"), aspect: 4, width: 220 },
+              { label: t("Telefonda"), aspect: 3, width: 165 },
+            ],
+          });
+    if (edited) void upload(kind, edited);
+  }
 
   async function upload(kind: Kind, file: File | undefined) {
     if (!file) return;
@@ -56,6 +88,16 @@ export function StoreImages({
     }
   }
 
+  /** The picture that is already there, placed again without choosing a new one. */
+  async function tune(kind: Kind) {
+    setError(null);
+    setBusy(kind);
+    const current = await fetchPicture(`/bff/store-image/${storeId}/${kind}?v=${version}`, kind);
+    setBusy(null);
+    if (!current) return setError(t("Şəkil açılmadı. Başqa şəkil seçin."));
+    await pick(kind, current);
+  }
+
   async function remove(kind: Kind) {
     setBusy(kind);
     setError(null);
@@ -74,6 +116,7 @@ export function StoreImages({
 
   return (
     <div className="space-y-3">
+      {editor.dialog}
       <div className="relative aspect-[3/1] overflow-hidden rounded-xl bg-primary-soft sm:aspect-[4/1]">
         {hasCover ? (
           // eslint-disable-next-line @next/next/no-img-element
@@ -94,6 +137,11 @@ export function StoreImages({
             <ImagePlus className="size-4" aria-hidden />
             {t("Üz qabığı seç")}</button>
           {hasCover && (
+            <button type="button" disabled={busy !== null} onClick={() => tune("cover")} className={button}>
+              <SlidersHorizontal className="size-4" aria-hidden />
+              {t("Düzəlt")}</button>
+          )}
+          {hasCover && (
             <button type="button" disabled={busy !== null} onClick={() => remove("cover")} className={`${button} text-danger`}>
               <Trash2 className="size-4" aria-hidden />
               {t("Sil")}</button>
@@ -104,7 +152,7 @@ export function StoreImages({
             accept="image/jpeg,image/png,image/webp"
             hidden
             onChange={(e) => {
-              void upload("cover", e.target.files?.[0]);
+              void pick("cover", e.target.files?.[0]);
               e.target.value = "";
             }}
           />
@@ -131,6 +179,11 @@ export function StoreImages({
               <ImagePlus className="size-4" aria-hidden />
               {t("Loqo seç")}</button>
             {hasLogo && (
+              <button type="button" disabled={busy !== null} onClick={() => tune("logo")} className={button}>
+                <SlidersHorizontal className="size-4" aria-hidden />
+                {t("Düzəlt")}</button>
+            )}
+            {hasLogo && (
               <button type="button" disabled={busy !== null} onClick={() => remove("logo")} className={`${button} text-danger`}>
                 <Trash2 className="size-4" aria-hidden />
                 {t("Sil")}</button>
@@ -141,7 +194,7 @@ export function StoreImages({
               accept="image/jpeg,image/png,image/webp"
               hidden
               onChange={(e) => {
-                void upload("logo", e.target.files?.[0]);
+                void pick("logo", e.target.files?.[0]);
                 e.target.value = "";
               }}
             />

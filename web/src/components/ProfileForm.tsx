@@ -2,11 +2,12 @@
 
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
-import { Camera, Loader2, Trash2 } from "lucide-react";
+import { Camera, Loader2, SlidersHorizontal, Trash2 } from "lucide-react";
 import { deleteAccount, updateProfile } from "@/app/kabinet/profil/actions";
 import { useT } from "@/lib/i18n/client";
 import { LOCALES, type Locale } from "@/lib/i18n/locales";
 import { ConfirmDialog } from "./ConfirmDialog";
+import { fetchPicture, useImageEditor } from "./ImageEditor";
 import { UserAvatar } from "./messages/UserAvatar";
 import { Select } from "./ui/Select";
 
@@ -34,6 +35,7 @@ export function ProfileForm({
   const t = useT();
   const router = useRouter();
   const file = useRef<HTMLInputElement>(null);
+  const editor = useImageEditor();
   const [name, setName] = useState(initialName);
   const [bio, setBio] = useState(initialBio);
   const [language, setLanguage] = useState<Locale>(initialLanguage);
@@ -54,6 +56,35 @@ export function ProfileForm({
       router.refresh();
     } else if (res.unauthorized) router.push("/giris?next=/kabinet/profil");
     else setMessage({ ok: false, text: res.message });
+  }
+
+  /** A chosen photo is first placed in a round frame (move, zoom, turn), then sent. */
+  async function pick(picked: File | undefined) {
+    if (!picked || busy) return;
+    if (!TYPES.includes(picked.type)) return setMessage({ ok: false, text: t("Yalnız JPEG, PNG və WebP şəkilləri qəbul olunur.") });
+    const edited = await editor.edit(picked, {
+      aspect: 1,
+      round: true,
+      outWidth: 512,
+      title: t("Profil şəklini yerləşdirin"),
+      hint: t("Üz çərçivənin ortasında olsun. Yalnız çərçivənin içi qalır."),
+      previews: [
+        { label: t("Profil"), aspect: 1, width: 72, round: true },
+        { label: t("Mesajlar"), aspect: 1, width: 36, round: true },
+      ],
+    });
+    if (edited) void upload(edited);
+  }
+
+  /** The photo that is already there, placed again (moved, zoomed, turned) without choosing a new one. */
+  async function tune() {
+    if (busy) return;
+    setBusy("photo");
+    setMessage(null);
+    const current = await fetchPicture(`/api/users/${userId}/profile-image?v=${photoVersion}`, "profile");
+    setBusy(null);
+    if (!current) return setMessage({ ok: false, text: t("Şəkil açılmadı. Başqa şəkil seçin.") });
+    await pick(current);
   }
 
   async function upload(picked: File | undefined) {
@@ -107,6 +138,7 @@ export function ProfileForm({
 
   return (
     <div className="space-y-5">
+      {editor.dialog}
       <section className="flex items-center gap-4 rounded-xl border border-line bg-surface p-4">
         <div className="relative">
           <UserAvatar key={photoVersion} userId={userId} size={72} version={photoVersion} hasPhoto={hasPhoto} />
@@ -128,6 +160,17 @@ export function ProfileForm({
               <Camera className="size-4" aria-hidden />
               {t("Şəkil əlavə et")}
             </button>
+            {hasPhoto && (
+              <button
+                type="button"
+                onClick={() => void tune()}
+                disabled={busy !== null}
+                className="flex h-9 items-center gap-1.5 rounded-lg border border-line px-3 text-[13px] font-semibold text-ink-2 hover:border-primary hover:text-primary disabled:opacity-60"
+              >
+                <SlidersHorizontal className="size-4" aria-hidden />
+                {t("Düzəlt")}
+              </button>
+            )}
             <button
               type="button"
               onClick={() => void removePhoto()}
@@ -143,7 +186,7 @@ export function ProfileForm({
             accept="image/jpeg,image/png,image/webp"
             hidden
             onChange={(e) => {
-              void upload(e.target.files?.[0]);
+              void pick(e.target.files?.[0]);
               e.target.value = "";
             }}
           />

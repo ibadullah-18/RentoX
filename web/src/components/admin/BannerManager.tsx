@@ -4,7 +4,7 @@ import { fmtNumeric } from "@/lib/dates";
 
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ExternalLink, ImagePlus, Loader2, Pencil, Plus, Trash2 } from "lucide-react";
+import { ExternalLink, ImagePlus, Loader2, Pencil, Plus, SlidersHorizontal, Trash2 } from "lucide-react";
 import {
   bannerImageChanged,
   createBanner,
@@ -15,6 +15,7 @@ import {
 } from "@/app/admin/(panel)/banner-actions";
 import { adminHref } from "@/lib/admin-path";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
+import { fetchPicture, useImageEditor, type EditorOptions } from "@/components/ImageEditor";
 import { Pill } from "@/components/admin/ui";
 
 export type BannerRow = {
@@ -211,6 +212,22 @@ async function uploadImage(id: string, file: File): Promise<string | null> {
   }
 }
 
+/** The frame for a banner picture: wide (3:1), with the phone's narrower cut and live previews. */
+function bannerEditor(): EditorOptions {
+  return {
+    aspect: 3,
+    outWidth: 1500,
+    pro: true,
+    title: "Kampaniya şəklini yerləşdirin",
+    hint: "Çərçivənin içi banner olacaq. Telefonda kənarlar azca kəsilir: vacib hissəni sarı xəttin içində saxlayın. Yazılar şəklin üstünə düşür, ona görə yazı yeri sakit olsun.",
+    guides: [{ label: "Telefon", aspect: 2.5 }],
+    previews: [
+      { label: "Kompüterdə", aspect: 3, width: 240 },
+      { label: "Telefonda", aspect: 2.5, width: 180 },
+    ],
+  };
+}
+
 function Group({ title, hint, children }: { title: string; hint?: string; children: React.ReactNode }) {
   return (
     <fieldset className="space-y-2 rounded-lg border border-line bg-surface p-3">
@@ -272,6 +289,17 @@ function BannerForm({
   const router = useRouter();
   const [v, setV] = useState(initial);
   const [file, setFile] = useState<File | null>(null);
+  // The photo as it was chosen, so it can be placed again without choosing it again.
+  const [original, setOriginal] = useState<File | null>(null);
+  const editor = useImageEditor();
+
+  /** The chosen picture is placed in the banner frame first: what the visitor will see, on the computer and the phone. */
+  async function chooseImage(chosen: File | undefined) {
+    if (!chosen) return;
+    setOriginal(chosen);
+    const edited = await editor.edit(chosen, bannerEditor());
+    if (edited) setFile(edited);
+  }
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const set = (patch: Partial<Draft>) => setV((x) => ({ ...x, ...patch }));
@@ -342,6 +370,7 @@ function BannerForm({
       }}
       className="space-y-3 rounded-lg bg-bg p-3"
     >
+      {editor.dialog}
       <Group title="1. Yazılar" hint="Başlıq üç dildə məcburidir. Alt yazı ixtiyaridir.">
         <div className="grid gap-2 sm:grid-cols-3">
           <input aria-label="Başlıq (AZ)" placeholder="Başlıq (AZ)" value={v.titleAz} onChange={(e) => set({ titleAz: e.target.value })} maxLength={100} disabled={busy} className={field} />
@@ -493,11 +522,11 @@ function BannerForm({
           <div className="flex flex-col justify-end gap-2">
             <label className="flex items-center gap-2 text-sm font-semibold">
               <input type="checkbox" checked={v.showText} onChange={(e) => set({ showText: e.target.checked })} disabled={busy} className={check} />
-              Başlıq şəkil üzərində yazılsın
+              Başlıq və alt yazı şəkil üzərində yazılsın (söndürsən şəkil təmiz görünür)
             </label>
             <label className="flex items-center gap-2 text-sm font-semibold">
               <input type="checkbox" checked={v.darkOverlay} onChange={(e) => set({ darkOverlay: e.target.checked })} disabled={busy} className={check} />
-              Yazı altında kölgə (oxunaqlı olsun)
+              Şəklin altında solğun fon olsun (yazı oxunsun deyə; söndürsən şəkil olduğu kimi qalır)
             </label>
           </div>
         </div>
@@ -525,10 +554,23 @@ function BannerForm({
             <input
               type="file"
               accept="image/jpeg,image/png,image/webp"
-              onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+              onChange={(e) => {
+                void chooseImage(e.target.files?.[0]);
+                e.target.value = "";
+              }}
               disabled={busy}
               className="mt-1 block w-full text-sm"
             />
+            {file && original && (
+              <button
+                type="button"
+                onClick={() => void chooseImage(original)}
+                disabled={busy}
+                className="mt-2 h-8 rounded-md border border-line bg-surface px-3 text-xs font-bold text-primary hover:border-primary"
+              >
+                Şəkli yenidən yerləşdir
+              </button>
+            )}
           </label>
         )}
         <label className="flex items-center gap-2 text-sm font-semibold">
@@ -568,6 +610,22 @@ export function BannerManager({ banners, stores, categories }: { banners: Banner
   const [version, setVersion] = useState(0);
   const picker = useRef<HTMLInputElement>(null);
   const pickFor = useRef<string | null>(null);
+  const editor = useImageEditor();
+
+  /** The picture the banner already has, placed again (moved, zoomed, background, colours) without choosing a new one. */
+  async function tuneImage(id: string) {
+    setBusy(id);
+    setMessage(null);
+    const current = await fetchPicture(`/api/banners/${id}/image?v=${version}`, "banner");
+    setBusy(null);
+    if (!current) return setMessage({ tone: "bad", text: "Şəkil açılmadı. Başqa şəkil seçin." });
+    await placeAndChange(id, current);
+  }
+
+  async function placeAndChange(id: string, chosen: File) {
+    const edited = await editor.edit(chosen, bannerEditor());
+    if (edited) await changeImage(id, edited);
+  }
 
   async function changeImage(id: string, file: File) {
     setBusy(id);
@@ -596,6 +654,7 @@ export function BannerManager({ banners, stores, categories }: { banners: Banner
 
   return (
     <div className="space-y-4">
+      {editor.dialog}
       <input
         ref={picker}
         type="file"
@@ -605,7 +664,7 @@ export function BannerManager({ banners, stores, categories }: { banners: Banner
           const file = e.target.files?.[0];
           const id = pickFor.current;
           e.target.value = "";
-          if (file && id) void changeImage(id, file);
+          if (file && id) void placeAndChange(id, file);
         }}
       />
 
@@ -702,6 +761,17 @@ export function BannerManager({ banners, stores, categories }: { banners: Banner
                   {busy === b.id ? <Loader2 className="size-4 animate-spin" aria-hidden /> : <ImagePlus className="size-4" aria-hidden />}
                   Şəkil
                 </button>
+                {b.hasImage && (
+                  <button
+                    type="button"
+                    disabled={busy !== null}
+                    onClick={() => void tuneImage(b.id)}
+                    className="flex h-8 items-center gap-1 rounded-lg px-2 text-sm font-bold text-primary hover:bg-primary-soft disabled:opacity-50"
+                  >
+                    <SlidersHorizontal className="size-4" aria-hidden />
+                    Düzəlt
+                  </button>
+                )}
                 <button type="button" onClick={() => setOpen(open === b.id ? null : b.id)} className="flex h-8 items-center gap-1 rounded-lg px-2 text-sm font-bold text-primary hover:bg-primary-soft">
                   <Pencil className="size-4" aria-hidden />
                   Dəyiş
